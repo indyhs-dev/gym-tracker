@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router';
+import { Navigate, Route, Routes, useLocation } from 'react-router';
 import TabBar from './components/TabBar';
 import History from './screens/history/History';
 import Progress from './screens/progress/Progress';
@@ -10,11 +10,14 @@ import SlotEditor from './screens/settings/SlotEditor';
 import TemplateEditor from './screens/settings/TemplateEditor';
 import Templates from './screens/settings/Templates';
 import Today from './screens/today/Today';
+import WorkoutScreen from './screens/workout/WorkoutScreen';
 
 export default function App() {
+  // The workout screen is full-screen: no tab bar.
+  const inWorkout = useLocation().pathname.startsWith('/workout/');
   return (
     <>
-      <main className="app">
+      <main className={inWorkout ? 'app app-full' : 'app'}>
         <Routes>
           <Route path="/" element={<Today />} />
           <Route path="/history" element={<History />} />
@@ -27,10 +30,11 @@ export default function App() {
           <Route path="/settings/templates" element={<Templates />} />
           <Route path="/settings/templates/:id" element={<TemplateEditor />} />
           <Route path="/settings/templates/:id/slots/:slotId" element={<SlotEditor />} />
+          <Route path="/workout/:id" element={<WorkoutScreen />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <TabBar />
+      {!inWorkout && <TabBar />}
     </>
   );
 }

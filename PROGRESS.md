@@ -3,14 +3,14 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 4 done.** Waiting for "go" before chunk 5.
+**Phase 1, chunk 5 done.** Waiting for "go" before chunk 6.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
 - [x] 2. Database + exercise library
 - [x] 3. Template builder
 - [x] 4. Seed data (library + 3 templates; no sample session)
-- [ ] 5. Today screen + start flow
+- [x] 5. Today screen + start flow
 - [ ] 6. Active workout: set entry
 - [ ] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
 - [ ] 8. Gym time + finish (incl. past-dated sessions)
@@ -25,16 +25,17 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 5: Today screen + start flow.
-- **Today:**
-  - A big **Start workout** button opens a start sheet: choose a template or Blank, plus a date that defaults to today.
-  - A last-session summary.
-  - This week's sessions and total gym time (Monday to Sunday).
-  - **Resume workout** replaces Start while a session is active.
-- **Starting a session** creates a `Session` (status `active`) whose exercises snapshot the template slots.
-- **Workout screen** (`/workout/:id`, tab bar hidden): lists each slot with its target line, rest text (from settings) and plan note.
-  - Set entry comes in chunk 6.
-  - Past-date details (no timer, start and end times entered by hand) come in chunk 8.
+Chunk 6: active workout set entry, in `src/screens/workout/` and the session mutations in `src/db/sessions.ts`.
+- **Set rows:**
+  - weight (`inputmode=decimal`) and reps (`inputmode=numeric`)
+  - −/+ steppers using the exercise's weight step (1 for reps)
+  - warm-up toggle, set note, delete set
+  - "Add set"
+- **Notes:** a per-exercise note and the whole-session note.
+- **Swap list** on the exercise name. It shows the slot's default and alternatives first, then all exercises, plus create-new. Swapping when sets exist asks first, then moves the sets.
+- **"Add exercise"** (ad-hoc, `slot: null`) and removing an exercise from the session.
+- Every change autosaves through a `mutateSession` helper, which calls `withDerived`.
+- Not in this chunk: ghost prefill and copy buttons (chunk 7), and the timer and Finish (chunk 8).
 
 ## How to run
 ```
@@ -90,8 +91,22 @@ npm run icons            # regenerate icons from public/icon.svg
   - Deleting a seeded template doesn't bring it back. Restoring a backup (chunk 10) carries `seededAt` with it.
   - Seed data is plain data in `seed.ts`, and nothing else in the app refers to those names.
 - **Target lines** (`targetLine` → `joinUnbroken`) use no-break spaces, non-breaking hyphens and word joiners, so they wrap only at the " | " separators. They're display-only; exports should build their own text.
+- **Sessions** (`src/db/sessions.ts`):
+  - Only one `active` session can exist at a time; `startSession` throws `ActiveSessionError` otherwise.
+  - Starting deep-copies the template's slots into `SessionExercise.slot`.
+  - `withDerived()` recomputes `exerciseIds` (every exercise in the session, deduplicated) and `updatedAt` on every write.
+- **Start date:** the start sheet's date can't be in the future.
+  - For today, `startedAt` is now.
+  - For a past date, it's that date at the current time of day, as a placeholder until chunk 8 adds manual times.
+  - A past-dated session is `active` (a draft) until it's finished, so Today shows "Resume workout · Legs · Fri 9 Oct".
+- **This week** runs Monday 00:00 to Sunday 23:59 local time and counts only finished sessions. **Last session** is the finished session with the latest `startedAt`.
+- **Discard workout** (shown only on an active session) asks first, then deletes it. It's needed until Finish exists, and is the agreed "discard a workout started by mistake".
+- **The workout screen** (`/workout/:id`) is full-screen with no tab bar. "‹ Today" leaves the workout running.
+- **Rest text** is "Rest {type text} · warm-ups {warm-up text}". The warm-up part is dropped when the slot's policy is "none"; ad-hoc exercises show both.
+- **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
 ## Known issues
 - The Claude app's built-in browser pane can't register service workers. Offline is verified with `npm run check:offline`, which uses the real Chrome, instead.
 - While the Claude app's browser pane is hidden it pauses animation frames, so screenshots taken right after a tap can look stale. Measured navigation is 1–6 ms, so the app itself isn't slow.
+- Dexie live queries only notice writes made through Dexie. Test data inserted with raw IndexedDB needs a page reload to show.
 - npm reports `fsevents` has an unapproved install script. It's an optional macOS file watcher and ships prebuilt, so it's safe to ignore.

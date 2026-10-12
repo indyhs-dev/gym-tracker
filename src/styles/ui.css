@@ -448,3 +448,121 @@
   overscroll-behavior: contain;
   padding: 16px var(--gutter) calc(16px + var(--safe-bottom));
 }
+
+/* Cards */
+.card {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.card-title {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card p {
+  margin: 0;
+}
+
+/* Today */
+.btn-hero {
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 88px;
+  border-radius: var(--radius);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.btn-hero-meta {
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.stat-value {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.last-session-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.last-session-duration {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.last-session-exercises {
+  margin-top: 8px !important;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* Workout */
+.exercise-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.exercise-card {
+  margin-top: 12px;
+}
+
+.exercise-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.exercise-target {
+  margin-top: 4px !important;
+  font-size: 15px;
+}
+
+.exercise-rest {
+  margin-top: 2px !important;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.exercise-plan {
+  margin-top: 6px !important;
+  color: var(--muted);
+  font-size: 15px;
+  font-style: italic;
+}
+
+.stat-value {
+  white-space: nowrap;
+}
+
+.stat-unit {
+  margin-left: 1px;
+  font-size: 0.55em;
+  font-weight: 600;
+  color: var(--muted);
+}

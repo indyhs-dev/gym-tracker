@@ -106,3 +106,7 @@ button {
 .tab.active {
   color: var(--accent);
 }
+
+.app-full {
+  padding-bottom: calc(var(--safe-bottom) + 32px);
+}

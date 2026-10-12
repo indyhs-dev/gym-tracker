@@ -1,3 +1,96 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { db } from '../../db/db';
+import { getActiveSession, lastFinishedSession, loadWeekStats } from '../../db/sessions';
+import type { Exercise, Session } from '../../db/types';
+import { formatDate, formatDuration, formatLongDate, formatTime, isSameDay } from '../../lib/time';
+import StartSheet from './StartSheet';
+
 export default function Today() {
-  return <h1 className="screen-title">Today</h1>;
+  const active = useLiveQuery(async () => (await getActiveSession()) ?? null, []);
+  const last = useLiveQuery(async () => (await lastFinishedSession()) ?? null, []);
+  const week = useLiveQuery(() => loadWeekStats(Date.now()), []);
+  const exercises = useLiveQuery(async () => new Map((await db.exercises.toArray()).map((e) => [e.id, e])), []);
+  const [starting, setStarting] = useState(false);
+
+  return (
+    <>
+      <h1 className="screen-title">Today</h1>
+      <p className="muted intro">{formatLongDate(Date.now())}</p>
+
+      {active === null && (
+        <button type="button" className="btn btn-primary btn-hero" onClick={() => setStarting(true)}>
+          Start workout
+        </button>
+      )}
+      {active && (
+        <Link className="btn btn-primary btn-hero" to={`/workout/${active.id}`}>
+          <span>Resume workout</span>
+          <span className="btn-hero-meta">{activeMeta(active)}</span>
+        </Link>
+      )}
+
+      <section className="card stat-card" aria-label="This week">
+        <h2 className="card-title">This week</h2>
+        <div className="stats">
+          <div>
+            <div className="stat-value">{week?.sessions ?? '–'}</div>
+            <div className="stat-label">{week?.sessions === 1 ? 'session' : 'sessions'}</div>
+          </div>
+          <div>
+            <div className="stat-value">{week ? <Duration ms={week.totalMs} /> : '–'}</div>
+            <div className="stat-label">gym time</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="card" aria-label="Last session">
+        <h2 className="card-title">Last session</h2>
+        {last === null && <p className="muted">No sessions yet.</p>}
+        {last && exercises && <LastSession session={last} exercises={exercises} />}
+      </section>
+
+      {starting && <StartSheet onClose={() => setStarting(false)} />}
+    </>
+  );
+}
+
+function activeMeta(s: Session): string {
+  const name = s.templateName ?? 'Blank workout';
+  return isSameDay(s.startedAt, Date.now())
+    ? `${name} · started ${formatTime(s.startedAt)}`
+    : `${name} · ${formatDate(s.startedAt)}`;
+}
+
+function LastSession({ session, exercises }: { session: Session; exercises: Map<string, Exercise> }) {
+  const names = session.exercises.map((e) => exercises.get(e.exerciseId)?.name ?? 'Unknown exercise');
+  return (
+    <div className="last-session">
+      <div className="last-session-head">
+        <span className="row-title">{session.templateName ?? 'Blank workout'}</span>
+        <span className="last-session-duration">
+          {session.endedAt !== null ? formatDuration(session.endedAt - session.startedAt) : ''}
+        </span>
+      </div>
+      <div className="row-meta">{formatDate(session.startedAt)}</div>
+      {names.length > 0 && <p className="last-session-exercises">{names.join(', ')}</p>}
+    </div>
+  );
+}
+
+/** "1h 12m" with large numbers and small units. */
+function Duration({ ms }: { ms: number }) {
+  const parts = [...formatDuration(ms).matchAll(/(\d+)([hm])/g)];
+  return (
+    <>
+      {parts.map(([, n, unit], i) => (
+        <span key={i}>
+          {i > 0 && ' '}
+          {n}
+          <span className="stat-unit">{unit}</span>
+        </span>
+      ))}
+    </>
+  );
 }
