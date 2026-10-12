@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 5 done.** Waiting for "go" before chunk 6.
+**Phase 1, chunk 6 done.** Waiting for "go" before chunk 7.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -11,7 +11,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 3. Template builder
 - [x] 4. Seed data (library + 3 templates; no sample session)
 - [x] 5. Today screen + start flow
-- [ ] 6. Active workout: set entry
+- [x] 6. Active workout: set entry
 - [ ] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
 - [ ] 8. Gym time + finish (incl. past-dated sessions)
 - [ ] 9. History + edit past sessions
@@ -25,17 +25,13 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 6: active workout set entry, in `src/screens/workout/` and the session mutations in `src/db/sessions.ts`.
-- **Set rows:**
-  - weight (`inputmode=decimal`) and reps (`inputmode=numeric`)
-  - −/+ steppers using the exercise's weight step (1 for reps)
-  - warm-up toggle, set note, delete set
-  - "Add set"
-- **Notes:** a per-exercise note and the whole-session note.
-- **Swap list** on the exercise name. It shows the slot's default and alternatives first, then all exercises, plus create-new. Swapping when sets exist asks first, then moves the sets.
-- **"Add exercise"** (ad-hoc, `slot: null`) and removing an exercise from the session.
-- Every change autosaves through a `mutateSession` helper, which calls `withDerived`.
-- Not in this chunk: ghost prefill and copy buttons (chunk 7), and the timer and Finish (chunk 8).
+Chunk 7: fast entry.
+- **Ghost rows:** last session's sets for the same `exerciseId` show dimmed below the logged sets. This uses the `*exerciseIds` index and takes the most recent *finished* session that started before this one and has sets for that exercise.
+  - Tapping a ghost row, or typing into it, turns it into a real set (stamped now).
+  - The ghost values show as the `NumberField` placeholders.
+- **Copy last set** duplicates the previous set's weight and reps; the warm-up toggle starts off.
+- **Copy previous session's sets** turns all remaining ghost rows into sets.
+- Swapped exercises show their own history only.
 
 ## How to run
 ```
@@ -103,6 +99,24 @@ npm run icons            # regenerate icons from public/icon.svg
 - **Discard workout** (shown only on an active session) asks first, then deletes it. It's needed until Finish exists, and is the agreed "discard a workout started by mistake".
 - **The workout screen** (`/workout/:id`) is full-screen with no tab bar. "‹ Today" leaves the workout running.
 - **Rest text** is "Rest {type text} · warm-ups {warm-up text}". The warm-up part is dropped when the slot's policy is "none"; ad-hoc exercises show both.
+- **Set entry** (chunk 6):
+  - A set row is two lines.
+    - Line 1: the label ("W" for warm-ups, otherwise 1, 2, 3… counting working sets only), the Warm-up chip, a note toggle (✎), and delete (✕). Delete needs two taps: the first arms it and it disarms after 3 s.
+    - Line 2: weight and reps steppers.
+  - The weight column is 1.3× the width of reps. On screens narrower than 360 px (SE, or Display Zoom) weight and reps stack, with small unit labels inside the fields.
+- **Number fields** (`NumberField`) save on every keystroke and keep the exact typed text while focused.
+  - Weight accepts "," or ".", up to 2 decimals. Reps take whole numbers only.
+  - Unusually long values get smaller text instead of clipping.
+- **Steppers** (`StepField`) step by the exercise's weight step, or 1 for reps. From empty, + gives one step and − gives 0. They never go below 0.
+- **The weight column heading** says "kg", "kg each" (per hand) or "+kg" (bodyweight).
+- **Saved values are cleaned:** weight is ≥ 0 and rounded to 2 decimals; reps are whole and ≥ 0. Empty stays `null`. Editing a set never changes its `loggedAt`.
+- **Swap** happens by tapping the exercise name (⇄).
+  - The picker shows "This slot" (default and alternatives, minus the current one) first, then all exercises, plus create-new.
+  - If sets are logged, it asks "Move N sets to X?" and moves them.
+  - The slot snapshot stays as it was, so the target line is unchanged.
+- **Notes:** the session note sits at the top, there's an exercise note on each card, and set notes are behind ✎. All autosave. The note fields grow with their text (`field-sizing: content`).
+- **"+ Add exercise"** adds an ad-hoc exercise (`slot: null`: rest text but no target line) and scrolls to it. Removing an exercise asks first and mentions how many sets will go.
+- **Chips** have a 48 px tap area around a 36 px pill.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
 ## Known issues

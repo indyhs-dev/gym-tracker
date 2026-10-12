@@ -11,6 +11,8 @@ interface Props {
   onCreate: (name: string) => void;
   /** Hidden from the results (e.g. already chosen), but still count as existing names. */
   excludeIds?: string[];
+  /** Shown above everything else while the search box is empty. */
+  suggested?: Exercise[];
   autoFocus?: boolean;
 }
 
@@ -22,11 +24,13 @@ export default function ExerciseSearch({
   onSelect,
   onCreate,
   excludeIds = [],
+  suggested = [],
   autoFocus,
 }: Props) {
   const typed = cleanName(query);
   const matches = filterExercises(exercises, query).filter((e) => !excludeIds.includes(e.id));
   const canCreate = typed !== '' && !findByName(exercises, typed);
+  const showSuggested = typed === '' && suggested.length > 0;
 
   return (
     <div className="exercise-search">
@@ -51,25 +55,39 @@ export default function ExerciseSearch({
         </button>
       )}
 
+      {showSuggested && (
+        <>
+          <span className="field-label">This slot</span>
+          <ExerciseList exercises={suggested} onSelect={onSelect} />
+          <span className="field-label">All exercises</span>
+        </>
+      )}
+
       {matches.length > 0 ? (
-        <ul className="list">
-          {matches.map((e) => (
-            <li key={e.id}>
-              <button type="button" className="list-row" onClick={() => onSelect(e)}>
-                <span className="row-text">
-                  <span className="row-title">{e.name}</span>
-                  <span className="row-meta">{exerciseMeta(e)}</span>
-                </span>
-                <span className="chevron" aria-hidden="true">
-                  ›
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <ExerciseList exercises={matches} onSelect={onSelect} />
       ) : (
         !canCreate && <p className="empty">{exercises.length === 0 ? 'No exercises yet.' : 'No matches.'}</p>
       )}
     </div>
+  );
+}
+
+function ExerciseList({ exercises, onSelect }: { exercises: Exercise[]; onSelect: (e: Exercise) => void }) {
+  return (
+    <ul className="list">
+      {exercises.map((e) => (
+        <li key={e.id}>
+          <button type="button" className="list-row" onClick={() => onSelect(e)}>
+            <span className="row-text">
+              <span className="row-title">{e.name}</span>
+              <span className="row-meta">{exerciseMeta(e)}</span>
+            </span>
+            <span className="chevron" aria-hidden="true">
+              ›
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }

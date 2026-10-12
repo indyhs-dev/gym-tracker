@@ -531,6 +531,7 @@
 
 .exercise-card {
   margin-top: 12px;
+  padding: 14px 12px;
 }
 
 .exercise-name {
@@ -565,4 +566,240 @@
   font-size: 0.55em;
   font-weight: 600;
   color: var(--muted);
+}
+
+/* Workout: exercise card */
+.exercise-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: calc(100% + 16px);
+  min-height: var(--tap);
+  margin: -8px -8px 0;
+  padding: 0 8px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.swap-hint {
+  flex: none;
+  color: var(--accent);
+  font-size: 20px;
+}
+
+.set-head {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.set-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.set-row {
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.set-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.set-label {
+  min-width: 28px;
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.is-warmup .set-label {
+  color: var(--muted);
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* 48px tap area around a smaller pill. */
+.chip-hit {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.chip-hit[aria-pressed='true'] .chip {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.chip-confirm {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon-button[aria-pressed='true'] {
+  color: var(--accent);
+}
+
+.set-row .icon-button {
+  margin-right: 0;
+}
+
+/* Weight gets more room than reps ("102.5" vs "12"). */
+.set-inputs,
+.set-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.set-inputs {
+  margin-top: 4px;
+}
+
+/* Very narrow phones (e.g. iPhone SE 1st gen): weight above reps. */
+@media (max-width: 359px) {
+  .set-inputs {
+    grid-template-columns: 1fr;
+  }
+  .set-head {
+    display: none;
+  }
+  .step-input .step-unit {
+    display: block;
+  }
+}
+
+.step-input {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.step-unit {
+  display: none;
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  right: 0;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.step-field {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.step-field button {
+  flex: none;
+  width: var(--tap);
+  height: 56px;
+  border: none;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.step-field button:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.step-field button:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.num-input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  appearance: none;
+}
+
+.num-input::placeholder {
+  color: var(--faint);
+}
+
+.num-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.set-note {
+  margin-top: 8px;
+}
+
+.add-set {
+  margin-top: 12px;
+}
+
+.note-field {
+  display: block;
+  margin-top: 12px;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  resize: none;
+  field-sizing: content;
+  line-height: 1.35;
+}
+
+.btn-small {
+  min-height: 44px;
+  margin-top: 4px !important;
+  font-size: 15px;
+}
+
+.add-exercise {
+  margin-top: 16px;
+}
+
+.num-input.is-long {
+  font-size: 17px;
 }

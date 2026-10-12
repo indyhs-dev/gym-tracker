@@ -1,7 +1,7 @@
 import { newId } from '../lib/ids';
 import { addDays, startOfWeek } from '../lib/time';
 import { db } from './db';
-import type { Session } from './types';
+import type { Session, SessionExercise, WorkoutSet } from './types';
 
 export class ActiveSessionError extends Error {
   constructor() {
@@ -91,4 +91,89 @@ export async function loadWeekStats(now: number): Promise<WeekStats> {
   const from = startOfWeek(now);
   const sessions = await db.sessions.where('startedAt').between(from, addDays(from, 7), true, false).toArray();
   return weekStats(sessions, now);
+}
+
+// ---- Editing a session. Every change is saved immediately. ----
+
+/** Applies a change to a session inside a transaction and saves it. */
+export async function mutateSession(id: string, change: (s: Session) => Session): Promise<Session> {
+  return db.transaction('rw', db.sessions, async () => {
+    const current = await db.sessions.get(id);
+    if (!current) throw new Error('Workout not found');
+    const next = withDerived(change(current));
+    await db.sessions.put(next);
+    return next;
+  });
+}
+
+function mapExercise(s: Session, itemId: string, change: (e: SessionExercise) => SessionExercise): Session {
+  return { ...s, exercises: s.exercises.map((e) => (e.id === itemId ? change(e) : e)) };
+}
+
+function mapSet(e: SessionExercise, setId: string, change: (set: WorkoutSet) => WorkoutSet): SessionExercise {
+  return { ...e, sets: e.sets.map((set) => (set.id === setId ? change(set) : set)) };
+}
+
+/** Weight: kg, not negative, 2 decimals. Reps: whole, not negative. */
+export function cleanWeight(kg: number | null): number | null {
+  return kg === null ? null : Math.max(0, Math.round(kg * 100) / 100);
+}
+
+export function cleanReps(reps: number | null): number | null {
+  return reps === null ? null : Math.max(0, Math.round(reps));
+}
+
+export type SetFields = Pick<WorkoutSet, 'weight' | 'reps' | 'warmup' | 'note'>;
+
+export function newSet(fields: Partial<SetFields> = {}, loggedAt = Date.now()): WorkoutSet {
+  return {
+    id: newId(),
+    weight: cleanWeight(fields.weight ?? null),
+    reps: cleanReps(fields.reps ?? null),
+    warmup: fields.warmup ?? false,
+    note: fields.note ?? '',
+    loggedAt,
+  };
+}
+
+export function addSet(sessionId: string, itemId: string, fields: Partial<SetFields> = {}): Promise<Session> {
+  return mutateSession(sessionId, (s) => mapExercise(s, itemId, (e) => ({ ...e, sets: [...e.sets, newSet(fields)] })));
+}
+
+/** Edits a set. Its loggedAt (creation time) is left unchanged. */
+export function updateSet(sessionId: string, itemId: string, setId: string, fields: Partial<SetFields>): Promise<Session> {
+  const clean: Partial<SetFields> = { ...fields };
+  if ('weight' in fields) clean.weight = cleanWeight(fields.weight ?? null);
+  if ('reps' in fields) clean.reps = cleanReps(fields.reps ?? null);
+  return mutateSession(sessionId, (s) => mapExercise(s, itemId, (e) => mapSet(e, setId, (set) => ({ ...set, ...clean }))));
+}
+
+export function deleteSet(sessionId: string, itemId: string, setId: string): Promise<Session> {
+  return mutateSession(sessionId, (s) =>
+    mapExercise(s, itemId, (e) => ({ ...e, sets: e.sets.filter((set) => set.id !== setId) })),
+  );
+}
+
+export function setExerciseNote(sessionId: string, itemId: string, note: string): Promise<Session> {
+  return mutateSession(sessionId, (s) => mapExercise(s, itemId, (e) => ({ ...e, note })));
+}
+
+export function setSessionNote(sessionId: string, note: string): Promise<Session> {
+  return mutateSession(sessionId, (s) => ({ ...s, note }));
+}
+
+/** Swaps the exercise done in this slot. Any sets already logged move with it. */
+export function swapExercise(sessionId: string, itemId: string, exerciseId: string): Promise<Session> {
+  return mutateSession(sessionId, (s) => mapExercise(s, itemId, (e) => ({ ...e, exerciseId })));
+}
+
+/** Adds an exercise that isn't part of the template. Returns the new item's id. */
+export async function addSessionExercise(sessionId: string, exerciseId: string): Promise<string> {
+  const item: SessionExercise = { id: newId(), exerciseId, slot: null, note: '', sets: [] };
+  await mutateSession(sessionId, (s) => ({ ...s, exercises: [...s.exercises, item] }));
+  return item.id;
+}
+
+export function removeSessionExercise(sessionId: string, itemId: string): Promise<Session> {
+  return mutateSession(sessionId, (s) => ({ ...s, exercises: s.exercises.filter((e) => e.id !== itemId) }));
 }

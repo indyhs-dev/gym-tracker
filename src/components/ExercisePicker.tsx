@@ -11,6 +11,8 @@ interface Props {
   title: string;
   /** Exercises not offered (e.g. already in this slot). */
   excludeIds?: string[];
+  /** Shown first, under "This slot" (e.g. the slot's default and alternatives). */
+  suggested?: Exercise[];
   onPick: (exercise: Exercise) => void;
   onClose: () => void;
 }
@@ -19,7 +21,7 @@ interface Props {
  * Pick any saved exercise, or type a new name: it's saved to the library
  * and picked in one go. Render it only while open.
  */
-export default function ExercisePicker({ title, excludeIds, onPick, onClose }: Props) {
+export default function ExercisePicker({ title, excludeIds, suggested, onPick, onClose }: Props) {
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const [query, setQuery] = useState('');
   const [newName, setNewName] = useState<string | null>(null);
@@ -31,6 +33,7 @@ export default function ExercisePicker({ title, excludeIds, onPick, onClose }: P
           <ExerciseSearch
             exercises={exercises}
             excludeIds={excludeIds}
+            suggested={suggested}
             query={query}
             onQueryChange={setQuery}
             onSelect={onPick}
