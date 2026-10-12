@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 8 done.** Going straight on to chunk 9.
+**Phase 1, chunk 9 done.** Going straight on to chunk 10.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -14,7 +14,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 6. Active workout: set entry
 - [x] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
 - [x] 8. Gym time + finish (incl. past-dated sessions)
-- [ ] 9. History + edit past sessions
+- [x] 9. History + edit past sessions
 - [ ] 10. Export / backup (JSON, restore, CSV, Copy for Claude, 14-day reminder)
 - [ ] 11. Phase 1 wrap-up + deploy instructions
 
@@ -25,15 +25,12 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 9: History and editing past sessions.
-- **History tab:** sessions newest first, each with date, template, duration and exercise names.
-- **Session detail:** read-only, with Edit and Delete (Delete asks first).
-- **Edit** reuses the workout screen for a finished session:
-  - date, start and end are editable (`setSessionTimes`)
-  - sets, notes and swaps work as during a workout
-  - "Done" goes back
-- **Ghosts in Edit mode** compare against sessions before the one being edited, which `previousSetsFor` already handles.
-- **After Finish,** go to the new session's detail page rather than Today.
+Chunk 10: export and backup, under Settings → Backup & export.
+- **JSON backup:** every table, saved via the iOS share sheet (`navigator.share` with a file), falling back to a download link. Sets `lastBackupAt`.
+- **Restore from JSON:** validate the file, confirm, then replace all data.
+- **CSV export of all sets**, with columns: date, session, exercise, set number, weight, reps, warm-up, note.
+- **"Copy for Claude":** a compact plain-text summary for a chosen date range, copied to the clipboard.
+- **Backup reminder** on Today when there's been no JSON backup in 14 days.
 
 ## How to run
 ```
@@ -141,7 +138,20 @@ npm run icons            # regenerate icons from public/icon.svg
   - If the end is earlier than the start, it's taken as the next day (ran past midnight).
   - Live: end defaults to `suggestedEnd` (latest set `loggedAt`, or now with no sets). Past: end defaults to start + 1 h.
   - The duration preview updates live, and it says how many exercises with no sets will be left out.
-- **`finishSession`** sets `finished` and the times, and drops exercises with no sets. Finishing currently returns to Today.
+- **`finishSession`** sets `finished` and the times, and drops exercises with no sets. Since chunk 9, finishing goes to the new session's detail page, which is the session summary with its duration.
+- **History** (chunk 9): finished sessions only, newest first, grouped by month. Each row shows the date (accent), template, exercise names (up to 2 lines) and duration.
+  - The Today "Last session" card links to the detail page.
+- **Session detail** (`/history/:id`):
+  - Date and start–end times.
+  - Gym time and set count, with the duration shown as big numbers and small units (shared `Duration` component).
+  - The session note, then each exercise's sets ("W"/numbered, `setText`) with set notes and the exercise note.
+  - "Edit session" and "Delete session" (asks first).
+- **Set text** (`setText`) is like "22.5 × 8". For bodyweight exercises it's "BW" (0) or "BW+10" (added load).
+- **Editing** reuses the workout screen whenever `status === 'finished'`:
+  - The bar shows "Editing" and Done.
+  - `TimesEditor` covers date, start and end. It saves through `setSessionTimes` once all three are set; an end before the start rolls to the next day.
+  - Everything else (sets, notes, swap, add/remove exercise, ghosts from sessions *before* this one) works as in a workout.
+  - Done drops exercises with no sets and goes back.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
 ## Known issues

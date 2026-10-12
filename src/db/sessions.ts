@@ -264,3 +264,17 @@ export function setSessionTimes(id: string, startedAt: number, endedAt: number |
   if (endedAt !== null && endedAt < startedAt) throw new Error('End time is before the start time');
   return mutateSession(id, (s) => ({ ...s, startedAt, endedAt }));
 }
+
+/** Removes exercises that have no sets (used when finishing, and after editing). */
+export function dropEmptyExercises(id: string): Promise<Session> {
+  return mutateSession(id, (s) => ({ ...s, exercises: s.exercises.filter((e) => e.sets.length > 0) }));
+}
+
+/** Finished sessions, newest first. */
+export function finishedSessions(): Promise<Session[]> {
+  return db.sessions
+    .orderBy('startedAt')
+    .reverse()
+    .filter((s) => s.status === 'finished')
+    .toArray();
+}

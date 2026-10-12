@@ -5,7 +5,14 @@ import ExercisePicker from '../../components/ExercisePicker';
 import NoteField from '../../components/NoteField';
 import ScreenHeader from '../../components/ScreenHeader';
 import { db } from '../../db/db';
-import { addSessionExercise, discardSession, isLive, previousSetsFor, setSessionNote } from '../../db/sessions';
+import {
+  addSessionExercise,
+  discardSession,
+  dropEmptyExercises,
+  isLive,
+  previousSetsFor,
+  setSessionNote,
+} from '../../db/sessions';
 import { useSettings } from '../../db/settings';
 import type { Exercise, RestGuidance, Session } from '../../db/types';
 import { useGoBack } from '../../lib/nav';
@@ -13,6 +20,7 @@ import { formatClock, formatDate, formatTime, isSameDay } from '../../lib/time';
 import { useNow } from '../../lib/useNow';
 import ExerciseCard from './ExerciseCard';
 import FinishSheet from './FinishSheet';
+import TimesEditor from './TimesEditor';
 
 export default function WorkoutScreen() {
   const { id = '' } = useParams();
@@ -40,7 +48,8 @@ interface WorkoutProps {
 
 function Workout({ session, exercises, rest }: WorkoutProps) {
   const navigate = useNavigate();
-  const goBack = useGoBack('/');
+  const editing = session.status === 'finished';
+  const goBack = useGoBack(editing ? `/history/${session.id}` : '/');
   const [adding, setAdding] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const live = isLive(session);
@@ -55,6 +64,12 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
     setTimeout(() => document.getElementById(`item-${itemId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
+  /** Leaving edit mode: tidy away any exercise left with no sets. */
+  async function done() {
+    await dropEmptyExercises(session.id);
+    goBack();
+  }
+
   function discard() {
     if (!window.confirm('Discard this workout? Anything logged in it will be deleted.')) return;
     navigate('/', { replace: true });
@@ -64,11 +79,23 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
   return (
     <>
       <div className="workout-bar">
-        <button type="button" className="back" onClick={goBack}>
-          ‹ Today
-        </button>
-        {live ? <Elapsed since={session.startedAt} /> : <span className="workout-bar-date">{formatDate(session.startedAt)}</span>}
-        {session.status === 'active' && (
+        {editing ? (
+          <span />
+        ) : (
+          <button type="button" className="back" onClick={goBack}>
+            ‹ Today
+          </button>
+        )}
+        {live ? (
+          <Elapsed since={session.startedAt} />
+        ) : (
+          <span className="workout-bar-date">{editing ? 'Editing' : formatDate(session.startedAt)}</span>
+        )}
+        {editing ? (
+          <button type="button" className="btn btn-primary btn-finish" onClick={done}>
+            Done
+          </button>
+        ) : (
           <button type="button" className="btn btn-primary btn-finish" onClick={() => setFinishing(true)}>
             {live ? 'Finish' : 'Save'}
           </button>
@@ -77,6 +104,7 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
 
       <h1 className="screen-title">{session.templateName ?? 'Blank workout'}</h1>
       <p className="muted intro">{sessionMeta(session)}</p>
+      {editing && <TimesEditor session={session} />}
 
       <NoteField
         label="Session note"
@@ -116,7 +144,7 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
           session={session}
           live={live}
           onClose={() => setFinishing(false)}
-          onFinished={() => navigate('/', { replace: true })}
+          onFinished={() => navigate(`/history/${session.id}`, { replace: true })}
         />
       )}
     </>

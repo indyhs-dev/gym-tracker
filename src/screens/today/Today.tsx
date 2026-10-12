@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import Duration from '../../components/Duration';
 import { db } from '../../db/db';
 import { getActiveSession, lastFinishedSession, loadWeekStats } from '../../db/sessions';
 import type { Exercise, Session } from '../../db/types';
@@ -45,11 +46,17 @@ export default function Today() {
         </div>
       </section>
 
-      <section className="card" aria-label="Last session">
-        <h2 className="card-title">Last session</h2>
-        {last === null && <p className="muted">No sessions yet.</p>}
-        {last && exercises && <LastSession session={last} exercises={exercises} />}
-      </section>
+      {last && exercises ? (
+        <Link className="card card-link" to={`/history/${last.id}`} aria-label="Last session">
+          <h2 className="card-title">Last session</h2>
+          <LastSession session={last} exercises={exercises} />
+        </Link>
+      ) : (
+        <section className="card" aria-label="Last session">
+          <h2 className="card-title">Last session</h2>
+          {last === null && <p className="muted">No sessions yet.</p>}
+        </section>
+      )}
 
       {starting && <StartSheet onClose={() => setStarting(false)} />}
     </>
@@ -79,18 +86,3 @@ function LastSession({ session, exercises }: { session: Session; exercises: Map<
   );
 }
 
-/** "1h 12m" with large numbers and small units. */
-function Duration({ ms }: { ms: number }) {
-  const parts = [...formatDuration(ms).matchAll(/(\d+)([hm])/g)];
-  return (
-    <>
-      {parts.map(([, n, unit], i) => (
-        <span key={i}>
-          {i > 0 && ' '}
-          {n}
-          <span className="stat-unit">{unit}</span>
-        </span>
-      ))}
-    </>
-  );
-}

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import TabBar from './components/TabBar';
 import History from './screens/history/History';
+import SessionDetail from './screens/history/SessionDetail';
 import Progress from './screens/progress/Progress';
 import ExerciseEditor from './screens/settings/ExerciseEditor';
 import Exercises from './screens/settings/Exercises';
@@ -21,6 +22,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Today />} />
           <Route path="/history" element={<History />} />
+          <Route path="/history/:id" element={<SessionDetail />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/exercises" element={<Exercises />} />
