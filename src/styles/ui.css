@@ -1221,3 +1221,32 @@
   margin: 0 4px 8px;
   width: calc(100% - 8px);
 }
+
+/* Training hints on exercise cards (warm-ups, progression) */
+.hint {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.hint-title {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.warmup-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 16px;
+}
+
+.warmup-step strong {
+  font-size: 18px;
+}

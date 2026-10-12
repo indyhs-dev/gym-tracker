@@ -122,6 +122,7 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
             exercises={exercises}
             rest={rest}
             previous={previous?.get(item.exerciseId)}
+            hints={session.status === 'active'}
           />
         ))}
       </div>

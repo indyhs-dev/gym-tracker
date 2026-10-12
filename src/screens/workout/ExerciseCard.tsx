@@ -13,11 +13,12 @@ import {
   type SetFields,
 } from '../../db/sessions';
 import type { Exercise, RestGuidance, SessionExercise, WorkoutSet } from '../../db/types';
-import { plural } from '../../lib/format';
+import { formatKg, plural } from '../../lib/format';
 import { newId } from '../../lib/ids';
 import { targetLine } from '../../lib/labels';
 import { restText } from '../../lib/rest';
 import { formatDate } from '../../lib/time';
+import { warmupSuggestions, workWeightFor } from '../../lib/warmup';
 import SetRow from './SetRow';
 
 interface Props {
@@ -27,9 +28,11 @@ interface Props {
   rest: RestGuidance;
   /** The last session's sets for this exercise, shown as ghost rows. */
   previous?: PreviousSets;
+  /** Show training hints (warm-ups, progression): during a workout, not when editing history. */
+  hints?: boolean;
 }
 
-export default function ExerciseCard({ sessionId, item, exercises, rest, previous }: Props) {
+export default function ExerciseCard({ sessionId, item, exercises, rest, previous, hints = false }: Props) {
   const [swapping, setSwapping] = useState(false);
   // Each ghost position has a ready-made set id, so a ghost row keeps its
   // identity (and keyboard focus) when typing turns it into a real set.
@@ -79,6 +82,10 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
     );
   }
 
+  // Warm-up helper: template exercises with a warm-up policy, not bodyweight.
+  const work = hints && exercise && slot && !exercise.bodyweight ? workWeightFor(item.sets, previous?.sets) : null;
+  const warmups = work && exercise && slot ? warmupSuggestions(slot.warmup, exercise.type, work.weight, exercise.weightStep) : [];
+
   const lastSet = item.sets.at(-1);
   let working = 0;
   const label = (warmup: boolean) => (warmup ? 'W' : String(++working));
@@ -95,6 +102,20 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
       {exercise && slot && <p className="exercise-target">{targetLine(slot, exercise.type)}</p>}
       {exercise && <p className="exercise-rest">{restText(exercise.type, slot?.warmup ?? null, rest)}</p>}
       {slot?.planNote && <p className="exercise-plan">{slot.planNote}</p>}
+      {work && warmups.length > 0 && (
+        <div className="hint warmup-hint">
+          <span className="hint-title">
+            Warm-up · from {formatKg(work.weight)} {work.source === 'today' ? 'today' : 'last time'}
+          </span>
+          <span className="warmup-steps">
+            {warmups.map((w) => (
+              <span key={w.weight} className="warmup-step">
+                <strong>{formatKg(w.weight)}</strong> × {w.reps}
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
 
       {previous && <p className="last-time">Last time · {formatDate(previous.startedAt)}</p>}
 

@@ -21,7 +21,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 ## Phase 2 (see PLAN.md §6)
 - [x] 12. Progress tab: per-exercise chart (top weight and e1RM)
 - [x] 13. PRs, weekly working sets, gym-time trend
-- [ ] 14. Warm-up helper
+- [x] 14. Warm-up helper
 - [ ] 15. Progression hint and beat-last-time comparison
 - [ ] 16. Training block tracker
 - [ ] 17. Phase 2 wrap-up
@@ -30,7 +30,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 14: the warm-up helper, as a text line on exercise cards (PLAN.md §6).
+Chunk 15: the progression hint and the "beat last time" comparison on exercise cards (PLAN.md §6).
 
 ## How to run
 ```
@@ -201,6 +201,12 @@ npm run icons            # regenerate icons from public/icon.svg
     - **Gym time per session:** last 20 sessions, round 15/30-minute ticks (`minuteTicks`), with the average in the subtitle.
     - Each has a "Show as table" (`<details>`).
   - These are computed on the fly in `src/lib/progress.ts` (`exercisePRs`, `weeklyWorkingSets`, `sessionDurations`). Nothing extra is stored.
+- **Warm-up helper** (chunk 14, `src/lib/warmup.ts`), shown on exercise cards as "Warm-up · from 25 last time · 10 × 6–10 · 17.5 × 4–8 · 20 × 2–4":
+  - The work weight is the first working set logged today (weight > 0), otherwise last session's.
+  - "Full": 40% × 6–10, then 65% × 4–8, then 75% × 2–4 for compound exercises only. "1 set" and "0–1": a single 65% × 4–8.
+  - Each step is rounded to the exercise's weight step. Steps that round to 0, reach the work weight, or repeat the previous weight are dropped.
+  - Hidden for bodyweight exercises, ad-hoc exercises (no slot) and the "none" policy, and when editing a finished session (`hints` prop).
+  - It's text only; nothing is logged automatically.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
