@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1 complete (chunks 1–11).** Waiting for the user to deploy and confirm it works on their iPhone. Phase 2 doesn't start until they do.
+**Phase 1 confirmed working on the iPhone (12 Oct 2026). Phase 2 in progress.** It's deployed at https://indyhs-dev.github.io/gym-tracker/ (repo `indyhs-dev/gym-tracker`; every push to `main` redeploys).
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -18,15 +18,19 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 10. Export / backup (JSON, restore, CSV, Copy for Claude, 14-day reminder)
 - [x] 11. Phase 1 wrap-up + deploy instructions
 
-## Phase 2 (only after Phase 1 is confirmed on the phone)
-- [ ] 12–17: see PLAN.md §6
+## Phase 2 (see PLAN.md §6)
+- [ ] 12. Progress tab: per-exercise chart (top weight and e1RM)
+- [ ] 13. PRs, weekly working sets, gym-time trend
+- [ ] 14. Warm-up helper
+- [ ] 15. Progression hint and beat-last-time comparison
+- [ ] 16. Training block tracker
+- [ ] 17. Phase 2 wrap-up
 
 ## In progress
 Nothing.
 
 ## Next
-- **User:** deploy (README → "Put it on your iPhone") and try Phase 1 on the phone.
-- **Then:** fix anything found on the phone, and plan Phase 2 (chunks 12–17 in PLAN.md §6) in detail once the user confirms.
+Chunk 12: the Progress tab chart (PLAN.md §6). Phase 2 runs chunk by chunk without stopping, like chunks 7–11.
 
 ## How to run
 ```
@@ -41,6 +45,11 @@ npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Phase 2 answers (12 Oct 2026):**
+  - Weekly volume is working sets per week.
+  - No bodyweight log.
+  - The 75% warm-up is for compound exercises only.
+  - The progression hint triggers when set 1 reaches the top of the rep range.
 - **Workflow change (12 Oct 2026, user's request):** work through the remaining Phase 1 chunks (7–11) one at a time without waiting for "go". Each chunk is still tested, committed and recorded here. Stop only for complications or decisions that need the user. Stop after chunk 11 (deploy instructions), because Phase 2 waits until the user confirms Phase 1 on their phone.
 - The project lives at `~/Developer/gym-tracker`.
 - The plan was approved on 12 Oct 2026. Answers are in PLAN.md §8.

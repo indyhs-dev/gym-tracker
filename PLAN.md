@@ -236,13 +236,32 @@ After each chunk: build, run the tests, try it in the browser at iPhone size (37
 | 10 | **Export / backup**: JSON backup (iOS share sheet → Save to Files, with a download fallback), restore (replaces everything after a confirm), CSV of all sets, Copy for Claude with a date range, 14-day reminder | Backup → wipe → restore gives identical data. The CSV opens in Numbers. The Claude text pastes cleanly. |
 | 11 | **Phase 1 wrap-up**: run through the whole Definition of Done, fix anything found, write README with free deploy steps and Safari → Share → Add to Home Screen | Every Definition of Done item checked. Ready for you to test on your phone. |
 
-## 6. Chunks: Phase 2 (outline; planned in detail once you confirm Phase 1 on your phone)
-12. Progress tab: per-exercise chart of top working-set weight and Epley estimated 1RM (sets over 12 reps ignored)
-13. Automatic PRs (heaviest weight, best reps at a given weight), weekly volume, gym-time-per-session trend
-14. Optional bodyweight log with trend line
-15. Warm-up helper (40 / 65 / 75 % suggestions, rounded to the exercise's weight step)
-16. Progression hint (top of the rep range → +5–10 %; beat last session's top set?)
-17. Training block tracker ("Week X", break-in weeks 1–2, week-off reminder after a configurable 12–16 weeks)
+## 6. Chunks: Phase 2 (planned 12 Oct 2026, after Phase 1 was confirmed on the iPhone)
+
+**Your answers:**
+- Weekly volume = **working sets per week**.
+- **No** bodyweight log.
+- The third warm-up (75% × 2–4) is **for compound exercises only**.
+- The progression hint triggers when **set 1** reaches the top of the rep range.
+
+**Data model:** one addition, `settings.block = { startDate: 'YYYY-MM-DD' | null, weekOffAfter: number }` (default 12). No new tables. Missing settings fields fall back to defaults, so older backups still restore.
+
+**Shared rules:**
+- A **working set** isn't a warm-up and has weight and reps > 0. Only finished sessions count.
+- **Epley e1RM** = weight × (1 + reps / 30). It's calculated only from working sets of 12 reps or fewer, and is the best value in a session.
+- **Top working-set weight** is the heaviest working set in a session, at any rep count.
+- **Per-hand weights** are used as entered (kg each).
+- **Bodyweight exercises** record added load only, so their charts show "top added weight" and "most reps" instead of e1RM.
+- **Everything is per exercise.** Variations never mix.
+
+| # | Chunk | Done when |
+|---|---|---|
+| 12 | **Progress tab: exercise chart.** Pick an exercise (most recently trained first). The chart shows top working-set weight and e1RM per session over time (bodyweight: added weight and most reps). Built with Recharts, loaded only when the Progress tab opens. | The chart matches hand-calculated values. The tab works offline. |
+| 13 | **PRs, weekly volume, gym time.** Per exercise: heaviest weight (with date) and best reps at each weight. Working sets per week (last 12 weeks, Monday–Sunday). Gym time per session as a trend. | PRs and weekly counts match the tests. |
+| 14 | **Warm-up helper.** On exercise cards with a warm-up policy, it's based on the first work weight (this session's, else last session's), rounded to the exercise's step. "Full" gives 40% × 6–10, then 65% × 4–8, then (compound only) 75% × 2–4. "1 set" and "0–1" give a single 65% × 4–8 set. Shown as a text line; nothing is logged automatically. Bodyweight and ad-hoc exercises get no suggestion. | The suggestions are correct for each policy and are rounded to the step. |
+| 15 | **Progression hint.** If set 1 last time reached the slot's top rep, the card says to try 5–10% more next, with the weights rounded to the step (at least one step). During a workout it also shows whether your top set beat, matched or fell short of last session's (heavier weight wins; at the same weight, more reps wins). | The hint and comparison are correct in the tests and on screen. |
+| 16 | **Training block tracker.** Settings → Training block: a start date and "Week off after N weeks" (default 12). Today shows "Week X" (weeks 1–2 labelled "Break-in") and a reminder once you're past N weeks. | Week numbers and the reminder are correct around the boundaries. |
+| 17 | **Phase 2 wrap-up.** Extend `check:dod` to cover Phase 2, fix anything found, and update the docs. | All checks pass. Ready to push to the phone. |
 
 ---
 
