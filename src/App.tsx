@@ -1,8 +1,8 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import TabBar from './components/TabBar';
 import History from './screens/history/History';
 import SessionDetail from './screens/history/SessionDetail';
-import Progress from './screens/progress/Progress';
 import Backup from './screens/settings/Backup';
 import ExerciseEditor from './screens/settings/ExerciseEditor';
 import Exercises from './screens/settings/Exercises';
@@ -14,6 +14,9 @@ import Templates from './screens/settings/Templates';
 import Today from './screens/today/Today';
 import WorkoutScreen from './screens/workout/WorkoutScreen';
 
+// Charts are the heaviest code; load them only when the Progress tab opens.
+const Progress = lazy(() => import('./screens/progress/Progress'));
+
 export default function App() {
   // The workout screen is full-screen: no tab bar.
   const inWorkout = useLocation().pathname.startsWith('/workout/');
@@ -24,7 +27,14 @@ export default function App() {
           <Route path="/" element={<Today />} />
           <Route path="/history" element={<History />} />
           <Route path="/history/:id" element={<SessionDetail />} />
-          <Route path="/progress" element={<Progress />} />
+          <Route
+            path="/progress"
+            element={
+              <Suspense fallback={<h1 className="screen-title">Progress</h1>}>
+                <Progress />
+              </Suspense>
+            }
+          />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/exercises" element={<Exercises />} />
           <Route path="/settings/exercises/new" element={<ExerciseEditor />} />

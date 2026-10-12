@@ -19,7 +19,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 11. Phase 1 wrap-up + deploy instructions
 
 ## Phase 2 (see PLAN.md §6)
-- [ ] 12. Progress tab: per-exercise chart (top weight and e1RM)
+- [x] 12. Progress tab: per-exercise chart (top weight and e1RM)
 - [ ] 13. PRs, weekly working sets, gym-time trend
 - [ ] 14. Warm-up helper
 - [ ] 15. Progression hint and beat-last-time comparison
@@ -30,7 +30,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 12: the Progress tab chart (PLAN.md §6). Phase 2 runs chunk by chunk without stopping, like chunks 7–11.
+Chunk 13: PRs per exercise (heaviest weight with date, best reps at each weight), working sets per week (last 12 weeks, Monday–Sunday) and gym time per session, all on the Progress tab.
 
 ## How to run
 ```
@@ -176,6 +176,21 @@ npm run icons            # regenerate icons from public/icon.svg
   - It also covers the iPhone install (Safari → Share → Add to Home Screen) and that the home-screen app's storage is separate from Safari's.
   - Minimum iOS is 16.4 (Vite 8's default build target).
 - **Definition of done** (`scripts/dod-check.mjs`): 26 automated checks in real Chrome against the production build. They cover the service worker, seeding, each template, swap, copy last set, ghosts and copy previous, durations, edit past session, JSON and CSV export, wipe and restore, and offline with the server stopped. All pass.
+- **Progress tab** (chunk 12):
+  - `src/lib/progress.ts` has `isWorkingSet` (not a warm-up, weight entered, reps > 0), `epley`, `exerciseHistory` (one point per finished session: top weight with its reps, best e1RM from sets of 12 reps or fewer, most reps) and `trainedExercises`.
+  - The exercise is chosen with a native `<select>`, most recently trained first, and kept in `?exercise=` in the URL.
+- **Weighted exercises** show one chart with **Est. 1RM** in the accent and **Top set** in off-white, on the same kg axis (kg each for per-hand).
+- **Bodyweight exercises** get two single-series charts, **Most reps** and **Added weight** (the second is hidden if it's never above 0), since two units must never share an axis.
+- **Each exercise has a "Sessions" table** under the chart, newest first, with the same numbers.
+- **Charts** (`components/charts/TrendChart.tsx`, Recharts):
+  - 2 px lines with dots that have a 2 px ring in the card colour, a hairline horizontal grid, and one y axis with headroom.
+  - The time-scaled x axis has up to 4 date ticks.
+  - The crosshair tooltip lists every series, values first.
+  - The legend appears only with two or more series. Line-end value labels appear only when they wouldn't collide.
+- **The Progress screen is lazy-loaded** (about 104 KB gzipped) and precached, so it works offline.
+- **Palette check** (dataviz validator, dark, card surface): accent against off-white separates well (ΔE 24.2 colour-blind, 26.5 normal; contrast passes).
+  - It fails the lightness-band and chroma-floor checks because one series has to be a neutral under the brief's four-colour rule.
+  - Covered by the legend, the end labels and the table, so colour is never the only cue.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 

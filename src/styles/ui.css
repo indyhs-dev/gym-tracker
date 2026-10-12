@@ -1078,3 +1078,118 @@
   margin: 0 0 16px;
   border: 1px solid var(--accent);
 }
+
+/* Progress charts */
+.select {
+  appearance: none;
+  padding-right: 40px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.chart-card {
+  padding: 16px 12px 8px;
+}
+
+.chart-title {
+  padding: 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.chart-subtitle {
+  margin: 2px 0 8px !important;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.trend-chart {
+  font-variant-numeric: tabular-nums;
+}
+
+.trend-chart svg:focus,
+.trend-chart *:focus {
+  outline: none;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 0 4px 6px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-key {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.chart-tooltip {
+  min-width: 140px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 13px;
+}
+
+.chart-tooltip-date {
+  margin-bottom: 4px;
+  color: var(--muted);
+}
+
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-tooltip-row strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.chart-tooltip-row span:last-child {
+  color: var(--muted);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table th {
+  padding: 0 0 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.data-table td {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.data-table th:last-child,
+.data-table td:last-child {
+  text-align: right;
+}

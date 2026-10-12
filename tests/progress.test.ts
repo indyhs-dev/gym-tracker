@@ -1,0 +1,67 @@
+import { describe, expect, it } from 'vitest';
+import { newSet } from '../src/db/sessions';
+import type { Session } from '../src/db/types';
+import { epley, exerciseHistory, isWorkingSet, trainedExercises } from '../src/lib/progress';
+
+const set = (weight: number | null, reps: number | null, warmup = false) => newSet({ weight, reps, warmup }, 0);
+
+function session(id: string, startedAt: number, items: [string, ReturnType<typeof set>[]][], status: Session['status'] = 'finished'): Session {
+  return {
+    id,
+    templateId: null,
+    templateName: null,
+    status,
+    startedAt,
+    endedAt: startedAt + 1,
+    note: '',
+    updatedAt: 0,
+    exercises: items.map(([exerciseId, sets], i) => ({ id: `${id}${i}`, exerciseId, slot: null, note: '', sets })),
+    exerciseIds: items.map(([e]) => e),
+  };
+}
+
+describe('working sets and Epley', () => {
+  it('counts only non-warm-up sets with weight and reps', () => {
+    expect(isWorkingSet(set(20, 8))).toBe(true);
+    expect(isWorkingSet(set(0, 12))).toBe(true); // bodyweight
+    expect(isWorkingSet(set(20, 8, true))).toBe(false);
+    expect(isWorkingSet(set(null, 8))).toBe(false);
+    expect(isWorkingSet(set(20, 0))).toBe(false);
+  });
+
+  it('epley', () => {
+    expect(epley(100, 10)).toBeCloseTo(133.33, 2);
+    expect(epley(22.5, 8)).toBeCloseTo(28.5, 5);
+  });
+});
+
+describe('exerciseHistory', () => {
+  const sessions = [
+    session('b', 2000, [['bench', [set(15, 10, true), set(22.5, 8), set(22.5, 9)]], ['curl', [set(10, 15)]]]),
+    session('a', 1000, [['bench', [set(20, 10), set(20, 7)]]]),
+    session('c', 3000, [['bench', [set(25, 15), set(22.5, 12)]]]),
+    session('d', 4000, [['bench', [set(30, 5)]]], 'active'),
+    session('e', 5000, [['bench', [set(15, 10, true)]]]), // only warm-ups: no point
+  ];
+
+  it('gives one point per finished session, oldest first', () => {
+    const h = exerciseHistory(sessions, 'bench');
+    expect(h.map((p) => p.sessionId)).toEqual(['a', 'b', 'c']);
+    expect(h[1]).toMatchObject({ topWeight: 22.5, topReps: 9, mostReps: 9, workingSets: 2 });
+    expect(h[1].e1rm).toBeCloseTo(epley(22.5, 9), 5); // warm-up ignored
+  });
+
+  it('top weight counts any reps, but e1RM ignores sets over 12 reps', () => {
+    const c = exerciseHistory(sessions, 'bench')[2];
+    expect(c.topWeight).toBe(25); // 25 × 15 is the heaviest
+    expect(c.e1rm).toBeCloseTo(epley(22.5, 12), 5); // 25 × 15 excluded from e1RM
+  });
+
+  it('e1RM is null when every set is over 12 reps', () => {
+    expect(exerciseHistory(sessions, 'curl')[0].e1rm).toBeNull();
+  });
+
+  it('trainedExercises lists exercises with working sets, most recent first', () => {
+    expect(trainedExercises(sessions)).toEqual(['bench', 'curl']);
+  });
+});
