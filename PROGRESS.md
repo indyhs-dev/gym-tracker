@@ -3,11 +3,11 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 1 done.** Waiting for "go" before chunk 2.
+**Phase 1, chunk 2 done.** Waiting for "go" before chunk 3.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
-- [ ] 2. Database + exercise library
+- [x] 2. Database + exercise library
 - [ ] 3. Template builder
 - [ ] 4. Seed data (library + 3 templates; no sample session)
 - [ ] 5. Today screen + start flow
@@ -25,7 +25,11 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 2: Dexie schema (all four tables from PLAN.md §2), a settings row with the default rest texts, Settings → Exercises (list / add / edit / delete-if-unused), Settings → Rest guidance, and the reusable ExercisePicker (search, pick, create by typing).
+Chunk 3: the template builder under Settings → Templates.
+- Template list: create, rename, duplicate, delete.
+- Template editor: add, edit, delete and reorder (↑/↓) slots.
+- Slot editor: default exercise, alternatives, sets, rep range, warm-up policy and plan note.
+- The ExercisePicker bottom sheet, wrapping `ExerciseSearch` with a quick-create form (`ExerciseForm`).
 
 ## How to run
 ```
@@ -52,9 +56,18 @@ npm run icons            # regenerate icons from public/icon.svg
 - Icon: an ember dumbbell on near-black (`public/icon.svg`), turned into PNGs by `@vite-pwa/assets-generator`. The apple-touch icon uses 10% padding.
 - `navigator.storage.persist()` is requested on every launch until granted (`src/lib/storage.ts`).
 - `newId()` falls back to `getRandomValues` when `crypto.randomUUID` is missing (plain-http testing over Wi-Fi).
-- Toolchain: Vite 8, React 19, TypeScript 7, React Router 8, vite-plugin-pwa 2, Vitest 5.
+- Toolchain: Vite 8, React 19, TypeScript 7, React Router 8, vite-plugin-pwa 2, Vitest 5, Dexie 4.
+- **Database** (`src/db/`): IndexedDB database `gym-log`, Dexie schema v1 with all four tables from PLAN.md §2.
+  - The settings row (`id: 'app'`) is created with the default rest texts by Dexie's `populate` hook.
+  - Defaults live in `defaults.ts`, which avoids an import cycle with `db.ts`.
+- **Exercise names:** they're stored with whitespace cleaned up. Uniqueness is enforced on `nameKey` (lower-cased) by a unique index plus a friendly pre-check (`DuplicateNameError`). Renaming to change only the capitals is allowed.
+- **Deleting exercises:** only allowed when no template slot (default or alternative) and no session (`exerciseIds` index) uses the exercise. Slot snapshots inside sessions aren't counted; later UI must skip alternative ids that no longer exist.
+- **New exercises:** a type must be chosen (it drives the rest text). The weight step defaults to 2.5 and the flags default to off.
+- **Settings forms** (exercise editor, rest guidance) use an explicit Save button. The workout screen will autosave.
+- **Delete confirmation** uses the native `window.confirm`. Errors are shown in the accent colour, since there's no red in the palette.
+- **ExercisePicker:** the shared `ExerciseSearch` (search, matching list, "+ Add “…”" when the typed name is new) is built and used by Settings → Exercises. The bottom-sheet wrapper was moved to chunk 3, where it's first used.
 
 ## Known issues
 - The Claude app's built-in browser pane can't register service workers. Offline is verified with `npm run check:offline`, which uses the real Chrome, instead.
-- React Router applies navigation inside a transition, so a tab switch renders a frame later. It isn't noticeable, but automated checks need a short wait after a click.
+- While the Claude app's browser pane is hidden it pauses animation frames, so screenshots taken right after a tap can look stale. Measured navigation is 1–6 ms, so the app itself isn't slow.
 - npm reports `fsevents` has an unapproved install script. It's an optional macOS file watcher and ships prebuilt, so it's safe to ignore.

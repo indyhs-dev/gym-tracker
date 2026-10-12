@@ -1,0 +1,261 @@
+/* Sub-screen header */
+.screen-header .back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  margin: -12px 0 0 -8px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 17px;
+}
+
+.intro {
+  margin: -8px 0 20px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: none;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-quiet {
+  background: none;
+  color: var(--muted);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn + .btn {
+  margin-top: 12px;
+}
+
+.new-button {
+  margin-bottom: 12px;
+}
+
+/* Lists */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.list > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.row-meta {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.chevron {
+  color: var(--faint);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.empty {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* Forms */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--faint);
+}
+
+.input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.input-number {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.form-error {
+  margin: 0 0 16px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.form-note {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Segmented control */
+.segmented {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.segmented button {
+  min-height: var(--tap);
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* Switch row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--card);
+  text-align: left;
+}
+
+.toggle-row + .toggle-row {
+  margin-top: 8px;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 51px;
+  height: 31px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.15s;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: transform 0.15s;
+}
+
+.toggle-row[aria-checked='true'] .switch {
+  background: var(--accent);
+}
+
+.toggle-row[aria-checked='true'] .switch::after {
+  transform: translateX(20px);
+}
+
+/* Exercise search */
+.exercise-search {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.create-row {
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px dashed var(--accent);
+  border-radius: 12px;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  text-align: left;
+}

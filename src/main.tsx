@@ -5,6 +5,7 @@ import App from './App';
 import { requestPersistentStorage } from './lib/storage';
 import './styles/tokens.css';
 import './styles/base.css';
+import './styles/ui.css';
 
 void requestPersistentStorage();
 
