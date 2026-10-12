@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 6 done.** Waiting for "go" before chunk 7.
+**Phase 1, chunk 7 done.** Going straight on to chunk 8 (see the workflow change below).
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -12,7 +12,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 4. Seed data (library + 3 templates; no sample session)
 - [x] 5. Today screen + start flow
 - [x] 6. Active workout: set entry
-- [ ] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
+- [x] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
 - [ ] 8. Gym time + finish (incl. past-dated sessions)
 - [ ] 9. History + edit past sessions
 - [ ] 10. Export / backup (JSON, restore, CSV, Copy for Claude, 14-day reminder)
@@ -25,13 +25,15 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 7: fast entry.
-- **Ghost rows:** last session's sets for the same `exerciseId` show dimmed below the logged sets. This uses the `*exerciseIds` index and takes the most recent *finished* session that started before this one and has sets for that exercise.
-  - Tapping a ghost row, or typing into it, turns it into a real set (stamped now).
-  - The ghost values show as the `NumberField` placeholders.
-- **Copy last set** duplicates the previous set's weight and reps; the warm-up toggle starts off.
-- **Copy previous session's sets** turns all remaining ghost rows into sets.
-- Swapped exercises show their own history only.
+Chunk 8: gym time and finish.
+- **Live elapsed timer** in the workout header.
+- **Finish** opens a sheet:
+  - Start time is editable.
+  - Suggested end time is the latest set `loggedAt`, or now if there are no sets, and is editable.
+  - Duration shows live.
+  - Finishing sets status to `finished` and drops exercises that have no sets.
+- **Past-dated sessions:** no timer. Start and end times are typed in, and the button says "Done" rather than Finish.
+- Start and end stay editable afterwards (the editing UI comes with History in chunk 9).
 
 ## How to run
 ```
@@ -45,6 +47,7 @@ npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Workflow change (12 Oct 2026, user's request):** work through the remaining Phase 1 chunks (7–11) one at a time without waiting for "go". Each chunk is still tested, committed and recorded here. Stop only for complications or decisions that need the user. Stop after chunk 11 (deploy instructions), because Phase 2 waits until the user confirms Phase 1 on their phone.
 - The project lives at `~/Developer/gym-tracker`.
 - The plan was approved on 12 Oct 2026. Answers are in PLAN.md §8.
   - No sample session.
@@ -117,6 +120,17 @@ npm run icons            # regenerate icons from public/icon.svg
 - **Notes:** the session note sits at the top, there's an exercise note on each card, and set notes are behind ✎. All autosave. The note fields grow with their text (`field-sizing: content`).
 - **"+ Add exercise"** adds an ad-hoc exercise (`slot: null`: rest text but no target line) and scrolls to it. Removing an exercise asks first and mentions how many sets will go.
 - **Chips** have a 48 px tap area around a 36 px pill.
+- **Ghost rows** (chunk 7):
+  - `previousSetsFor(exerciseIds, session)` finds, per exercise, the latest *finished* session that started before this one and has sets for it. Other sessions without sets for it are skipped.
+  - Ghosts are last time's sets from position `sets.length` onwards. They're dimmed, and their values show as placeholders.
+  - Any of these logs a ghost: "✓ Log", typing, −/+ (which starts from the ghost value), or the warm-up chip. The new set takes the ghost's values plus your change.
+- **Keeping focus on a ghost row:** each position has a pre-made set id (`ghostIds`). Logged sets and ghosts render as one keyed list, so the row and its input survive the change and the iOS keypad stays up.
+  - A `logging` set makes keystrokes typed before the new set arrives update that set instead of adding another.
+  - The position's id is replaced once the add finishes.
+- **"Copy last set"** copies weight and reps only. It's disabled when there are no sets.
+- **"Copy previous session's sets (N)"** shows while ghosts remain and adds them all in one write (`addSets`).
+- **"Last time · Sat 10 Oct"** appears above the sets when there's history.
+- **Swapping** shows the new exercise's own history (variations never mix).
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
 ## Known issues

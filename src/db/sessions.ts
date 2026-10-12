@@ -125,9 +125,9 @@ export function cleanReps(reps: number | null): number | null {
 
 export type SetFields = Pick<WorkoutSet, 'weight' | 'reps' | 'warmup' | 'note'>;
 
-export function newSet(fields: Partial<SetFields> = {}, loggedAt = Date.now()): WorkoutSet {
+export function newSet(fields: Partial<SetFields> = {}, loggedAt = Date.now(), id = newId()): WorkoutSet {
   return {
-    id: newId(),
+    id,
     weight: cleanWeight(fields.weight ?? null),
     reps: cleanReps(fields.reps ?? null),
     warmup: fields.warmup ?? false,
@@ -136,8 +136,24 @@ export function newSet(fields: Partial<SetFields> = {}, loggedAt = Date.now()): 
   };
 }
 
-export function addSet(sessionId: string, itemId: string, fields: Partial<SetFields> = {}): Promise<Session> {
-  return mutateSession(sessionId, (s) => mapExercise(s, itemId, (e) => ({ ...e, sets: [...e.sets, newSet(fields)] })));
+/** Adds a set. `id` can be supplied so the UI can keep a row's identity (e.g. a ghost row being typed into). */
+export function addSet(
+  sessionId: string,
+  itemId: string,
+  fields: Partial<SetFields> = {},
+  id?: string,
+): Promise<Session> {
+  return mutateSession(sessionId, (s) =>
+    mapExercise(s, itemId, (e) => ({ ...e, sets: [...e.sets, newSet(fields, Date.now(), id)] })),
+  );
+}
+
+/** Adds several sets at once (e.g. copying the previous session's sets). */
+export function addSets(sessionId: string, itemId: string, fieldsList: Partial<SetFields>[]): Promise<Session> {
+  const now = Date.now();
+  return mutateSession(sessionId, (s) =>
+    mapExercise(s, itemId, (e) => ({ ...e, sets: [...e.sets, ...fieldsList.map((f) => newSet(f, now))] })),
+  );
 }
 
 /** Edits a set. Its loggedAt (creation time) is left unchanged. */
@@ -176,4 +192,38 @@ export async function addSessionExercise(sessionId: string, exerciseId: string):
 
 export function removeSessionExercise(sessionId: string, itemId: string): Promise<Session> {
   return mutateSession(sessionId, (s) => ({ ...s, exercises: s.exercises.filter((e) => e.id !== itemId) }));
+}
+
+// ---- Last time: the previous session's sets for an exercise ----
+
+export interface PreviousSets {
+  sessionId: string;
+  startedAt: number;
+  sets: WorkoutSet[];
+}
+
+/**
+ * For each exercise, the sets from the most recent *finished* session that
+ * started before `current` and logged that exercise. Tracked strictly per
+ * exercise, so variations never mix.
+ */
+export async function previousSetsFor(
+  exerciseIds: string[],
+  current: Pick<Session, 'id' | 'startedAt'>,
+): Promise<Map<string, PreviousSets>> {
+  const result = new Map<string, PreviousSets>();
+  for (const exerciseId of new Set(exerciseIds)) {
+    const candidates = await db.sessions.where('exerciseIds').equals(exerciseId).toArray();
+    const previous = candidates
+      .filter((s) => s.id !== current.id && s.status === 'finished' && s.startedAt < current.startedAt)
+      .sort((a, b) => b.startedAt - a.startedAt)
+      .map((s) => ({
+        sessionId: s.id,
+        startedAt: s.startedAt,
+        sets: s.exercises.filter((e) => e.exerciseId === exerciseId).flatMap((e) => e.sets),
+      }))
+      .find((p) => p.sets.length > 0);
+    if (previous) result.set(exerciseId, previous);
+  }
+  return result;
 }

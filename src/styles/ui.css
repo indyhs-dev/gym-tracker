@@ -776,8 +776,47 @@
   margin-top: 8px;
 }
 
-.add-set {
+.set-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   margin-top: 12px;
+}
+
+.set-actions .btn + .btn {
+  margin-top: 0;
+}
+
+.copy-previous {
+  margin-top: 8px !important;
+  border: 1px dashed var(--accent);
+  background: none;
+  color: var(--accent);
+}
+
+.last-time {
+  margin-top: 10px !important;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Ghost rows: last session's values, dimmed until logged. */
+.is-ghost .set-label,
+.is-ghost .chip {
+  opacity: 0.55;
+}
+
+.is-ghost .num-input::placeholder {
+  color: rgb(245 245 244 / 0.45);
+}
+
+.is-ghost .step-field button {
+  color: var(--muted);
+}
+
+.chip-log {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .note-field {
@@ -802,4 +841,9 @@
 
 .num-input.is-long {
   font-size: 17px;
+}
+
+/* Buttons sitting on a card use the page colour so they read as buttons. */
+.set-actions .btn {
+  background: var(--bg);
 }

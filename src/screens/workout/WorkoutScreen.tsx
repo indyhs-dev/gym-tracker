@@ -5,7 +5,7 @@ import ExercisePicker from '../../components/ExercisePicker';
 import NoteField from '../../components/NoteField';
 import ScreenHeader from '../../components/ScreenHeader';
 import { db } from '../../db/db';
-import { addSessionExercise, discardSession, setSessionNote } from '../../db/sessions';
+import { addSessionExercise, discardSession, previousSetsFor, setSessionNote } from '../../db/sessions';
 import { useSettings } from '../../db/settings';
 import type { Exercise, RestGuidance, Session } from '../../db/types';
 import { formatDate, formatTime, isSameDay } from '../../lib/time';
@@ -38,6 +38,10 @@ interface WorkoutProps {
 function Workout({ session, exercises, rest }: WorkoutProps) {
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
+  const previous = useLiveQuery(
+    () => previousSetsFor(session.exerciseIds, session),
+    [session.id, session.startedAt, session.exerciseIds.join(',')],
+  );
 
   async function add(exercise: Exercise) {
     setAdding(false);
@@ -65,7 +69,14 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
 
       <div className="exercise-list">
         {session.exercises.map((item) => (
-          <ExerciseCard key={item.id} sessionId={session.id} item={item} exercises={exercises} rest={rest} />
+          <ExerciseCard
+            key={item.id}
+            sessionId={session.id}
+            item={item}
+            exercises={exercises}
+            rest={rest}
+            previous={previous?.get(item.exerciseId)}
+          />
         ))}
       </div>
 
