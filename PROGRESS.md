@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 7 done.** Going straight on to chunk 8 (see the workflow change below).
+**Phase 1, chunk 8 done.** Going straight on to chunk 9.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -13,7 +13,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 5. Today screen + start flow
 - [x] 6. Active workout: set entry
 - [x] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
-- [ ] 8. Gym time + finish (incl. past-dated sessions)
+- [x] 8. Gym time + finish (incl. past-dated sessions)
 - [ ] 9. History + edit past sessions
 - [ ] 10. Export / backup (JSON, restore, CSV, Copy for Claude, 14-day reminder)
 - [ ] 11. Phase 1 wrap-up + deploy instructions
@@ -25,15 +25,15 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 8: gym time and finish.
-- **Live elapsed timer** in the workout header.
-- **Finish** opens a sheet:
-  - Start time is editable.
-  - Suggested end time is the latest set `loggedAt`, or now if there are no sets, and is editable.
-  - Duration shows live.
-  - Finishing sets status to `finished` and drops exercises that have no sets.
-- **Past-dated sessions:** no timer. Start and end times are typed in, and the button says "Done" rather than Finish.
-- Start and end stay editable afterwards (the editing UI comes with History in chunk 9).
+Chunk 9: History and editing past sessions.
+- **History tab:** sessions newest first, each with date, template, duration and exercise names.
+- **Session detail:** read-only, with Edit and Delete (Delete asks first).
+- **Edit** reuses the workout screen for a finished session:
+  - date, start and end are editable (`setSessionTimes`)
+  - sets, notes and swaps work as during a workout
+  - "Done" goes back
+- **Ghosts in Edit mode** compare against sessions before the one being edited, which `previousSetsFor` already handles.
+- **After Finish,** go to the new session's detail page rather than Today.
 
 ## How to run
 ```
@@ -131,6 +131,17 @@ npm run icons            # regenerate icons from public/icon.svg
 - **"Copy previous session's sets (N)"** shows while ghosts remain and adds them all in one write (`addSets`).
 - **"Last time · Sat 10 Oct"** appears above the sets when there's history.
 - **Swapping** shows the new exercise's own history (variations never mix).
+- **Live or past** (chunk 8): `isLive(session)` means it's `active` and started less than 16 hours ago, so it was started today with the timer running.
+  - A past-dated draft started yesterday or earlier at least 24 hours ago, so it isn't live: no timer, "Save" instead of "Finish".
+  - A workout left open overnight also stops being live, so there's no runaway timer.
+  - This avoids adding a field to the data model.
+- **The workout bar** is a sticky top bar: "‹ Today", the live gym timer (m:ss, or h:mm:ss after an hour) or the date for a past draft, and Finish/Save.
+  - The timer is its own component, so only it re-renders each second.
+- **The Finish / Save sheet** has start and end time inputs on the session's day.
+  - If the end is earlier than the start, it's taken as the next day (ran past midnight).
+  - Live: end defaults to `suggestedEnd` (latest set `loggedAt`, or now with no sets). Past: end defaults to start + 1 h.
+  - The duration preview updates live, and it says how many exercises with no sets will be left out.
+- **`finishSession`** sets `finished` and the times, and drops exercises with no sets. Finishing currently returns to Today.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
 ## Known issues

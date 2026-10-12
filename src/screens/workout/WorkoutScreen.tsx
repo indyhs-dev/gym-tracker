@@ -5,11 +5,14 @@ import ExercisePicker from '../../components/ExercisePicker';
 import NoteField from '../../components/NoteField';
 import ScreenHeader from '../../components/ScreenHeader';
 import { db } from '../../db/db';
-import { addSessionExercise, discardSession, previousSetsFor, setSessionNote } from '../../db/sessions';
+import { addSessionExercise, discardSession, isLive, previousSetsFor, setSessionNote } from '../../db/sessions';
 import { useSettings } from '../../db/settings';
 import type { Exercise, RestGuidance, Session } from '../../db/types';
-import { formatDate, formatTime, isSameDay } from '../../lib/time';
+import { useGoBack } from '../../lib/nav';
+import { formatClock, formatDate, formatTime, isSameDay } from '../../lib/time';
+import { useNow } from '../../lib/useNow';
 import ExerciseCard from './ExerciseCard';
+import FinishSheet from './FinishSheet';
 
 export default function WorkoutScreen() {
   const { id = '' } = useParams();
@@ -37,7 +40,10 @@ interface WorkoutProps {
 
 function Workout({ session, exercises, rest }: WorkoutProps) {
   const navigate = useNavigate();
+  const goBack = useGoBack('/');
   const [adding, setAdding] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const live = isLive(session);
   const previous = useLiveQuery(
     () => previousSetsFor(session.exerciseIds, session),
     [session.id, session.startedAt, session.exerciseIds.join(',')],
@@ -57,7 +63,19 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
 
   return (
     <>
-      <ScreenHeader title={session.templateName ?? 'Blank workout'} back="/" backLabel="Today" />
+      <div className="workout-bar">
+        <button type="button" className="back" onClick={goBack}>
+          ‹ Today
+        </button>
+        {live ? <Elapsed since={session.startedAt} /> : <span className="workout-bar-date">{formatDate(session.startedAt)}</span>}
+        {session.status === 'active' && (
+          <button type="button" className="btn btn-primary btn-finish" onClick={() => setFinishing(true)}>
+            {live ? 'Finish' : 'Save'}
+          </button>
+        )}
+      </div>
+
+      <h1 className="screen-title">{session.templateName ?? 'Blank workout'}</h1>
       <p className="muted intro">{sessionMeta(session)}</p>
 
       <NoteField
@@ -93,11 +111,30 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
       )}
 
       {adding && <ExercisePicker title="Add exercise" onPick={add} onClose={() => setAdding(false)} />}
+      {finishing && (
+        <FinishSheet
+          session={session}
+          live={live}
+          onClose={() => setFinishing(false)}
+          onFinished={() => navigate('/', { replace: true })}
+        />
+      )}
     </>
   );
 }
 
 function sessionMeta(s: Session): string {
-  if (isSameDay(s.startedAt, Date.now())) return `Today · started ${formatTime(s.startedAt)}`;
-  return formatDate(s.startedAt);
+  if (isLive(s)) return `Today · started ${formatTime(s.startedAt)}`;
+  if (s.status === 'active') return `Logging a past session · ${formatDate(s.startedAt)}`;
+  return isSameDay(s.startedAt, Date.now()) ? 'Today' : formatDate(s.startedAt);
+}
+
+/** Running gym time. Its own component so only it re-renders every second. */
+function Elapsed({ since }: { since: number }) {
+  const now = useNow(1000);
+  return (
+    <span className="workout-bar-timer" role="timer" aria-label="Gym time">
+      {formatClock(now - since)}
+    </span>
+  );
 }

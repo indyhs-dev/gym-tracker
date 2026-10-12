@@ -227,3 +227,40 @@ export async function previousSetsFor(
   }
   return result;
 }
+
+// ---- Gym time and finishing ----
+
+/** Longest a workout can have been running and still be "live" (timer running). */
+const LIVE_WINDOW_MS = 16 * 60 * 60 * 1000;
+
+/**
+ * A live workout is one started today with the timer running. A past-dated
+ * one (logged after the fact) is still `active` until saved, but has no timer.
+ */
+export function isLive(session: Session, now = Date.now()): boolean {
+  return session.status === 'active' && now - session.startedAt < LIVE_WINDOW_MS;
+}
+
+/** Suggested end time: when the last set was logged (or now if none). */
+export function suggestedEnd(session: Session, now = Date.now()): number {
+  const last = Math.max(0, ...session.exercises.flatMap((e) => e.sets.map((set) => set.loggedAt)));
+  return last > session.startedAt ? last : now;
+}
+
+/** Finishes a workout with the given times. Exercises with no sets (skipped) are dropped. */
+export function finishSession(id: string, startedAt: number, endedAt: number): Promise<Session> {
+  if (endedAt < startedAt) throw new Error('End time is before the start time');
+  return mutateSession(id, (s) => ({
+    ...s,
+    status: 'finished',
+    startedAt,
+    endedAt,
+    exercises: s.exercises.filter((e) => e.sets.length > 0),
+  }));
+}
+
+/** Changes the start/end of a session (e.g. editing a past one). */
+export function setSessionTimes(id: string, startedAt: number, endedAt: number | null): Promise<Session> {
+  if (endedAt !== null && endedAt < startedAt) throw new Error('End time is before the start time');
+  return mutateSession(id, (s) => ({ ...s, startedAt, endedAt }));
+}
