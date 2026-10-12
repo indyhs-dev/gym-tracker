@@ -1250,3 +1250,31 @@
 .warmup-step strong {
   font-size: 18px;
 }
+
+.progression-hint {
+  border: 1px solid var(--accent);
+  font-size: 15px;
+}
+
+.progression-hint .hint-title {
+  color: var(--accent);
+}
+
+.progression-hint strong {
+  font-size: 17px;
+}
+
+.top-set-compare {
+  margin: 10px 0 0 !important;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.top-set-compare.is-beat {
+  color: var(--accent);
+}
+
+.top-set-compare.is-matched {
+  color: var(--text);
+}

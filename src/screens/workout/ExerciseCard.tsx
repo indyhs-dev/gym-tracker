@@ -16,7 +16,9 @@ import type { Exercise, RestGuidance, SessionExercise, WorkoutSet } from '../../
 import { formatKg, plural } from '../../lib/format';
 import { newId } from '../../lib/ids';
 import { targetLine } from '../../lib/labels';
+import { compareTopSets, progressionHint, topSet, type TopSet } from '../../lib/progression';
 import { restText } from '../../lib/rest';
+import { weightText } from '../../lib/setText';
 import { formatDate } from '../../lib/time';
 import { warmupSuggestions, workWeightFor } from '../../lib/warmup';
 import SetRow from './SetRow';
@@ -86,6 +88,15 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
   const work = hints && exercise && slot && !exercise.bodyweight ? workWeightFor(item.sets, previous?.sets) : null;
   const warmups = work && exercise && slot ? warmupSuggestions(slot.warmup, exercise.type, work.weight, exercise.weightStep) : [];
 
+  // Progression hint (from last time's set 1) and today's top set vs last time's.
+  const progression =
+    hints && exercise && slot ? progressionHint(previous?.sets, slot.repMax, exercise.weightStep) : null;
+  const todayTop = hints ? topSet(item.sets) : null;
+  const lastTop = topSet(previous?.sets);
+  const comparison = todayTop && lastTop ? compareTopSets(todayTop, lastTop) : null;
+  const kgUnit = exercise?.perHand ? 'kg each' : 'kg';
+  const showSet = (t: TopSet) => `${weightText(t.weight, exercise)} × ${t.reps}`;
+
   const lastSet = item.sets.at(-1);
   let working = 0;
   const label = (warmup: boolean) => (warmup ? 'W' : String(++working));
@@ -113,6 +124,29 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
                 <strong>{formatKg(w.weight)}</strong> × {w.reps}
               </span>
             ))}
+          </span>
+        </div>
+      )}
+
+      {progression && slot && (
+        <div className="hint progression-hint">
+          <span className="hint-title">Go up</span>
+          <span>
+            Last time set 1 hit {progression.reps} reps (top of {slot.repMin}–{slot.repMax}). If your form was good,{' '}
+            {progression.weight === 0 ? (
+              <>
+                try adding <strong>{formatKg(progression.low)} kg</strong>.
+              </>
+            ) : (
+              <>
+                try{' '}
+                <strong>
+                  {formatKg(progression.low)}
+                  {progression.high > progression.low && `–${formatKg(progression.high)}`} {kgUnit}
+                </strong>{' '}
+                (+5–10%).
+              </>
+            )}
           </span>
         </div>
       )}
@@ -155,6 +189,18 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
             ]}
           </ol>
         </>
+      )}
+
+      {comparison && todayTop && lastTop && (
+        <p className={`top-set-compare is-${comparison}`} role="status">
+          {comparison === 'beat' && <>↑ Top set {showSet(todayTop)} beats last time ({showSet(lastTop)})</>}
+          {comparison === 'matched' && <>= Top set matches last time ({showSet(lastTop)})</>}
+          {comparison === 'below' && (
+            <>
+              Top set {showSet(todayTop)} · not yet past last time ({showSet(lastTop)})
+            </>
+          )}
+        </p>
       )}
 
       <div className="set-actions">

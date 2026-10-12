@@ -22,7 +22,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 12. Progress tab: per-exercise chart (top weight and e1RM)
 - [x] 13. PRs, weekly working sets, gym-time trend
 - [x] 14. Warm-up helper
-- [ ] 15. Progression hint and beat-last-time comparison
+- [x] 15. Progression hint and beat-last-time comparison
 - [ ] 16. Training block tracker
 - [ ] 17. Phase 2 wrap-up
 
@@ -30,7 +30,10 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 15: the progression hint and the "beat last time" comparison on exercise cards (PLAN.md §6).
+Chunk 16: the training block tracker.
+- Settings → Training block: start date and "week off after N weeks" (default 12).
+- Today shows "Week X" (weeks 1–2 "Break-in") and a reminder once past N weeks.
+- Stored as `settings.block`, with defaults merged in by `getSettings`.
 
 ## How to run
 ```
@@ -207,6 +210,14 @@ npm run icons            # regenerate icons from public/icon.svg
   - Each step is rounded to the exercise's weight step. Steps that round to 0, reach the work weight, or repeat the previous weight are dropped.
   - Hidden for bodyweight exercises, ad-hoc exercises (no slot) and the "none" policy, and when editing a finished session (`hints` prop).
   - It's text only; nothing is logged automatically.
+- **Progression** (chunk 15, `src/lib/progression.ts`):
+  - **"Go up" box:** appears when last session's *first working set* reached the slot's `repMax`.
+    - It suggests 5–10% more, rounded to the step and at least +1 step, e.g. "try 27.5 kg each (+5–10%)". With 0 added load (bodyweight) it says "try adding {one step} kg".
+    - It's worded "If your form was good", since the app can't judge form.
+  - **Top-set line** under the sets during a workout: "↑ beats", "= matches" or "not yet past" last time's top set.
+    - The top set is the heaviest working set, with more reps breaking a tie. Heavier wins; at the same weight, more reps wins.
+    - Text carries the meaning; colour (accent for beat) is extra.
+  - Both show only during a workout (`hints`). The "Go up" box needs a template slot for the rep range; the top-set line works for any exercise with history.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
