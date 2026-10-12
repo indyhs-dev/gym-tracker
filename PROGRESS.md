@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 10 done.** Going straight on to chunk 11.
+**Phase 1 complete (chunks 1–11).** Waiting for the user to deploy and confirm it works on their iPhone. Phase 2 doesn't start until they do.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -16,7 +16,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 8. Gym time + finish (incl. past-dated sessions)
 - [x] 9. History + edit past sessions
 - [x] 10. Export / backup (JSON, restore, CSV, Copy for Claude, 14-day reminder)
-- [ ] 11. Phase 1 wrap-up + deploy instructions
+- [x] 11. Phase 1 wrap-up + deploy instructions
 
 ## Phase 2 (only after Phase 1 is confirmed on the phone)
 - [ ] 12–17: see PLAN.md §6
@@ -25,16 +25,8 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 11: Phase 1 wrap-up.
-- Run the whole Definition of Done end to end:
-  - offline
-  - each seeded template
-  - swap, copy sets
-  - finish with the right duration
-  - edit a past session
-  - export JSON and CSV, then restore
-- Fix anything found.
-- Write README.md with free deploy steps and iPhone install (Safari → Share → Add to Home Screen).
+- **User:** deploy (README → "Put it on your iPhone") and try Phase 1 on the phone.
+- **Then:** fix anything found on the phone, and plan Phase 2 (chunks 12–17 in PLAN.md §6) in detail once the user confirms.
 
 ## How to run
 ```
@@ -44,6 +36,7 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
+npm run check:dod        # after build: whole Phase 1 definition of done in Chrome (26 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
@@ -169,10 +162,22 @@ npm run icons            # regenerate icons from public/icon.svg
   - **Copy for Claude:** From/To dates (default: the last 28 days), a live preview of the text, and a copy button (clipboard, with an `execCommand` fallback).
     - The text is in fixed English formats so it's the same on any device.
     - Format: a header line, a legend line, then per session "Mon 12 Oct 2026 · Torso · 18:00–19:12 (1h 12m)", the session note, and one line per exercise like "- Name (each): W 15×10, 22.5×8 [set note]. Note: …".
+- **Deploy** (chunk 11): `.github/workflows/deploy.yml` builds, tests and publishes `dist/` to GitHub Pages on every push to `main` (Node 24).
+  - README.md has step-by-step instructions: GitHub CLI via Homebrew, repo, Pages source "GitHub Actions", push. Vercel is given as an alternative.
+  - It also covers the iPhone install (Safari → Share → Add to Home Screen) and that the home-screen app's storage is separate from Safari's.
+  - Minimum iOS is 16.4 (Vite 8's default build target).
+- **Definition of done** (`scripts/dod-check.mjs`): 26 automated checks in real Chrome against the production build. They cover the service worker, seeding, each template, swap, copy last set, ghosts and copy previous, durations, edit past session, JSON and CSV export, wipe and restore, and offline with the server stopped. All pass.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
 ## Known issues
+- **Not yet tested on a real iPhone.** These can only be checked on the device:
+  - the share sheet "Save to Files"
+  - the clipboard
+  - the native date/time pickers
+  - the safe-area insets
+  - keeping the keypad open when typing into a ghost row (works in Chrome)
+  - `field-sizing` on notes (Safari 18.4+; older versions just scroll)
 - The Claude app's built-in browser pane can't register service workers. Offline is verified with `npm run check:offline`, which uses the real Chrome, instead.
 - While the Claude app's browser pane is hidden it pauses animation frames, so screenshots taken right after a tap can look stale. Measured navigation is 1–6 ms, so the app itself isn't slow.
 - Dexie live queries only notice writes made through Dexie. Test data inserted with raw IndexedDB needs a page reload to show.

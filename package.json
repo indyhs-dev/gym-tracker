@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "icons": "pwa-assets-generator",
-    "check:offline": "node scripts/offline-check.mjs"
+    "check:offline": "node scripts/offline-check.mjs",
+    "check:dod": "node scripts/dod-check.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",
