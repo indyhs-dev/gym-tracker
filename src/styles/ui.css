@@ -259,3 +259,192 @@
   font-weight: 600;
   text-align: left;
 }
+
+/* Inline create form (name + button) */
+.inline-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* A single tappable row on a card background */
+.card-row {
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.row-action {
+  flex: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.icon-button {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  margin-right: -12px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+/* Template slots */
+.slot-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slot-card {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.slot-main {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 0 12px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.slot-number {
+  flex: none;
+  width: 22px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.slot-note {
+  font-style: italic;
+}
+
+.slot-move {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4px;
+}
+
+.slot-move button {
+  width: var(--tap);
+  height: var(--tap);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font-size: 20px;
+}
+
+.slot-move button:disabled {
+  color: var(--faint);
+  opacity: 0.4;
+}
+
+.danger-zone {
+  margin-top: 32px;
+}
+
+/* Stepper */
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+}
+
+.stepper button {
+  width: var(--tap);
+  height: var(--tap);
+  border: none;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.stepper button:disabled {
+  opacity: 0.3;
+}
+
+.stepper-value {
+  min-width: 56px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+/* Bottom sheet */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(10 10 10 / 0.75);
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--max-width);
+  height: calc(100dvh - var(--safe-top) - 40px);
+  border-top: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  background: var(--bg);
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 6px 6px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sheet-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.sheet-close {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 17px;
+}
+
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px var(--gutter) calc(16px + var(--safe-bottom));
+}

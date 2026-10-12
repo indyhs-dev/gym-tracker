@@ -4,6 +4,7 @@ import ExerciseForm, { draftFrom } from '../../components/ExerciseForm';
 import ScreenHeader from '../../components/ScreenHeader';
 import { db } from '../../db/db';
 import { createExercise, deleteExercise, exerciseUsage, updateExercise } from '../../db/exercises';
+import { plural } from '../../lib/format';
 import { useGoBack } from '../../lib/nav';
 
 const BACK = '/settings/exercises';
@@ -83,8 +84,4 @@ function EditExercise({ id }: { id: string }) {
       </ExerciseForm>
     </>
   );
-}
-
-function plural(n: number, word: string) {
-  return `${n} ${word}${n === 1 ? '' : 's'}`;
 }

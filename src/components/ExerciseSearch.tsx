@@ -9,13 +9,23 @@ interface Props {
   onSelect: (exercise: Exercise) => void;
   /** Called with the typed name when it isn't in the library yet. */
   onCreate: (name: string) => void;
+  /** Hidden from the results (e.g. already chosen), but still count as existing names. */
+  excludeIds?: string[];
   autoFocus?: boolean;
 }
 
 /** Search box + matching exercises + "Add “…”" when the typed name is new. */
-export default function ExerciseSearch({ exercises, query, onQueryChange, onSelect, onCreate, autoFocus }: Props) {
+export default function ExerciseSearch({
+  exercises,
+  query,
+  onQueryChange,
+  onSelect,
+  onCreate,
+  excludeIds = [],
+  autoFocus,
+}: Props) {
   const typed = cleanName(query);
-  const matches = filterExercises(exercises, query);
+  const matches = filterExercises(exercises, query).filter((e) => !excludeIds.includes(e.id));
   const canCreate = typed !== '' && !findByName(exercises, typed);
 
   return (
@@ -58,7 +68,7 @@ export default function ExerciseSearch({ exercises, query, onQueryChange, onSele
           ))}
         </ul>
       ) : (
-        !canCreate && <p className="empty">No exercises yet.</p>
+        !canCreate && <p className="empty">{exercises.length === 0 ? 'No exercises yet.' : 'No matches.'}</p>
       )}
     </div>
   );

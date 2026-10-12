@@ -3,12 +3,12 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 2 done.** Waiting for "go" before chunk 3.
+**Phase 1, chunk 3 done.** Waiting for "go" before chunk 4.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
 - [x] 2. Database + exercise library
-- [ ] 3. Template builder
+- [x] 3. Template builder
 - [ ] 4. Seed data (library + 3 templates; no sample session)
 - [ ] 5. Today screen + start flow
 - [ ] 6. Active workout: set entry
@@ -25,11 +25,11 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 3: the template builder under Settings → Templates.
-- Template list: create, rename, duplicate, delete.
-- Template editor: add, edit, delete and reorder (↑/↓) slots.
-- Slot editor: default exercise, alternatives, sets, rep range, warm-up policy and plan note.
-- The ExercisePicker bottom sheet, wrapping `ExerciseSearch` with a quick-create form (`ExerciseForm`).
+Chunk 4: seed data (`src/db/seed.ts`), run once on first launch and tracked by `settings.seededAt`.
+- The exercise library and the three templates (Torso, Legs, Shoulders & Arms), exactly as in PLAN.md §7.
+- The 7 kg step on Lat Pulldown and Seated Cable Row.
+- No sample session.
+- Use `createTemplate(name, slots)` from `templates.ts`.
 
 ## How to run
 ```
@@ -66,6 +66,18 @@ npm run icons            # regenerate icons from public/icon.svg
 - **Settings forms** (exercise editor, rest guidance) use an explicit Save button. The workout screen will autosave.
 - **Delete confirmation** uses the native `window.confirm`. Errors are shown in the accent colour, since there's no red in the palette.
 - **ExercisePicker:** the shared `ExerciseSearch` (search, matching list, "+ Add “…”" when the typed name is new) is built and used by Settings → Exercises. The bottom-sheet wrapper was moved to chunk 3, where it's first used.
+- **Templates** (`src/db/templates.ts`, screens under `src/screens/settings/`):
+  - The template editor and slot editor **autosave** every change. There's no Save button; you just go back.
+  - Clearing a template's name isn't saved. The field goes back to the stored name when you leave it.
+  - Every slot change goes through `normaliseSlot`: sets 1–20 and reps 1–100, whole numbers, with max reps never below min.
+  - Raising min reps above max pushes max up, and lowering max below min pulls min down.
+- **New slots** start at 2 × 8–12 with no warm-up. The slot editor opens straight after you add an exercise so you can set them.
+- **Changing a slot's default** to one of its alternatives swaps them, so the old default becomes an alternative. This suits progressions like Knee Raise → L-sit (`withDefault`).
+- **The picker hides exercises already in the slot** (the default when changing the default; the default and alternatives when adding an alternative). Hidden names still block creating duplicates.
+- **Picker quick-create:** typing a new name in the picker opens the new-exercise form inside the sheet. "Add to library and use" saves it and picks it in one go.
+- **Duplicate** adds "Name (copy)" at the end of the list with new ids throughout, and opens it. Deleting a template asks first and never touches past sessions, since they hold their own snapshot.
+- **Template order:** the list is in creation order. Reordering templates isn't in the spec, so it isn't built.
+- **Slot reorder:** ↑/↓ buttons (48 px) on each slot card, disabled at the ends.
 
 ## Known issues
 - The Claude app's built-in browser pane can't register service workers. Offline is verified with `npm run check:offline`, which uses the real Chrome, instead.

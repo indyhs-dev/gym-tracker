@@ -1,14 +1,27 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
 import { db } from '../../db/db';
+import { plural } from '../../lib/format';
 
 export default function Settings() {
   const exerciseCount = useLiveQuery(() => db.exercises.count(), []);
+  const templateCount = useLiveQuery(() => db.templates.count(), []);
 
   return (
     <>
       <h1 className="screen-title">Settings</h1>
       <ul className="list">
+        <li>
+          <Link className="list-row" to="/settings/templates">
+            <span className="row-text">
+              <span className="row-title">Templates</span>
+              <span className="row-meta">{templateCount === undefined ? '…' : plural(templateCount, 'template')}</span>
+            </span>
+            <span className="chevron" aria-hidden="true">
+              ›
+            </span>
+          </Link>
+        </li>
         <li>
           <Link className="list-row" to="/settings/exercises">
             <span className="row-text">

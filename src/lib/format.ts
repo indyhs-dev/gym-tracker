@@ -10,3 +10,8 @@ export function parseDecimal(text: string): number | null {
 export function formatKg(kg: number): string {
   return String(Math.round(kg * 100) / 100);
 }
+
+/** plural(1, 'set') → "1 set", plural(3, 'set') → "3 sets". */
+export function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
+}

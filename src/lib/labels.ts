@@ -1,4 +1,4 @@
-import type { Exercise, ExerciseType, WarmupPolicy } from '../db/types';
+import type { Exercise, ExerciseType, TemplateSlot, WarmupPolicy } from '../db/types';
 import { formatKg } from './format';
 
 export const TYPE_LABEL: Record<ExerciseType, string> = {
@@ -25,4 +25,25 @@ export function exerciseMeta(e: Exercise): string {
   ]
     .filter(Boolean)
     .join(' · ');
+}
+
+/** Short labels for the four-way warm-up picker. */
+export const WARMUP_SHORT: Record<WarmupPolicy, string> = {
+  full: 'Full',
+  one: '1 set',
+  zeroToOne: '0–1',
+  none: 'None',
+};
+
+export const WARMUP_POLICIES: WarmupPolicy[] = ['full', 'one', 'zeroToOne', 'none'];
+
+/** "2 × 5–12" (or "3 × 5" when min = max). */
+export function setsReps(slot: Pick<TemplateSlot, 'targetSets' | 'repMin' | 'repMax'>): string {
+  const reps = slot.repMin === slot.repMax ? `${slot.repMin}` : `${slot.repMin}–${slot.repMax}`;
+  return `${slot.targetSets} × ${reps}`;
+}
+
+/** "2 × 5–12 | Compound | Full warm-up" */
+export function targetLine(slot: TemplateSlot, type: ExerciseType): string {
+  return `${setsReps(slot)} | ${TYPE_LABEL[type]} | ${WARMUP_LABEL[slot.warmup]}`;
 }
