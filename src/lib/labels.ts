@@ -1,5 +1,5 @@
 import type { Exercise, ExerciseType, TemplateSlot, WarmupPolicy } from '../db/types';
-import { formatKg } from './format';
+import { formatKg, joinUnbroken } from './format';
 
 export const TYPE_LABEL: Record<ExerciseType, string> = {
   compound: 'Compound',
@@ -43,7 +43,7 @@ export function setsReps(slot: Pick<TemplateSlot, 'targetSets' | 'repMin' | 'rep
   return `${slot.targetSets} × ${reps}`;
 }
 
-/** "2 × 5–12 | Compound | Full warm-up" */
+/** "2 × 5–12 | Compound | Full warm-up", wrapping only at the separators. */
 export function targetLine(slot: TemplateSlot, type: ExerciseType): string {
-  return `${setsReps(slot)} | ${TYPE_LABEL[type]} | ${WARMUP_LABEL[slot.warmup]}`;
+  return joinUnbroken([setsReps(slot), TYPE_LABEL[type], WARMUP_LABEL[slot.warmup]]);
 }

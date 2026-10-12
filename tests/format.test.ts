@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatKg, parseDecimal } from '../src/lib/format';
+import { formatKg, joinUnbroken, parseDecimal } from '../src/lib/format';
 
 describe('parseDecimal', () => {
   it('accepts dot or comma decimals', () => {
@@ -18,5 +18,13 @@ describe('formatKg', () => {
     expect(formatKg(2.5)).toBe('2.5');
     expect(formatKg(7)).toBe('7');
     expect(formatKg(22.499999999)).toBe('22.5');
+  });
+});
+
+describe('joinUnbroken', () => {
+  it('keeps spaces and hyphens inside each part from breaking', () => {
+    expect(joinUnbroken(['2 × 5–12', 'Compound', '0–1 warm-up sets'])).toBe(
+      '2\u00a0×\u00a05–\u206012 | Compound | 0–\u20601\u00a0warm\u2011up\u00a0sets',
+    );
   });
 });

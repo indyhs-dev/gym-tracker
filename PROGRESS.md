@@ -3,13 +3,13 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 3 done.** Waiting for "go" before chunk 4.
+**Phase 1, chunk 4 done.** Waiting for "go" before chunk 5.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
 - [x] 2. Database + exercise library
 - [x] 3. Template builder
-- [ ] 4. Seed data (library + 3 templates; no sample session)
+- [x] 4. Seed data (library + 3 templates; no sample session)
 - [ ] 5. Today screen + start flow
 - [ ] 6. Active workout: set entry
 - [ ] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
@@ -25,11 +25,16 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 4: seed data (`src/db/seed.ts`), run once on first launch and tracked by `settings.seededAt`.
-- The exercise library and the three templates (Torso, Legs, Shoulders & Arms), exactly as in PLAN.md §7.
-- The 7 kg step on Lat Pulldown and Seated Cable Row.
-- No sample session.
-- Use `createTemplate(name, slots)` from `templates.ts`.
+Chunk 5: Today screen + start flow.
+- **Today:**
+  - A big **Start workout** button opens a start sheet: choose a template or Blank, plus a date that defaults to today.
+  - A last-session summary.
+  - This week's sessions and total gym time (Monday to Sunday).
+  - **Resume workout** replaces Start while a session is active.
+- **Starting a session** creates a `Session` (status `active`) whose exercises snapshot the template slots.
+- **Workout screen** (`/workout/:id`, tab bar hidden): lists each slot with its target line, rest text (from settings) and plan note.
+  - Set entry comes in chunk 6.
+  - Past-date details (no timer, start and end times entered by hand) come in chunk 8.
 
 ## How to run
 ```
@@ -78,6 +83,13 @@ npm run icons            # regenerate icons from public/icon.svg
 - **Duplicate** adds "Name (copy)" at the end of the list with new ids throughout, and opens it. Deleting a template asks first and never touches past sessions, since they hold their own snapshot.
 - **Template order:** the list is in creation order. Reordering templates isn't in the spec, so it isn't built.
 - **Slot reorder:** ↑/↓ buttons (48 px) on each slot card, disabled at the ends.
+- **Seeding** (`src/db/seed.ts`): `seedIfNeeded()` runs from `main.tsx` on every launch and does nothing once `settings.seededAt` is set.
+  - It adds 32 exercises and 3 templates in a single transaction.
+  - An exercise that already exists (same name, any case) is reused rather than duplicated, and its flags are left alone.
+  - Seed templates are always added after any existing templates, never merged.
+  - Deleting a seeded template doesn't bring it back. Restoring a backup (chunk 10) carries `seededAt` with it.
+  - Seed data is plain data in `seed.ts`, and nothing else in the app refers to those names.
+- **Target lines** (`targetLine` → `joinUnbroken`) use no-break spaces, non-breaking hyphens and word joiners, so they wrap only at the " | " separators. They're display-only; exports should build their own text.
 
 ## Known issues
 - The Claude app's built-in browser pane can't register service workers. Offline is verified with `npm run check:offline`, which uses the real Chrome, instead.
