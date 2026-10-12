@@ -1,0 +1,23 @@
+:root {
+  /* The four design colours. Everything else is derived from them. */
+  --bg: #0a0a0a;
+  --card: #161616;
+  --accent: #fb923c;
+  --text: #f5f5f4;
+
+  /* Off-white at reduced opacity: secondary text, ghost values, hairlines. */
+  --muted: rgb(245 245 244 / 0.6);
+  --faint: rgb(245 245 244 / 0.35);
+  --line: rgb(245 245 244 / 0.1);
+
+  --tap: 48px;
+  --radius: 14px;
+  --gutter: 16px;
+  --max-width: 480px;
+  --tabbar-height: 64px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
