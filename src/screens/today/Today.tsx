@@ -4,6 +4,8 @@ import { Link } from 'react-router';
 import Duration from '../../components/Duration';
 import { db } from '../../db/db';
 import { getActiveSession, lastFinishedSession, loadWeekStats } from '../../db/sessions';
+import { useSettings } from '../../db/settings';
+import { needsBackupReminder } from '../../lib/export';
 import type { Exercise, Session } from '../../db/types';
 import { formatDate, formatDuration, formatLongDate, formatTime, isSameDay } from '../../lib/time';
 import StartSheet from './StartSheet';
@@ -14,11 +16,38 @@ export default function Today() {
   const week = useLiveQuery(() => loadWeekStats(Date.now()), []);
   const exercises = useLiveQuery(async () => new Map((await db.exercises.toArray()).map((e) => [e.id, e])), []);
   const [starting, setStarting] = useState(false);
+  const settings = useSettings();
+  const firstSessionAt = useLiveQuery(
+    async () =>
+      (
+        await db.sessions
+          .orderBy('startedAt')
+          .filter((s) => s.status === 'finished')
+          .first()
+      )?.startedAt ?? null,
+    [],
+  );
+  const remind =
+    settings !== undefined &&
+    firstSessionAt !== undefined &&
+    needsBackupReminder(settings.lastBackupAt, firstSessionAt, Date.now());
 
   return (
     <>
       <h1 className="screen-title">Today</h1>
       <p className="muted intro">{formatLongDate(Date.now())}</p>
+
+      {remind && (
+        <Link className="card card-link backup-reminder" to="/settings/backup">
+          <span className="row-title">Time to back up</span>
+          <span className="row-meta">
+            {settings?.lastBackupAt
+              ? `Your last backup was ${formatDate(settings.lastBackupAt)}.`
+              : 'You haven’t saved a backup yet.'}{' '}
+            Your data only lives on this phone. Tap to save one.
+          </span>
+        </Link>
+      )}
 
       {active === null && (
         <button type="button" className="btn btn-primary btn-hero" onClick={() => setStarting(true)}>

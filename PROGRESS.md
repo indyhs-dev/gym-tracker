@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1, chunk 9 done.** Going straight on to chunk 10.
+**Phase 1, chunk 10 done.** Going straight on to chunk 11.
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -15,7 +15,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 7. Fast entry (copy last set, ghost prefill, copy previous session's sets)
 - [x] 8. Gym time + finish (incl. past-dated sessions)
 - [x] 9. History + edit past sessions
-- [ ] 10. Export / backup (JSON, restore, CSV, Copy for Claude, 14-day reminder)
+- [x] 10. Export / backup (JSON, restore, CSV, Copy for Claude, 14-day reminder)
 - [ ] 11. Phase 1 wrap-up + deploy instructions
 
 ## Phase 2 (only after Phase 1 is confirmed on the phone)
@@ -25,12 +25,16 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 10: export and backup, under Settings → Backup & export.
-- **JSON backup:** every table, saved via the iOS share sheet (`navigator.share` with a file), falling back to a download link. Sets `lastBackupAt`.
-- **Restore from JSON:** validate the file, confirm, then replace all data.
-- **CSV export of all sets**, with columns: date, session, exercise, set number, weight, reps, warm-up, note.
-- **"Copy for Claude":** a compact plain-text summary for a chosen date range, copied to the clipboard.
-- **Backup reminder** on Today when there's been no JSON backup in 14 days.
+Chunk 11: Phase 1 wrap-up.
+- Run the whole Definition of Done end to end:
+  - offline
+  - each seeded template
+  - swap, copy sets
+  - finish with the right duration
+  - edit a past session
+  - export JSON and CSV, then restore
+- Fix anything found.
+- Write README.md with free deploy steps and iPhone install (Safari → Share → Add to Home Screen).
 
 ## How to run
 ```
@@ -152,6 +156,20 @@ npm run icons            # regenerate icons from public/icon.svg
   - `TimesEditor` covers date, start and end. It saves through `setSessionTimes` once all three are set; an end before the start rolls to the next day.
   - Everything else (sets, notes, swap, add/remove exercise, ghosts from sessions *before* this one) works as in a workout.
   - Done drops exercises with no sets and goes back.
+- **Backup & export** (chunk 10, Settings → Backup & export):
+  - **The iOS tap rule:** Safari only allows sharing and clipboard writes inside the tap itself. So all data is preloaded with `useLiveQuery(readAll)`, and files and text are built synchronously in the click handler.
+  - **Saving files** (`saveFile`): on phones (`pointer: coarse` and `canShare` with files) it opens the share sheet, so you can "Save to Files". Elsewhere it downloads.
+  - **JSON backup:** `{ format: 'gym-log-backup', version: 1, exportedAt, data: { exercises, templates, sessions, settings } }`. `lastBackupAt` is set only if the share sheet isn't cancelled.
+  - **Restore:** `parseBackup` validates the file and rejects anything that isn't a backup, or is newer or damaged, with a readable message.
+    - It asks for confirmation, showing the backup's counts, then replaces everything in one transaction.
+    - `seededAt` is kept, or set if missing, so seeding never runs on top of a restore.
+  - **CSV:** finished sessions only, oldest first. Columns exactly as specified, with a UTF-8 BOM and CRLF line endings.
+    - The set number counts every set of that exercise, warm-ups included.
+    - Weight is as entered (per hand / added load). Warm-up is "yes" or "no".
+  - **Copy for Claude:** From/To dates (default: the last 28 days), a live preview of the text, and a copy button (clipboard, with an `execCommand` fallback).
+    - The text is in fixed English formats so it's the same on any device.
+    - Format: a header line, a legend line, then per session "Mon 12 Oct 2026 · Torso · 18:00–19:12 (1h 12m)", the session note, and one line per exercise like "- Name (each): W 15×10, 22.5×8 [set note]. Note: …".
+- **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
 ## Known issues

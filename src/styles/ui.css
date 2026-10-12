@@ -1043,3 +1043,38 @@
   padding: 0 10px;
   font-size: 17px;
 }
+
+/* Backup & export */
+.notice {
+  margin: 0 0 16px;
+  border: 1px solid var(--accent);
+}
+
+.field .btn + .btn,
+.field .row-meta + .btn {
+  margin-top: 4px;
+}
+
+.claude-preview {
+  max-height: 280px;
+  margin: 4px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--muted);
+  font: 13px/1.45 ui-monospace, 'SF Mono', Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.backup-reminder {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 16px;
+  border: 1px solid var(--accent);
+}

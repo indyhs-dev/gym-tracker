@@ -3,6 +3,7 @@ import TabBar from './components/TabBar';
 import History from './screens/history/History';
 import SessionDetail from './screens/history/SessionDetail';
 import Progress from './screens/progress/Progress';
+import Backup from './screens/settings/Backup';
 import ExerciseEditor from './screens/settings/ExerciseEditor';
 import Exercises from './screens/settings/Exercises';
 import RestGuidance from './screens/settings/RestGuidance';
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/settings/exercises/new" element={<ExerciseEditor />} />
           <Route path="/settings/exercises/:id" element={<ExerciseEditor />} />
           <Route path="/settings/rest" element={<RestGuidance />} />
+          <Route path="/settings/backup" element={<Backup />} />
           <Route path="/settings/templates" element={<Templates />} />
           <Route path="/settings/templates/:id" element={<TemplateEditor />} />
           <Route path="/settings/templates/:id/slots/:slotId" element={<SlotEditor />} />
