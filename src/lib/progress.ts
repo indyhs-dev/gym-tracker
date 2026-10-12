@@ -1,4 +1,5 @@
 import type { Session, WorkoutSet } from '../db/types';
+import { addDays, startOfWeek } from './time';
 
 /** Not a warm-up, with weight entered and at least one rep (bodyweight sets count with 0 added). */
 export function isWorkingSet(set: WorkoutSet): set is WorkoutSet & { weight: number; reps: number } {
@@ -62,4 +63,90 @@ export function trainedExercises(sessions: Session[]): string[] {
     }
   }
   return [...last].sort((a, b) => b[1] - a[1]).map(([id]) => id);
+}
+
+// ---- Personal records ----
+
+export interface BestSet {
+  weight: number;
+  reps: number;
+  /** When it was first achieved. */
+  startedAt: number;
+}
+
+export interface ExercisePRs {
+  /** Heaviest working set (most reps at that weight; earliest if tied). */
+  heaviest: BestSet | null;
+  /** Best reps at each weight, heaviest weight first. */
+  repsAtWeight: BestSet[];
+}
+
+export function exercisePRs(sessions: Session[], exerciseId: string): ExercisePRs {
+  const best = new Map<number, BestSet>();
+  const ordered = sessions.filter((s) => s.status === 'finished').sort((a, b) => a.startedAt - b.startedAt);
+  for (const s of ordered) {
+    for (const item of s.exercises) {
+      if (item.exerciseId !== exerciseId) continue;
+      for (const set of item.sets) {
+        if (!isWorkingSet(set)) continue;
+        const current = best.get(set.weight);
+        // Strictly more reps to count as a new record, so the first time it was done is kept.
+        if (!current || set.reps > current.reps) {
+          best.set(set.weight, { weight: set.weight, reps: set.reps, startedAt: s.startedAt });
+        }
+      }
+    }
+  }
+  const repsAtWeight = [...best.values()].sort((a, b) => b.weight - a.weight);
+  return { heaviest: repsAtWeight[0] ?? null, repsAtWeight };
+}
+
+// ---- Overall ----
+
+export interface WeekCount {
+  weekStart: number;
+  sets: number;
+}
+
+/** Working sets per week (Monday–Sunday) for the last `weeks` weeks, oldest first, including empty weeks. */
+export function weeklyWorkingSets(sessions: Session[], now: number, weeks = 12): WeekCount[] {
+  const thisWeek = startOfWeek(now);
+  const result: WeekCount[] = Array.from({ length: weeks }, (_, i) => ({
+    weekStart: addDays(thisWeek, -7 * (weeks - 1 - i)),
+    sets: 0,
+  }));
+  for (const s of sessions) {
+    if (s.status !== 'finished') continue;
+    const week = result.find((w) => w.weekStart === startOfWeek(s.startedAt));
+    if (!week) continue;
+    week.sets += s.exercises.reduce((n, e) => n + e.sets.filter(isWorkingSet).length, 0);
+  }
+  return result;
+}
+
+export interface SessionDuration {
+  sessionId: string;
+  startedAt: number;
+  minutes: number;
+}
+
+/** Gym time of the most recent finished sessions (up to `limit`), oldest first. */
+export function sessionDurations(sessions: Session[], limit = 20): SessionDuration[] {
+  return sessions
+    .filter((s) => s.status === 'finished' && s.endedAt !== null)
+    .sort((a, b) => a.startedAt - b.startedAt)
+    .slice(-limit)
+    .map((s) => ({ sessionId: s.id, startedAt: s.startedAt, minutes: Math.round((s.endedAt! - s.startedAt) / 60000) }));
+}
+
+/** Round ticks for a minutes axis: 15-minute steps (30 for wide ranges), one step of headroom each side. */
+export function minuteTicks(minutes: number[]): number[] {
+  const lo = Math.min(...minutes);
+  const hi = Math.max(...minutes);
+  const step = hi - lo > 90 ? 30 : 15;
+  const start = Math.max(0, Math.floor(lo / step) * step - (lo % step === 0 ? step : 0));
+  const end = Math.ceil(hi / step) * step + (hi % step === 0 ? step : 0);
+  const ticks = [];
+  for (let t = start; t <= end; t += step) ticks.push(t);
+  return ticks;
 }

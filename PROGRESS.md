@@ -20,7 +20,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
 ## Phase 2 (see PLAN.md §6)
 - [x] 12. Progress tab: per-exercise chart (top weight and e1RM)
-- [ ] 13. PRs, weekly working sets, gym-time trend
+- [x] 13. PRs, weekly working sets, gym-time trend
 - [ ] 14. Warm-up helper
 - [ ] 15. Progression hint and beat-last-time comparison
 - [ ] 16. Training block tracker
@@ -30,7 +30,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 Nothing.
 
 ## Next
-Chunk 13: PRs per exercise (heaviest weight with date, best reps at each weight), working sets per week (last 12 weeks, Monday–Sunday) and gym time per session, all on the Progress tab.
+Chunk 14: the warm-up helper, as a text line on exercise cards (PLAN.md §6).
 
 ## How to run
 ```
@@ -191,6 +191,16 @@ npm run icons            # regenerate icons from public/icon.svg
 - **Palette check** (dataviz validator, dark, card surface): accent against off-white separates well (ΔE 24.2 colour-blind, 26.5 normal; contrast passes).
   - It fails the lightness-band and chroma-floor checks because one series has to be a neutral under the brief's four-colour rule.
   - Covered by the legend, the end labels and the table, so colour is never the only cue.
+- **PRs, volume and gym time** (chunk 13):
+  - The Progress tab has a segmented control, **By exercise / Overall**, kept in `?view=` in the URL.
+  - **By exercise** adds a **Personal records** card: the heaviest set (shown large, with the date) and a table of best reps at each weight (top 10 weights, each with the date it was first done).
+    - A record needs strictly more reps, so the first time it was achieved is kept.
+    - For bodyweight exercises, "weight" means added weight.
+  - **Overall** shows:
+    - **Working sets per week:** last 12 weeks, Monday–Sunday, including empty weeks; columns at most 18 px wide with gaps.
+    - **Gym time per session:** last 20 sessions, round 15/30-minute ticks (`minuteTicks`), with the average in the subtitle.
+    - Each has a "Show as table" (`<details>`).
+  - These are computed on the fly in `src/lib/progress.ts` (`exercisePRs`, `weeklyWorkingSets`, `sessionDurations`). Nothing extra is stored.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 

@@ -21,6 +21,8 @@ interface Props {
   yTick?: (value: number) => string;
   height?: number;
   label: string;
+  /** Fixed y ticks (the axis then spans exactly from the first to the last). */
+  yTicks?: number[];
 }
 
 const shortDate = (ms: number) => new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
@@ -35,7 +37,7 @@ function pickTicks(xs: number[], max = 4): number[] {
  * Line chart over time: 2px lines, ringed dots, hairline grid, one y axis,
  * a crosshair tooltip listing every series, and end labels when they don't collide.
  */
-export default function TrendChart({ data, series, yTick = (v) => String(v), height = 220, label }: Props) {
+export default function TrendChart({ data, series, yTick = (v) => String(v), height = 220, label, yTicks }: Props) {
   const last = data.at(-1);
   const values = data.flatMap((p) => series.map((s) => p[s.key])).filter((v): v is number => v !== null);
   const range = Math.max(...values) - Math.min(...values) || 1;
@@ -75,10 +77,15 @@ export default function TrendChart({ data, series, yTick = (v) => String(v), hei
           <YAxis
             width={40}
             // A little headroom so the lowest/highest points don't sit on the frame (never below 0).
-            domain={[
-              (min: number) => Math.max(0, Math.floor(min - Math.max(1, min * 0.08))),
-              (max: number) => Math.ceil(max + Math.max(1, max * 0.05)),
-            ]}
+            domain={
+              yTicks
+                ? [yTicks[0], yTicks.at(-1)!]
+                : [
+                    (min: number) => Math.max(0, Math.floor(min - Math.max(1, min * 0.08))),
+                    (max: number) => Math.ceil(max + Math.max(1, max * 0.05)),
+                  ]
+            }
+            ticks={yTicks}
             tickFormatter={yTick}
             tick={{ fill: CHART.muted, fontSize: 12 }}
             tickLine={false}

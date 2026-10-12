@@ -1193,3 +1193,31 @@
 .data-table td:last-child {
   text-align: right;
 }
+
+.pr-hero {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.pr-hero-value {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.chart-table summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chart-table .data-table {
+  margin: 0 4px 8px;
+  width: calc(100% - 8px);
+}
