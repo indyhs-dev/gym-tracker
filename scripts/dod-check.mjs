@@ -1,4 +1,4 @@
-// Phase 1 "definition of done", run end to end against the production build
+// Phase 1 + 2 "definition of done", run end to end against the production build
 // in the locally installed Google Chrome (throwaway profile, iPhone-sized window).
 // Usage: npm run build && npm run check:dod
 import { spawn } from 'node:child_process';
@@ -51,9 +51,16 @@ const go = async (hash) => {
 const card = (name) => page.locator('.exercise-card').filter({ has: page.locator('.exercise-name', { hasText: name }) });
 const loggedRows = (c) => c.locator('.set-row:not(.is-ghost)');
 
-async function startWorkout(template) {
+const localDate = (daysAgo) => {
+  const d = new Date(Date.now() - daysAgo * 86400000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/** Starts a workout; with `date` ("YYYY-MM-DD") it's logged as a past session. */
+async function startWorkout(template, date) {
   await go('#/');
   await page.getByRole('button', { name: 'Start workout' }).click();
+  if (date) await page.locator('.sheet input[type="date"]').fill(date);
   await page.locator('.sheet .list-row', { hasText: template }).click();
   await page.locator('.workout-bar').waitFor();
 }
@@ -70,12 +77,13 @@ async function logSet(name, weight, reps) {
   await page.waitForTimeout(150);
 }
 
+/** Finishes (live) or saves (past) the workout; times are left as suggested if not given. */
 async function finish(start, end) {
-  await page.locator('.workout-bar').getByRole('button', { name: 'Finish' }).click();
+  await page.locator('.workout-bar').getByRole('button', { name: /^(Finish|Save)$/ }).click();
   const times = page.locator('.sheet input[type="time"]');
-  await times.nth(0).fill(start);
-  await times.nth(1).fill(end);
-  await page.getByRole('button', { name: 'Finish workout' }).click();
+  if (start) await times.nth(0).fill(start);
+  if (end) await times.nth(1).fill(end);
+  await page.getByRole('button', { name: /^(Finish workout|Save session)$/ }).click();
   await page.waitForURL(/#\/history\//);
   return (await page.locator('.detail-summary .stat-value').first().textContent()).trim();
 }
@@ -91,8 +99,8 @@ try {
   check('seeded: 3 templates and 32 exercises', (await page.locator('main').textContent()).includes('3 templates') &&
     (await page.locator('main').textContent()).includes('32 in library'));
 
-  // --- Torso: log sets, swap an exercise, finish with a set duration ---
-  await startWorkout('Torso');
+  // --- Torso (logged as yesterday, so later sessions always come after it) ---
+  await startWorkout('Torso', localDate(1));
   check('Torso starts with 7 exercises', (await page.locator('.exercise-card').count()) === 7);
   await logSet('Flat Dumbbell Bench Press', 22.5, 8);
   await logSet('Flat Dumbbell Bench Press', 22.5, 9);
@@ -106,7 +114,7 @@ try {
   const pulldownSets = await loggedRows(card('Lat Pulldown')).count();
   check('copy last set', pulldownSets === 2, `${pulldownSets} sets`);
   let duration = await finish('18:00', '19:12');
-  check('Torso finished with correct duration', duration === '1h 12m', duration);
+  check('past session (yesterday) saved with correct duration', duration === '1h 12m', duration);
   const torsoExercises = await detailExercises();
   check('skipped exercises left out', JSON.stringify(torsoExercises) === JSON.stringify(['Flat Dumbbell Bench Press', 'Lat Pulldown']), torsoExercises.join(', '));
 
@@ -151,6 +159,48 @@ try {
   const editedSets = (await page.locator('.detail-summary .stat-value').nth(1).textContent()).trim();
   check('edit past session: new end time and extra set saved', edited === '1h 35m' && editedSets === '2', `${edited}, ${editedSets} sets`);
 
+  // ===== Phase 2 =====
+
+  // --- Warm-up helper and top-set comparison ---
+  await startWorkout('Torso');
+  const bench3 = card('Flat Dumbbell Bench Press');
+  const warm = (await bench3.locator('.warmup-hint').textContent()) ?? '';
+  check(
+    'warm-up helper: 40 / 65 / 75% of last work weight, rounded to the step',
+    warm.includes('from 22.5 last time') && warm.includes('10 × 6–10') && warm.includes('15 × 4–8') && warm.includes('17.5 × 2–4'),
+    warm,
+  );
+  check('no "Go up" hint when set 1 missed the top of the range', (await bench3.locator('.progression-hint').count()) === 0);
+  await logSet('Flat Dumbbell Bench Press', 22.5, 12);
+  const compare = (await bench3.locator('.top-set-compare').textContent()) ?? '';
+  check('top set compared with last session', compare.includes('beats last time (22.5 × 9)'), compare);
+  await finish();
+
+  // --- Progression hint next time ---
+  await startWorkout('Torso');
+  const hint = (await card('Flat Dumbbell Bench Press').locator('.progression-hint').textContent()) ?? '';
+  check('"Go up" hint after set 1 hit the top of the range', hint.includes('hit 12 reps') && hint.includes('try 25 kg each'), hint);
+  await page.getByRole('button', { name: 'Discard workout' }).click();
+  await page.waitForURL(/#\/$/);
+
+  // --- Progress tab ---
+  await go('#/progress');
+  await page.locator('select').selectOption({ label: 'Flat Dumbbell Bench Press' });
+  await page.locator('.recharts-line').first().waitFor();
+  check('progress chart: top set and estimated 1RM', (await page.locator('.recharts-line').count()) === 2);
+  const pr = (await page.locator('.pr-hero-value').textContent()) ?? '';
+  check('personal record: heaviest set', pr.includes('22.5 kg each × 12'), pr);
+  await page.getByRole('button', { name: 'Overall' }).click();
+  await page.locator('.recharts-bar-rectangle').first().waitFor();
+  check('weekly working sets and gym-time charts', (await page.locator('.chart-card').count()) === 2);
+
+  // --- Training block ---
+  await go('#/settings/block');
+  await page.locator('input[type="date"]').fill(localDate(15));
+  await go('#/');
+  const blockText = (await page.locator('.block-card').textContent()) ?? '';
+  check('training block shows the week number', blockText.includes('Week 3'), blockText);
+
   // --- Export JSON and CSV ---
   await go('#/settings/backup');
   const [jsonDownload] = await Promise.all([
@@ -160,7 +210,7 @@ try {
   const backupPath = join(tmp, jsonDownload.suggestedFilename());
   await jsonDownload.saveAs(backupPath);
   const backup = JSON.parse(await readFile(backupPath, 'utf8'));
-  check('JSON backup exported', backup.format === 'gym-log-backup' && backup.data.sessions.length === 4, jsonDownload.suggestedFilename());
+  check('JSON backup exported', backup.format === 'gym-log-backup' && backup.data.sessions.length === 5, jsonDownload.suggestedFilename());
 
   const [csvDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -170,7 +220,7 @@ try {
   await csvDownload.saveAs(csvPath);
   const csvLines = (await readFile(csvPath, 'utf8')).replace(/^﻿/, '').trim().split('\r\n');
   if (process.env.DEBUG) console.log(csvLines.join('\n'));
-  check('CSV exported (header + 9 sets)', csvLines.length === 10 && csvLines[0] === 'date,session,exercise,set number,weight,reps,warm-up,note',
+  check('CSV exported (header + 10 sets)', csvLines.length === 11 && csvLines[0] === 'date,session,exercise,set number,weight,reps,warm-up,note',
     `${csvLines.length - 1} rows`);
 
   // --- Wipe everything, then restore from the JSON backup ---
@@ -187,19 +237,25 @@ try {
   await go('#/settings/backup');
   await page.locator('input[type="file"]').setInputFiles(backupPath);
   await page.locator('.notice').waitFor();
-  check('restore from JSON', (await page.locator('.notice').textContent()).includes('Restored 4 sessions'));
+  check('restore from JSON', (await page.locator('.notice').textContent()).includes('Restored 5 sessions'));
   await go('#/history');
-  check('history back after restore', (await page.locator('.history-row').count()) === 4);
+  check('history back after restore', (await page.locator('.history-row').count()) === 5);
+  await go('#/');
+  check('training block restored too', ((await page.locator('.block-card').textContent()) ?? '').includes('Week 3'));
+  await go('#/history');
 
   // --- Offline ---
   await stopServer(server);
   await page.reload();
   await page.locator('h1').waitFor({ timeout: 5000 });
   const offlineRows = await page.locator('.history-row').count();
-  check('works offline with the server stopped', offlineRows === 4, `${offlineRows} sessions shown`);
+  check('works offline with the server stopped', offlineRows === 5, `${offlineRows} sessions shown`);
   await page.locator('.history-row').first().click();
   await page.locator('.detail-summary').waitFor({ timeout: 3000 }).catch(() => {});
   check('session detail offline', (await page.locator('.detail-summary').count()) === 1);
+  await go('#/progress');
+  await page.locator('.recharts-surface').first().waitFor({ timeout: 5000 }).catch(() => {});
+  check('progress charts offline', (await page.locator('.recharts-surface').count()) > 0);
 
   check('no page errors', errors.length === 0, errors.join(' | '));
 } catch (err) {
@@ -209,5 +265,5 @@ try {
   await stopServer(server);
   await rm(tmp, { recursive: true, force: true });
 }
-console.log(failed ? `\n${failed} check(s) failed` : '\nAll Phase 1 checks passed');
+console.log(failed ? `\n${failed} check(s) failed` : '\nAll checks passed');
 process.exit(failed ? 1 : 0);

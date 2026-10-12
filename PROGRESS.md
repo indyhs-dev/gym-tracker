@@ -3,7 +3,7 @@
 ## Status
 SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
-**Phase 1 confirmed working on the iPhone (12 Oct 2026). Phase 2 in progress.** It's deployed at https://indyhs-dev.github.io/gym-tracker/ (repo `indyhs-dev/gym-tracker`; every push to `main` redeploys).
+**Phase 1 and Phase 2 complete.** Phase 1 was confirmed on the iPhone (12 Oct 2026). Phase 2 is built and tested, waiting to be pushed and tried on the phone. It's deployed at https://indyhs-dev.github.io/gym-tracker/ (repo `indyhs-dev/gym-tracker`; every push to `main` redeploys).
 
 ## Phase 1 chunks
 - [x] 1. Project setup + PWA shell
@@ -24,16 +24,14 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 14. Warm-up helper
 - [x] 15. Progression hint and beat-last-time comparison
 - [x] 16. Training block tracker
-- [ ] 17. Phase 2 wrap-up
+- [x] 17. Phase 2 wrap-up
 
 ## In progress
 Nothing.
 
 ## Next
-Chunk 17: Phase 2 wrap-up.
-- Extend `check:dod` to cover Phase 2: the Progress views offline, PRs, the warm-up line, the "Go up" box, the top-set line and the block week.
-- Fix anything found and update the docs.
-- Then ask the user before pushing (pushing redeploys the live site).
+- Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
+- Everything in the brief is now built. Anything further would be new requests from the user.
 
 ## How to run
 ```
@@ -43,7 +41,7 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
-npm run check:dod        # after build: whole Phase 1 definition of done in Chrome (26 checks)
+npm run check:dod        # after build: Phase 1 + 2 definition of done in Chrome (35 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
@@ -225,6 +223,9 @@ npm run icons            # regenerate icons from public/icon.svg
     - Week 1 is the start date plus 6 days. Weeks 1–2 are break-in. Past `weekOffAfter` a week off is due. A future start counts down in days.
   - **Settings → Training block:** a start date, "Start a new block today", "Stop tracking", and a "Week off reminder: after week N" stepper (1–52, "usually 12–16").
   - **Today** has a block card ("Week 5 · Training block" / "Break-in week"). Once past the limit it gets an accent border and "Past week 12: time to take a week off". It links to the settings screen.
+- **Definition-of-done script** (chunk 17): `check:dod` now covers Phase 2 as well (35 checks).
+  - The first Torso session is logged as *yesterday* (past-session flow), so the ghost and progression checks don't depend on the time of day the script runs.
+  - Phase 2 checks: warm-up line, no "Go up" below the top of the range, top-set "beats", "Go up" after 22.5 × 12, chart lines, PR, overall charts, training block week (also after restore), and Progress charts offline.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
