@@ -1,6 +1,8 @@
 # Progress
 
 ## Status
+SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
+
 **Phase 1, chunk 1 done.** Waiting for "go" before chunk 2.
 
 ## Phase 1 chunks
