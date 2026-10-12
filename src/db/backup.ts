@@ -1,5 +1,5 @@
 import { db } from './db';
-import { defaultSettings } from './defaults';
+import { withDefaults } from './settings';
 import type { Exercise, Session, Settings, Template } from './types';
 
 export const BACKUP_FORMAT = 'gym-log-backup';
@@ -71,6 +71,6 @@ export async function restoreBackup(backup: Backup): Promise<void> {
     await db.sessions.bulkAdd(sessions);
     const saved = settings.find((s) => s.id === 'app');
     // Never re-run first-launch seeding on top of restored data.
-    await db.settings.put({ ...defaultSettings(), ...saved, id: 'app', seededAt: saved?.seededAt ?? backup.exportedAt });
+    await db.settings.put({ ...withDefaults(saved), seededAt: saved?.seededAt ?? backup.exportedAt });
   });
 }

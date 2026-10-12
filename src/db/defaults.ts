@@ -1,5 +1,7 @@
 import type { RestGuidance, Settings } from './types';
 
+export const DEFAULT_WEEK_OFF_AFTER = 12;
+
 export const DEFAULT_REST: RestGuidance = {
   warmup: '1–2 min',
   compound: '3–5 min',
@@ -8,5 +10,11 @@ export const DEFAULT_REST: RestGuidance = {
 };
 
 export function defaultSettings(): Settings {
-  return { id: 'app', rest: { ...DEFAULT_REST }, lastBackupAt: null, seededAt: null };
+  return {
+    id: 'app',
+    rest: { ...DEFAULT_REST },
+    lastBackupAt: null,
+    seededAt: null,
+    block: { startDate: null, weekOffAfter: DEFAULT_WEEK_OFF_AFTER },
+  };
 }

@@ -3,8 +3,20 @@ import { db } from './db';
 import { defaultSettings } from './defaults';
 import type { Settings } from './types';
 
+/** Stored settings with defaults filled in for anything added since they were saved. */
+export function withDefaults(stored: Partial<Settings> | undefined): Settings {
+  const defaults = defaultSettings();
+  return {
+    ...defaults,
+    ...stored,
+    id: 'app',
+    rest: { ...defaults.rest, ...stored?.rest },
+    block: { ...defaults.block, ...stored?.block },
+  };
+}
+
 export async function getSettings(): Promise<Settings> {
-  return (await db.settings.get('app')) ?? defaultSettings();
+  return withDefaults(await db.settings.get('app'));
 }
 
 export async function updateSettings(patch: Partial<Omit<Settings, 'id'>>): Promise<void> {

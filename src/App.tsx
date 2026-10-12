@@ -11,6 +11,7 @@ import Settings from './screens/settings/Settings';
 import SlotEditor from './screens/settings/SlotEditor';
 import TemplateEditor from './screens/settings/TemplateEditor';
 import Templates from './screens/settings/Templates';
+import TrainingBlock from './screens/settings/TrainingBlock';
 import Today from './screens/today/Today';
 import WorkoutScreen from './screens/workout/WorkoutScreen';
 
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/settings/exercises/:id" element={<ExerciseEditor />} />
           <Route path="/settings/rest" element={<RestGuidance />} />
           <Route path="/settings/backup" element={<Backup />} />
+          <Route path="/settings/block" element={<TrainingBlock />} />
           <Route path="/settings/templates" element={<Templates />} />
           <Route path="/settings/templates/:id" element={<TemplateEditor />} />
           <Route path="/settings/templates/:id/slots/:slotId" element={<SlotEditor />} />

@@ -82,9 +82,17 @@ export interface RestGuidance {
   core: string;
 }
 
+export interface TrainingBlock {
+  /** First day of the current training block ("YYYY-MM-DD"), or null if not tracking. */
+  startDate: string | null;
+  /** Remind to take a week off once the block is longer than this many weeks. */
+  weekOffAfter: number;
+}
+
 export interface Settings {
   id: 'app';
   rest: RestGuidance;
   lastBackupAt: number | null;
   seededAt: number | null;
+  block: TrainingBlock;
 }

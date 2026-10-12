@@ -5,6 +5,7 @@ import Duration from '../../components/Duration';
 import { db } from '../../db/db';
 import { getActiveSession, lastFinishedSession, loadWeekStats } from '../../db/sessions';
 import { useSettings } from '../../db/settings';
+import { blockStatus } from '../../lib/block';
 import { needsBackupReminder } from '../../lib/export';
 import type { Exercise, Session } from '../../db/types';
 import { formatDate, formatDuration, formatLongDate, formatTime, isSameDay } from '../../lib/time';
@@ -27,6 +28,7 @@ export default function Today() {
       )?.startedAt ?? null,
     [],
   );
+  const block = settings ? blockStatus(settings.block, Date.now()) : null;
   const remind =
     settings !== undefined &&
     firstSessionAt !== undefined &&
@@ -58,6 +60,27 @@ export default function Today() {
         <Link className="btn btn-primary btn-hero" to={`/workout/${active.id}`}>
           <span>Resume workout</span>
           <span className="btn-hero-meta">{activeMeta(active)}</span>
+        </Link>
+      )}
+
+      {block && (
+        <Link className={block.weekOffDue ? 'card card-link block-card is-due' : 'card card-link block-card'} to="/settings/block">
+          {block.week === 0 ? (
+            <span className="row-meta">
+              Training block starts in {block.startsIn} {block.startsIn === 1 ? 'day' : 'days'}
+            </span>
+          ) : (
+            <>
+              <span className="block-week">Week {block.week}</span>
+              <span className="row-meta">
+                {block.weekOffDue
+                  ? `Past week ${settings!.block.weekOffAfter}: time to take a week off`
+                  : block.breakIn
+                    ? 'Break-in week'
+                    : 'Training block'}
+              </span>
+            </>
+          )}
         </Link>
       )}
 

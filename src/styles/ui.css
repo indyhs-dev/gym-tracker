@@ -1278,3 +1278,39 @@
 .top-set-compare.is-matched {
   color: var(--text);
 }
+
+/* Training block */
+.block-card {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.block-week {
+  flex: none;
+  font-size: 28px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.block-card.is-due {
+  border: 1px solid var(--accent);
+}
+
+.block-card.is-due .row-meta {
+  color: var(--accent);
+  font-weight: 600;
+  text-align: right;
+}
+
+.block-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 20px;
+}
+
+.block-weeks {
+  margin-top: 24px;
+}

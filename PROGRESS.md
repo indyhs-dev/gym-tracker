@@ -23,17 +23,17 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 13. PRs, weekly working sets, gym-time trend
 - [x] 14. Warm-up helper
 - [x] 15. Progression hint and beat-last-time comparison
-- [ ] 16. Training block tracker
+- [x] 16. Training block tracker
 - [ ] 17. Phase 2 wrap-up
 
 ## In progress
 Nothing.
 
 ## Next
-Chunk 16: the training block tracker.
-- Settings → Training block: start date and "week off after N weeks" (default 12).
-- Today shows "Week X" (weeks 1–2 "Break-in") and a reminder once past N weeks.
-- Stored as `settings.block`, with defaults merged in by `getSettings`.
+Chunk 17: Phase 2 wrap-up.
+- Extend `check:dod` to cover Phase 2: the Progress views offline, PRs, the warm-up line, the "Go up" box, the top-set line and the block week.
+- Fix anything found and update the docs.
+- Then ask the user before pushing (pushing redeploys the live site).
 
 ## How to run
 ```
@@ -218,6 +218,13 @@ npm run icons            # regenerate icons from public/icon.svg
     - The top set is the heaviest working set, with more reps breaking a tie. Heavier wins; at the same weight, more reps wins.
     - Text carries the meaning; colour (accent for beat) is extra.
   - Both show only during a workout (`hints`). The "Go up" box needs a template slot for the rep range; the top-set line works for any exercise with history.
+- **Training block** (chunk 16):
+  - `settings.block = { startDate: 'YYYY-MM-DD' | null, weekOffAfter: number }`, default `{ null, 12 }`.
+  - `withDefaults()` in `settings.ts` fills in any settings fields added later. It's used by `getSettings` and restore, so old settings and backups keep working.
+  - `blockStatus` (`src/lib/block.ts`) counts weeks from the start date by calendar date, so clock changes can't shift it.
+    - Week 1 is the start date plus 6 days. Weeks 1–2 are break-in. Past `weekOffAfter` a week off is due. A future start counts down in days.
+  - **Settings → Training block:** a start date, "Start a new block today", "Stop tracking", and a "Week off reminder: after week N" stepper (1–52, "usually 12–16").
+  - **Today** has a block card ("Week 5 · Training block" / "Break-in week"). Once past the limit it gets an accent border and "Past week 12: time to take a week off". It links to the settings screen.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
 
