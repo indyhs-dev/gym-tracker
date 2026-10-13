@@ -5,6 +5,10 @@
   --accent: #fb923c;
   --text: #f5f5f4;
 
+  /* Rest timer only (added at the user's request): red = rest, green = go. */
+  --rest: #ef4444;
+  --go: #22c55e;
+
   /* Off-white at reduced opacity: secondary text, ghost values, hairlines. */
   --muted: rgb(245 245 244 / 0.6);
   --faint: rgb(245 245 244 / 0.35);

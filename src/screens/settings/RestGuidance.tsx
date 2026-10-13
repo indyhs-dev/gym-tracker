@@ -15,7 +15,10 @@ export default function RestGuidance() {
   return (
     <>
       <ScreenHeader title="Rest guidance" back="/settings" backLabel="Settings" />
-      <p className="muted intro">Shown on each exercise during a workout, by exercise type.</p>
+      <p className="muted intro">
+        Shown on each exercise during a workout, by exercise type. The rest timer turns green at the first number (e.g.
+        3 min for “3–5 min”).
+      </p>
       {settings && <RestForm saved={settings.rest} />}
     </>
   );

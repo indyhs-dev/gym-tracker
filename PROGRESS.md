@@ -26,12 +26,16 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 16. Training block tracker
 - [x] 17. Phase 2 wrap-up
 
+## After Phase 2 (user requests)
+- [x] 18. Rest timer (requested 13 Oct 2026 after trying the app at the gym)
+
 ## In progress
 Nothing.
 
 ## Next
 - Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
 - Everything in the brief is now built. Anything further would be new requests from the user.
+- Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
 
 ## How to run
 ```
@@ -46,6 +50,12 @@ npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Rest timer (chunk 18, 13 Oct 2026).** The user asked for it after testing at the gym, to stop switching to the iPhone stopwatch between sets. This overrides the brief's "text only, no timer" and adds red and green to the palette (used only by the timer).
+  - Each set row in a **live** workout gets a round ✓ button. Tapping it ticks the set (green tick and set number), closes the keyboard and starts the rest timer. "✓ Log" on a ghost row logs the set and does the same. Past sessions and History edits have no ✓ and no timer.
+  - The timer is a bar pinned to the bottom of the workout screen. It counts up like a stopwatch. It's **red** ("Rest · Ready in 2:14") until the lower number of the rest guidance has passed, then **green** ("Go · Ready · guide 3–5 min"). ✕ hides it. Tapping ✓ on another set restarts it.
+  - The length comes from the existing rest guidance texts (`parseRest` in `src/lib/rest.ts`): warm-up sets use the warm-up text, other sets use their exercise type's text. So editing Settings → Rest guidance also changes the timer. Text with no number falls back to the default for that type.
+  - **No data model change.** The timer and the ticks live in localStorage (`gym-log.rest-timer`, `src/lib/restTimer.ts`), not in the database. Time is worked out from a start timestamp, so it stays right when the app is in the background, the phone is locked, or the app is closed and reopened. Finishing or discarding the workout clears it. Ticks are only on this phone and aren't part of backups or exports.
+  - No sound or alert when it turns green. iOS doesn't allow vibration, and a home-screen app can't play a sound while it's in the background.
 - **Phase 2 answers (12 Oct 2026):**
   - Weekly volume is working sets per week.
   - No bodyweight log.

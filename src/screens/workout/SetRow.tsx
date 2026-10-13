@@ -16,13 +16,18 @@ interface Props {
   /** Logged set: saves the change. Ghost row: logs the set (ghost values + this change). */
   onChange: (fields: Partial<SetFields>) => void;
   onDelete?: () => void;
+  /** Live workout only: the ✓ that marks the set done and starts the rest timer. */
+  onDone?: () => void;
+  /** Ticked done. */
+  done?: boolean;
 }
 
 /**
  * One set. A ghost row looks the same but dimmed; tapping "Log", typing,
- * using −/+ or the warm-up chip turns it into a real set.
+ * using −/+ or the warm-up chip turns it into a real set. In a live workout,
+ * "Log" on a ghost row also counts as done and starts the rest timer.
  */
-export default function SetRow({ set, ghost, label, exercise, weightUnit, onChange, onDelete }: Props) {
+export default function SetRow({ set, ghost, label, exercise, weightUnit, onChange, onDelete, onDone, done = false }: Props) {
   const isGhost = set === undefined;
   const warmup = set?.warmup ?? ghost?.warmup ?? false;
   const [noteOpen, setNoteOpen] = useState(set !== undefined && set.note !== '');
@@ -37,7 +42,7 @@ export default function SetRow({ set, ghost, label, exercise, weightUnit, onChan
   }, [confirming]);
 
   const placeholder = (v: number | null | undefined) => (v === null || v === undefined ? '–' : formatKg(v));
-  const classes = ['set-row', warmup && 'is-warmup', isGhost && 'is-ghost'].filter(Boolean).join(' ');
+  const classes = ['set-row', warmup && 'is-warmup', isGhost && 'is-ghost', done && 'is-done'].filter(Boolean).join(' ');
 
   return (
     <li className={classes}>
@@ -48,11 +53,27 @@ export default function SetRow({ set, ghost, label, exercise, weightUnit, onChan
         </button>
         <span className="spacer" />
         {isGhost ? (
-          <button type="button" className="chip-hit" aria-label={`Log set ${label} as last time`} onClick={() => onChange({})}>
+          <button
+            type="button"
+            className="chip-hit"
+            aria-label={`Log set ${label} as last time`}
+            onClick={() => (onDone ? onDone() : onChange({}))}
+          >
             <span className="chip chip-log">✓ Log</span>
           </button>
         ) : (
           <>
+            {onDone && (
+              <button
+                type="button"
+                className="done-button"
+                aria-label={`Set ${label} done, start rest`}
+                aria-pressed={done}
+                onClick={onDone}
+              >
+                <span aria-hidden="true">✓</span>
+              </button>
+            )}
             <button
               type="button"
               className="icon-button"

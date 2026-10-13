@@ -1314,3 +1314,141 @@
 .block-weeks {
   margin-top: 24px;
 }
+
+/* Rest timer: ✓ on a set starts it; a bar pinned to the bottom of the workout. */
+.done-button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.done-button span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.done-button[aria-pressed='true'] span {
+  border-color: var(--go);
+  background: var(--go);
+  color: var(--bg);
+}
+
+.is-done .set-label {
+  color: var(--go);
+}
+
+.is-done.is-warmup .set-label {
+  color: var(--muted);
+}
+
+.rest-spacer {
+  height: 84px;
+}
+
+.rest-bar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 30;
+  padding-bottom: var(--safe-bottom);
+  overflow: hidden;
+  color: var(--bg);
+  transition: background-color 0.3s;
+}
+
+.rest-bar.is-resting {
+  background: var(--rest);
+}
+
+.rest-bar.is-ready {
+  background: var(--go);
+}
+
+.rest-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: var(--max-width);
+  min-height: 72px;
+  margin: 0 auto;
+  padding: 8px 4px 8px var(--gutter);
+}
+
+.rest-bar-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rest-bar-state {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rest-bar-detail {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.rest-bar-clock {
+  font-size: 40px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.rest-bar-close {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 20px;
+  opacity: 0.75;
+}
+
+/* Fills up towards "go". */
+.rest-bar-progress {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--bg);
+  opacity: 0.35;
+  transform-origin: left;
+}
+
+/* Very narrow phones: room for the ✓ without wrapping the Warm-up chip. */
+@media (max-width: 359px) {
+  .set-top {
+    gap: 2px;
+  }
+  .set-top .set-label {
+    min-width: 22px;
+  }
+  .set-top .chip {
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  .rest-bar-clock {
+    font-size: 34px;
+  }
+}

@@ -16,10 +16,12 @@ import {
 import { useSettings } from '../../db/settings';
 import type { Exercise, RestGuidance, Session } from '../../db/types';
 import { useGoBack } from '../../lib/nav';
+import { clearRest, useRestTimer } from '../../lib/restTimer';
 import { formatClock, formatDate, formatTime, isSameDay } from '../../lib/time';
 import { useNow } from '../../lib/useNow';
 import ExerciseCard from './ExerciseCard';
 import FinishSheet from './FinishSheet';
+import RestBar from './RestBar';
 import TimesEditor from './TimesEditor';
 
 export default function WorkoutScreen() {
@@ -53,6 +55,7 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
   const [adding, setAdding] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const live = isLive(session);
+  const restTimer = useRestTimer(session.id);
   const previous = useLiveQuery(
     () => previousSetsFor(session.exerciseIds, session),
     [session.id, session.startedAt, session.exerciseIds.join(',')],
@@ -73,6 +76,7 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
   function discard() {
     if (!window.confirm('Discard this workout? Anything logged in it will be deleted.')) return;
     navigate('/', { replace: true });
+    clearRest(session.id);
     void discardSession(session.id);
   }
 
@@ -123,6 +127,7 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
             rest={rest}
             previous={previous?.get(item.exerciseId)}
             hints={session.status === 'active'}
+            live={live}
           />
         ))}
       </div>
@@ -145,8 +150,17 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
           session={session}
           live={live}
           onClose={() => setFinishing(false)}
-          onFinished={() => navigate(`/history/${session.id}`, { replace: true })}
+          onFinished={() => {
+            clearRest(session.id);
+            navigate(`/history/${session.id}`, { replace: true });
+          }}
         />
+      )}
+      {live && restTimer && (
+        <>
+          <div className="rest-spacer" />
+          <RestBar timer={restTimer} />
+        </>
       )}
     </>
   );

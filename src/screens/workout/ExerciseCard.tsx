@@ -17,7 +17,8 @@ import { formatKg, plural } from '../../lib/format';
 import { newId } from '../../lib/ids';
 import { targetLine } from '../../lib/labels';
 import { compareTopSets, progressionHint, topSet, type TopSet } from '../../lib/progression';
-import { restText } from '../../lib/rest';
+import { restAfter, restText } from '../../lib/rest';
+import { startRest, useDoneSets } from '../../lib/restTimer';
 import { weightText } from '../../lib/setText';
 import { formatDate } from '../../lib/time';
 import { warmupSuggestions, workWeightFor } from '../../lib/warmup';
@@ -32,9 +33,11 @@ interface Props {
   previous?: PreviousSets;
   /** Show training hints (warm-ups, progression): during a workout, not when editing history. */
   hints?: boolean;
+  /** A workout happening now: sets get a ✓ that starts the rest timer. */
+  live?: boolean;
 }
 
-export default function ExerciseCard({ sessionId, item, exercises, rest, previous, hints = false }: Props) {
+export default function ExerciseCard({ sessionId, item, exercises, rest, previous, hints = false, live = false }: Props) {
   const [swapping, setSwapping] = useState(false);
   // Each ghost position has a ready-made set id, so a ghost row keeps its
   // identity (and keyboard focus) when typing turns it into a real set.
@@ -63,6 +66,16 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
     const n = item.sets.length;
     const msg = n > 0 ? `Remove ${name} and its ${plural(n, 'set')} from this workout?` : `Remove ${name} from this workout?`;
     if (window.confirm(msg)) void removeSessionExercise(sessionId, item.id);
+  }
+
+  const doneIds = useDoneSets(sessionId);
+
+  /** ✓ on a set: tick it, put the keyboard away and start resting. */
+  function setDone(setId: string, warmupSet: boolean) {
+    if (!exercise) return;
+    const { text, range } = restAfter(exercise.type, warmupSet, rest);
+    startRest(sessionId, setId, text, range);
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   }
 
   const ghosts = (previous?.sets ?? []).slice(item.sets.length);
@@ -171,6 +184,8 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
                   exercise={exercise}
                   onChange={(fields) => updateSet(sessionId, item.id, set.id, fields)}
                   onDelete={() => deleteSet(sessionId, item.id, set.id)}
+                  onDone={live ? () => setDone(set.id, set.warmup) : undefined}
+                  done={doneIds.includes(set.id)}
                 />
               )),
               ...ghosts.map((ghost, i) => {
@@ -183,6 +198,15 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
                     label={label(ghost.warmup)}
                     exercise={exercise}
                     onChange={(fields) => logGhost(position, ghost, fields)}
+                    onDone={
+                      live
+                        ? () => {
+                            const id = ghostId(position);
+                            logGhost(position, ghost, {});
+                            setDone(id, ghost.warmup);
+                          }
+                        : undefined
+                    }
                   />
                 );
               }),
