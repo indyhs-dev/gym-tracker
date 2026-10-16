@@ -108,8 +108,6 @@ export interface Settings {
 // ---- Sauna ----
 
 export type SaunaContext = 'afterLifting' | 'afterCardio' | 'standalone';
-export type SaunaBench = 'upper' | 'lower';
-export type SaunaTemp = 'low' | 'mid' | 'high';
 export type SaunaExitReason = 'tooHot' | 'dehydrated' | 'tired' | 'other';
 export type SaunaSkipReason = 'rest' | 'sick' | 'closed' | 'other';
 export type SaunaFeel = 1 | 2 | 3 | 4 | 5;
@@ -139,11 +137,10 @@ export interface SaunaSession extends SaunaEntryBase {
   kind: 'session';
   context: SaunaContext;
   rounds: SaunaRound[];
-  bench: SaunaBench;
-  temp: SaunaTemp | null;
   /** 1 = survivable, 3 = comfortable, 5 = easy. */
   feel: SaunaFeel;
-  water: boolean;
+  /** Anything else worth noting ("" if none). */
+  note: string;
 }
 
 /** A gym day without the sauna. Never counts against the weekly target. */

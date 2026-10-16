@@ -1,3 +1,4 @@
+import { normaliseSaunaEntry } from '../lib/sauna';
 import { db } from './db';
 import { withDefaults } from './settings';
 import type { Exercise, SaunaEntry, Session, Settings, Template } from './types';
@@ -82,7 +83,7 @@ export async function restoreBackup(backup: Backup): Promise<void> {
     await db.exercises.bulkAdd(exercises);
     await db.templates.bulkAdd(templates);
     await db.sessions.bulkAdd(sessions);
-    await db.saunaEntries.bulkAdd(saunaEntries);
+    await db.saunaEntries.bulkAdd(saunaEntries.map(normaliseSaunaEntry));
     const saved = settings.find((s) => s.id === 'app');
     const restored = withDefaults(saved);
     // Never re-run first-launch seeding (or the sauna samples) on top of restored data.

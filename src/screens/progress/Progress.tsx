@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSearchParams } from 'react-router';
 import TrendChart, { type Series } from '../../components/charts/TrendChart';
+import SectionHeader from '../../components/SectionHeader';
 import WeeklyBars from '../../components/charts/WeeklyBars';
 import Segmented from '../../components/Segmented';
 import { db } from '../../db/db';
@@ -26,13 +27,13 @@ export default function Progress() {
   const exercises = useLiveQuery(async () => new Map((await db.exercises.toArray()).map((e) => [e.id, e])), []);
   const [params, setParams] = useSearchParams();
 
-  if (!sessions || !exercises) return <h1 className="screen-title">Progress</h1>;
+  if (!sessions || !exercises) return <SectionHeader section="gym" />;
 
   const trained = trainedExercises(sessions).filter((id) => exercises.has(id));
   if (trained.length === 0) {
     return (
       <>
-        <h1 className="screen-title">Progress</h1>
+        <SectionHeader section="gym" />
         <p className="empty">Charts appear here after your first finished workout.</p>
       </>
     );
@@ -50,7 +51,7 @@ export default function Progress() {
 
   return (
     <>
-      <h1 className="screen-title">Progress</h1>
+      <SectionHeader section="gym" />
 
       <div className="field">
         <Segmented

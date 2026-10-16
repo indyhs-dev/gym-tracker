@@ -103,7 +103,7 @@ cd ~/Developer/gym-tracker && npm install
 | `npm run build` | Type-checks, then builds the production version into `dist/`. |
 | `npm run preview` | Serves `dist/` at http://localhost:4173, with offline mode on. |
 | `npm run check:offline` | After a build: proves the app loads with the server stopped. |
-| `npm run check:dod` | After a build: runs the whole Phase 1, Phase 2 and sauna "definition of done" in Chrome (43 checks). |
+| `npm run check:dod` | After a build: runs the whole Phase 1, Phase 2 and sauna "definition of done" in Chrome (46 checks). |
 | `npm run icons` | Regenerates the app icons from `public/icon.svg`. |
 
 Built with Vite, React, TypeScript, vite-plugin-pwa and Dexie (IndexedDB).

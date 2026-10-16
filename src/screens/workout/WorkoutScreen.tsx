@@ -156,12 +156,9 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
           }}
         />
       )}
-      {live && restTimer && (
-        <>
-          <div className="rest-spacer" />
-          <RestBar timer={restTimer} />
-        </>
-      )}
+      {/* Room for the rest bar is kept for the whole live workout, so closing the bar never shifts the page. */}
+      {live && <div className="rest-spacer" />}
+      {live && restTimer && <RestBar timer={restTimer} />}
     </>
   );
 }

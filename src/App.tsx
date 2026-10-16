@@ -2,7 +2,10 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import TabBar from './components/TabBar';
 import History from './screens/history/History';
+import SectionHeader from './components/SectionHeader';
 import SessionDetail from './screens/history/SessionDetail';
+import SaunaHistory from './screens/sauna/SaunaHistory';
+import SaunaToday from './screens/sauna/SaunaToday';
 import Backup from './screens/settings/Backup';
 import ExerciseEditor from './screens/settings/ExerciseEditor';
 import Exercises from './screens/settings/Exercises';
@@ -16,9 +19,9 @@ import TrainingBlock from './screens/settings/TrainingBlock';
 import Today from './screens/today/Today';
 import WorkoutScreen from './screens/workout/WorkoutScreen';
 
-// Charts are the heaviest code; load them only when the Progress or Sauna tab opens.
+// Charts are the heaviest code; load them only when a Progress screen opens.
 const Progress = lazy(() => import('./screens/progress/Progress'));
-const Sauna = lazy(() => import('./screens/sauna/Sauna'));
+const SaunaProgress = lazy(() => import('./screens/sauna/SaunaProgress'));
 
 export default function App() {
   // The workout screen is full-screen: no tab bar.
@@ -33,16 +36,18 @@ export default function App() {
           <Route
             path="/progress"
             element={
-              <Suspense fallback={<h1 className="screen-title">Progress</h1>}>
+              <Suspense fallback={<SectionHeader section="gym" />}>
                 <Progress />
               </Suspense>
             }
           />
+          <Route path="/sauna" element={<SaunaToday />} />
+          <Route path="/sauna/history" element={<SaunaHistory />} />
           <Route
-            path="/sauna"
+            path="/sauna/progress"
             element={
-              <Suspense fallback={<h1 className="screen-title">Sauna</h1>}>
-                <Sauna />
+              <Suspense fallback={<SectionHeader section="sauna" />}>
+                <SaunaProgress />
               </Suspense>
             }
           />

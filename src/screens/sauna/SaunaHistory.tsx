@@ -1,19 +1,41 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useState } from 'react';
+import SectionHeader from '../../components/SectionHeader';
+import { saunaEntries } from '../../db/sauna';
 import type { SaunaEntry, SaunaSession } from '../../db/types';
 import {
-  BENCH_LABEL,
   CONTEXT_LABEL,
   EXIT_REASON_LABEL,
+  isSession,
   planOf,
   planText,
   roundText,
   SKIP_REASON_LABEL,
-  TEMP_LABEL,
   ymdToMs,
 } from '../../lib/sauna';
 import { formatDate } from '../../lib/time';
+import SessionSheet from './SessionSheet';
+import SkipSheet from './SkipSheet';
 
-/** Every entry, newest first, grouped by month. Tap one to edit or delete it. */
-export default function SaunaHistory({ entries, onEdit }: { entries: SaunaEntry[]; onEdit: (entry: SaunaEntry) => void }) {
+/** Every sauna entry; tap one to edit or delete it. */
+export default function SaunaHistory() {
+  const entries = useLiveQuery(saunaEntries, []);
+  const [editing, setEditing] = useState<SaunaEntry | null>(null);
+  const close = () => setEditing(null);
+  return (
+    <>
+      <SectionHeader section="sauna" />
+      {entries && <HistoryList entries={entries} onEdit={setEditing} />}
+      {editing?.kind === 'session' && (
+        <SessionSheet entry={editing} last={entries?.filter(isSession).at(-1) ?? null} onClose={close} />
+      )}
+      {editing?.kind === 'skip' && <SkipSheet entry={editing} onClose={close} />}
+    </>
+  );
+}
+
+/** Newest first, grouped by month. */
+function HistoryList({ entries, onEdit }: { entries: SaunaEntry[]; onEdit: (entry: SaunaEntry) => void }) {
   if (entries.length === 0) return <p className="empty">No sauna sessions yet.</p>;
   return (
     <>
@@ -51,12 +73,7 @@ export default function SaunaHistory({ entries, onEdit }: { entries: SaunaEntry[
   );
 }
 
-function SessionText({ session: s }: { session: SaunaSession }) {
-  const details = [
-    `${BENCH_LABEL[s.bench]} bench`,
-    s.temp && `${TEMP_LABEL[s.temp]} temp`,
-    s.water && 'Drank water',
-  ].filter(Boolean);
+export function SessionText({ session: s }: { session: SaunaSession }) {
   return (
     <>
       <span className="row-title">
@@ -68,7 +85,7 @@ function SessionText({ session: s }: { session: SaunaSession }) {
           {r.reason && ` · ${EXIT_REASON_LABEL[r.reason].toLowerCase()}`}
         </span>
       ))}
-      <span className="row-meta">{details.join(' · ')}</span>
+      {s.note && <span className="row-meta sauna-note">{s.note}</span>}
     </>
   );
 }

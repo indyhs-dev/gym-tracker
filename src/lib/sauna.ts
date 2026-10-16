@@ -1,13 +1,4 @@
-import type {
-  SaunaBench,
-  SaunaContext,
-  SaunaEntry,
-  SaunaExitReason,
-  SaunaRound,
-  SaunaSession,
-  SaunaSkipReason,
-  SaunaTemp,
-} from '../db/types';
+import type { SaunaContext, SaunaEntry, SaunaExitReason, SaunaRound, SaunaSession, SaunaSkipReason } from '../db/types';
 
 // ---- Settings that are easy to change ----
 
@@ -43,10 +34,6 @@ export const CONTEXT_LABEL: Record<SaunaContext, string> = {
   afterCardio: 'After cardio',
   standalone: 'Standalone',
 };
-
-export const BENCH_LABEL: Record<SaunaBench, string> = { upper: 'Upper', lower: 'Lower' };
-
-export const TEMP_LABEL: Record<SaunaTemp, string> = { low: 'Low', mid: 'Mid', high: 'High' };
 
 export const EXIT_REASON_LABEL: Record<SaunaExitReason, string> = {
   tooHot: 'Too hot',
@@ -177,6 +164,16 @@ export function planText(minutes: number[]): string {
 export const planOf = (s: SaunaSession) => s.rounds.map((r) => r.plannedMin);
 
 export const isSession = (e: SaunaEntry): e is SaunaSession => e.kind === 'session';
+
+/**
+ * Brings an entry saved by an older version up to date: sessions get a note,
+ * and bench, temperature and water (no longer logged) are dropped.
+ */
+export function normaliseSaunaEntry(entry: SaunaEntry): SaunaEntry {
+  if (entry.kind !== 'session') return entry;
+  const { bench: _bench, temp: _temp, water: _water, ...rest } = entry as SaunaSession & Record<string, unknown>;
+  return { ...rest, note: typeof rest.note === 'string' ? rest.note : '' } as SaunaSession;
+}
 
 export const allRoundsComplete = (s: SaunaSession) => s.rounds.every(isRoundComplete);
 

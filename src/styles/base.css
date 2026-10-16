@@ -7,6 +7,15 @@
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--bg);
+  /* No double-tap-to-zoom: tapping + quickly must never zoom or nudge the page (pinch zoom still works). */
+  touch-action: manipulation;
+}
+
+button,
+a,
+input,
+label {
+  touch-action: manipulation;
 }
 
 body {
@@ -77,7 +86,7 @@ button {
   margin: 0 auto;
   height: var(--tabbar-height);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .tab {

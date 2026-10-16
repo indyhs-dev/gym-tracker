@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import Duration from '../../components/Duration';
+import SectionHeader from '../../components/SectionHeader';
 import { db } from '../../db/db';
 import { getActiveSession, lastFinishedSession, loadWeekStats } from '../../db/sessions';
 import { useSettings } from '../../db/settings';
@@ -36,7 +37,7 @@ export default function Today() {
 
   return (
     <>
-      <h1 className="screen-title">Today</h1>
+      <SectionHeader section="gym" />
       <p className="muted intro">{formatLongDate(Date.now())}</p>
 
       {remind && (

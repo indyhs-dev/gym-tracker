@@ -240,10 +240,13 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
           Copy last set
         </button>
       </div>
-      {ghosts.length > 0 && (
+      {/* Stays in place (disabled) once every ghost is logged: if it vanished, the card would
+          shrink and, scrolled to the bottom, slide the page so the next tap on reps + hit ✕. */}
+      {previous && (
         <button
           type="button"
           className="btn btn-block copy-previous"
+          disabled={ghosts.length === 0}
           onClick={() =>
             addSets(
               sessionId,
@@ -252,7 +255,7 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
             )
           }
         >
-          Copy previous session’s sets ({ghosts.length})
+          {ghosts.length > 0 ? `Copy previous session’s sets (${ghosts.length})` : 'Previous session’s sets all logged'}
         </button>
       )}
 

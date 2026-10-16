@@ -1,3 +1,4 @@
+import { Dexie } from 'dexie';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeBackup, parseBackup, readAll, restoreBackup } from '../src/db/backup';
 import { db } from '../src/db/db';
@@ -22,6 +23,7 @@ import {
   makeRound,
   monthGrid,
   nextPlan,
+  normaliseSaunaEntry,
   parseTimeLeft,
   planText,
   roundStats,
@@ -40,10 +42,8 @@ const session = (date: string, over: Partial<SaunaSession> = {}): SaunaSession =
   date,
   context: 'afterLifting',
   rounds: [makeRound(15, 0), makeRound(15, 0)],
-  bench: 'upper',
-  temp: null,
   feel: 3,
-  water: false,
+  note: '',
   createdAt: seq,
   updatedAt: seq,
   ...over,
@@ -226,10 +226,8 @@ describe('sauna storage', () => {
     date: '2026-10-14',
     context: 'afterLifting',
     rounds: [makeRound(15, 0), makeRound(15, 217)],
-    bench: 'upper',
-    temp: 'high',
     feel: 3,
-    water: true,
+    note: '  Crowded tonight ',
     ...over,
   });
 
@@ -238,6 +236,7 @@ describe('sauna storage', () => {
     const id = await saveSaunaSession(tampered);
     const [saved] = (await saunaEntries()) as SaunaSession[];
     expect(saved.rounds[0].completedSec).toBe(683);
+    expect(saved.note).toBe('Crowded tonight');
 
     await saveSaunaSession(fields({ feel: 5, rounds: [makeRound(20, 0)] }), id);
     const edited = (await db.saunaEntries.get(id)) as SaunaSession;
@@ -255,9 +254,9 @@ describe('sauna storage', () => {
   });
 
   it('the last session (not skip) is used to pre-fill', async () => {
-    await saveSaunaSession(fields({ date: '2026-10-12', bench: 'lower' }));
-    await saveSaunaSession(fields({ date: '2026-10-14', bench: 'upper' }));
-    await saveSaunaSession(fields({ date: '2026-10-13', bench: 'lower' })); // back-dated
+    await saveSaunaSession(fields({ date: '2026-10-12', context: 'standalone' }));
+    await saveSaunaSession(fields({ date: '2026-10-14', context: 'afterLifting' }));
+    await saveSaunaSession(fields({ date: '2026-10-13', context: 'afterCardio' })); // back-dated
     await saveSaunaSkip({ date: '2026-10-15', reason: 'sick' });
     expect((await lastSaunaSession())?.date).toBe('2026-10-14');
   });
@@ -289,6 +288,23 @@ describe('sauna storage', () => {
     expect((await saunaEntries()).map((e) => e.date)).toEqual(['2026-10-12', '2026-10-13', '2026-10-14']);
   });
 
+  it('upgrades sessions saved before notes: bench, temperature and water dropped, empty note added', async () => {
+    db.close();
+    await Dexie.delete('gym-log');
+    const v2 = new Dexie('gym-log');
+    v2.version(1).stores({ exercises: 'id, &nameKey', templates: 'id, order', sessions: 'id, status, startedAt, *exerciseIds', settings: 'id' });
+    v2.version(2).stores({ saunaEntries: 'id, date' });
+    const { note: _n, ...current } = session('2026-10-13');
+    await v2.table('saunaEntries').bulkAdd([{ ...current, bench: 'upper', temp: 'high', water: true }, skip('2026-10-14')]);
+    v2.close();
+
+    await db.open();
+    const [upgraded, kept] = await saunaEntries();
+    expect(upgraded).toEqual({ ...current, note: '' });
+    expect(kept.kind).toBe('skip');
+    expect(normaliseSaunaEntry(upgraded)).toEqual(upgraded);
+  });
+
   it('backs up and restores sauna entries; older backups without them still restore', async () => {
     await updateSettings({ sauna: { weeklyTarget: 4, samplesAddedAt: 1 } });
     await saveSaunaSession(fields());
@@ -308,5 +324,11 @@ describe('sauna storage', () => {
     expect(await saunaEntries()).toEqual([]);
     expect((await getSettings()).sauna.weeklyTarget).toBe(3);
     expect(await seedSaunaSamplesIfNeeded()).toBe(false);
+
+    // A v2 backup made before notes: restored entries are brought up to date.
+    const old = makeBackup({ ...(await readAll()), saunaEntries: [{ ...session('2026-10-13'), note: undefined, bench: 'lower' } as never] });
+    await restoreBackup(parseBackup(JSON.stringify(old)));
+    expect(await saunaEntries()).toMatchObject([{ note: '' }]);
+    expect((await saunaEntries())[0]).not.toHaveProperty('bench');
   });
 });

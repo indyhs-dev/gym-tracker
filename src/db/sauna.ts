@@ -44,10 +44,8 @@ function cleanSession(f: SaunaSessionFields): SaunaSessionFields {
     date: f.date,
     context: f.context,
     rounds: f.rounds.map((r) => makeRound(r.plannedMin, r.leftSec, r.reason)),
-    bench: f.bench,
-    temp: f.temp,
     feel: feel as SaunaFeel,
-    water: f.water,
+    note: f.note.trim(),
   };
 }
 
@@ -108,26 +106,20 @@ export async function seedSaunaSamplesIfNeeded(now = Date.now()): Promise<boolea
       session(0, {
         context: 'afterLifting',
         rounds: [makeRound(15, 0), makeRound(15, 0)],
-        bench: 'upper',
-        temp: 'mid',
         feel: 3,
-        water: true,
+        note: '',
       }),
       session(1, {
         context: 'afterCardio',
         rounds: [makeRound(15, 0), makeRound(15, 3 * 60 + 37, 'tooHot')],
-        bench: 'upper',
-        temp: 'high',
         feel: 2,
-        water: true,
+        note: 'Hotter than usual today',
       }),
       session(2, {
         context: 'afterLifting',
         rounds: [makeRound(15, 0), makeRound(15, 0)],
-        bench: 'lower',
-        temp: 'mid',
         feel: 4,
-        water: false,
+        note: '',
       }),
     ]);
     await db.settings.put({ ...settings, sauna: { ...settings.sauna, samplesAddedAt: now } });

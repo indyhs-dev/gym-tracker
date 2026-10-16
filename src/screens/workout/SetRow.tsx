@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import StepField from '../../components/StepField';
 import type { SetFields } from '../../db/sessions';
 import type { Exercise, WorkoutSet } from '../../db/types';
@@ -22,6 +22,9 @@ interface Props {
   done?: boolean;
 }
 
+/** Delete only counts after a pause since the previous tap on ✕ / Delete. */
+const DELETE_PAUSE_MS = 600;
+
 /**
  * One set. A ghost row looks the same but dimmed; tapping "Log", typing,
  * using −/+ or the warm-up chip turns it into a real set. In a live workout,
@@ -33,6 +36,8 @@ export default function SetRow({ set, ghost, label, exercise, weightUnit, onChan
   const [noteOpen, setNoteOpen] = useState(set !== undefined && set.note !== '');
   const [note, setNote] = useState(set?.note ?? '');
   const [confirming, setConfirming] = useState(false);
+  // When the last tap on ✕ / Delete happened: a rapid run of taps (spamming + nearby) never deletes.
+  const lastDeleteTap = useRef(0);
 
   // A first tap on ✕ arms delete; it disarms itself after 3 s.
   useEffect(() => {
@@ -84,11 +89,27 @@ export default function SetRow({ set, ghost, label, exercise, weightUnit, onChan
               ✎
             </button>
             {confirming ? (
-              <button type="button" className="chip-hit" onClick={onDelete}>
+              <button
+                type="button"
+                className="chip-hit"
+                onClick={() => {
+                  const tooSoon = Date.now() - lastDeleteTap.current < DELETE_PAUSE_MS;
+                  lastDeleteTap.current = Date.now();
+                  if (!tooSoon) onDelete?.();
+                }}
+              >
                 <span className="chip chip-confirm">Delete</span>
               </button>
             ) : (
-              <button type="button" className="icon-button" aria-label="Delete set" onClick={() => setConfirming(true)}>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Delete set"
+                onClick={() => {
+                  lastDeleteTap.current = Date.now();
+                  setConfirming(true);
+                }}
+              >
                 ✕
               </button>
             )}

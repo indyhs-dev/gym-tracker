@@ -1,40 +1,31 @@
 import type { ReactNode } from 'react';
-import { NavLink } from 'react-router';
+import { Link, useLocation } from 'react-router';
+import { sectionOf, type Section } from '../lib/nav';
 
-const tabs: { to: string; label: string; icon: ReactNode }[] = [
+// The bottom bar picks the section; each section has its own Today · History · Progress at the top.
+const tabs: { to: string; section: Section; label: string; icon: ReactNode }[] = [
   {
     to: '/',
-    label: 'Today',
+    section: 'gym',
+    label: 'Gym',
     icon: (
       <>
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M3 10h18M8 3v4M16 3v4" />
+        <rect x="4.5" y="7" width="3" height="10" rx="1" />
+        <rect x="16.5" y="7" width="3" height="10" rx="1" />
+        <path d="M7.5 12h9M2.5 10v4M21.5 10v4" />
       </>
     ),
-  },
-  {
-    to: '/history',
-    label: 'History',
-    icon: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </>
-    ),
-  },
-  {
-    to: '/progress',
-    label: 'Progress',
-    icon: <path d="M3 17l6-6 4 4 8-8M15 7h6v6" />,
   },
   {
     to: '/sauna',
+    section: 'sauna',
     label: 'Sauna',
     // Heat rising from a bench.
     icon: <path d="M8 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M12 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M16 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M4 19h16" />,
   },
   {
     to: '/settings',
+    section: 'settings',
     label: 'Settings',
     icon: (
       <>
@@ -48,17 +39,21 @@ const tabs: { to: string; label: string; icon: ReactNode }[] = [
 ];
 
 export default function TabBar() {
+  const current = sectionOf(useLocation().pathname);
   return (
     <nav className="tabbar" aria-label="Main">
       <div className="tabbar-inner">
-        {tabs.map((tab) => (
-          <NavLink key={tab.to} to={tab.to} end={tab.to === '/'} className="tab">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              {tab.icon}
-            </svg>
-            {tab.label}
-          </NavLink>
-        ))}
+        {tabs.map((tab) => {
+          const active = tab.section === current;
+          return (
+            <Link key={tab.to} to={tab.to} className={active ? 'tab active' : 'tab'} aria-current={active ? 'page' : undefined}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                {tab.icon}
+              </svg>
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

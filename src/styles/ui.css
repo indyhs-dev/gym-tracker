@@ -1,3 +1,32 @@
+/* Section header: title plus Today · History · Progress */
+.section-header .screen-title {
+  margin-bottom: 4px;
+}
+
+.section-tabs {
+  display: flex;
+  gap: 28px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.section-tab {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.section-tab.active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
 /* Sub-screen header */
 .screen-header .back {
   display: inline-flex;
@@ -794,6 +823,12 @@
   color: var(--accent);
 }
 
+.copy-previous:disabled {
+  border-color: var(--line);
+  color: var(--muted);
+  opacity: 1;
+}
+
 .last-time {
   margin-top: 10px !important;
   color: var(--muted);
@@ -1566,9 +1601,15 @@
 }
 
 /* Sauna: screen */
-.sauna-view {
-  margin-top: 20px;
-  margin-bottom: 4px;
+.sauna-last {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sauna-first {
+  margin-top: 0;
 }
 
 .step-up {
@@ -1596,6 +1637,16 @@
 
 .sauna-secondary {
   margin-top: 10px !important;
+}
+
+.field .note-field {
+  margin-top: 0;
+}
+
+.sauna-note {
+  margin-top: 2px;
+  font-style: italic;
+  white-space: pre-wrap;
 }
 
 .sauna-feel {

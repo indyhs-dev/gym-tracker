@@ -1,5 +1,14 @@
 import { useLocation, useNavigate } from 'react-router';
 
+export type Section = 'gym' | 'sauna' | 'settings';
+
+/** Which bottom-bar section a path belongs to. */
+export function sectionOf(pathname: string): Section {
+  if (pathname.startsWith('/sauna')) return 'sauna';
+  if (pathname.startsWith('/settings')) return 'settings';
+  return 'gym';
+}
+
 /** Go back in history, or to `fallback` if this screen was opened directly. */
 export function useGoBack(fallback: string): () => void {
   const navigate = useNavigate();

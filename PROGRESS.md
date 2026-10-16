@@ -29,6 +29,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 ## After Phase 2 (user requests)
 - [x] 18. Rest timer (requested 13 Oct 2026 after trying the app at the gym)
 - [x] 19. Sauna tracker (requested 16 Oct 2026): logging, skips, weekly target, charts, step-up card
+- [x] 20. Reps + mis-tap fix, simpler sauna log with a note, Gym / Sauna sections (requested 16 Oct 2026)
 
 ## In progress
 Nothing.
@@ -37,7 +38,8 @@ Nothing.
 - Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
 - Everything in the brief is now built. Anything further would be new requests from the user.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
-- Chunk 19 (sauna): the user checks the sample sessions in the charts, then removes them in **Settings → Sauna → Remove 3 sample sessions**.
+- Chunk 19 (sauna) is live. The user checks the sample sessions in the charts, then removes them in **Settings → Sauna → Remove 3 sample sessions**.
+- Chunk 20 is pushed, waiting to be tried on the phone (especially spamming reps + at the gym).
 
 ## How to run
 ```
@@ -47,19 +49,32 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
-npm run check:dod        # after build: Phase 1 + 2 + sauna definition of done in Chrome (43 checks)
+npm run check:dod        # after build: Phase 1 + 2 + sauna definition of done in Chrome (46 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Chunk 20 (16 Oct 2026), three user requests:**
+  - **Reps + mis-tap (bug).** Reproduced: on the last ghost set, + logged it, so the "Copy previous session's sets" button vanished. Scrolled to the bottom, the page got 56 px shorter and slid down, so the next tap landed on that set's ✕ (and the one after on Delete).
+    - The button now stays in place, disabled, as "Previous session's sets all logged".
+    - The rest-timer spacer is kept for the whole live workout, so closing the timer can't shift the page either.
+    - `touch-action: manipulation` turns off iOS double-tap zoom, which can also nudge the page on rapid taps (pinch zoom still works).
+    - Delete only counts after a 600 ms pause since the previous tap on ✕ / Delete (`DELETE_PAUSE_MS` in `SetRow.tsx`), so spamming never deletes a set.
+  - **Simpler sauna log.** Bench (always upper), temperature and water are gone. Sessions have an optional **note** instead, shown in italics in History and on the Last session card. Notes aren't pre-filled.
+    - Dexie **v3** upgrades stored entries: it drops those three fields and adds `note: ''` (`normaliseSaunaEntry`). Restoring an older backup applies the same clean-up.
+  - **Navigation: Gym and Sauna sections** (the user asked for the best option from a designer's point of view).
+    - The bottom bar is now **Gym · Sauna · Settings**. Each section's screens share a header: its title, then **Today · History · Progress** text tabs with an accent underline (`SectionHeader`).
+    - Gym keeps its routes (`/`, `/history`, `/progress`). Sauna is now `/sauna`, `/sauna/history` and `/sauna/progress`; the `?view=` switch is gone.
+    - Sauna Today has Log sauna, Log a skip, the step-up card, This week and Last session. History lists entries (tap to edit or delete). Progress has the charts and is lazy-loaded like gym Progress.
+    - Why: it matches how the user thinks about the app (two activities with the same three views). The most frequent switch, gym → sauna right after a workout, is one thumb tap in the bottom bar. A footer that expands into more buttons was avoided: it hides navigation, costs a tap every time, and changes under your thumb mid-set.
 - **Sauna tracker (chunk 19, 16 Oct 2026).** Logging and tracking only: no timer and no notifications (the user times rounds on the iPhone Clock app).
-  - **Navigation:** a 5th tab, **Sauna** (between Progress and Settings). It's lazy-loaded like Progress and shares the Recharts chunk with it. Settings has a new **Sauna** screen for the weekly target and removing sample data.
+  - **Navigation:** originally a 5th tab, **Sauna**. Chunk 20 replaced this with Gym · Sauna sections (see above). Settings has a new **Sauna** screen for the weekly target and removing sample data.
   - **Data:** Dexie **v2** adds one table, `saunaEntries: 'id, date'`. Existing tables are untouched. Each entry is a session or a skip (`kind`).
     - `date` is a "YYYY-MM-DD" calendar day in **Australia/Brisbane** (`SAUNA_TIME_ZONE`). Week maths works on these strings, so it doesn't depend on the device's time zone or daylight saving.
     - Each round stores `plannedMin`, `leftSec` (as entered, so it can be shown that way) and `completedSec` = planned − left. `completedSec` is always recomputed on save, and all stats use it. A blank or zero time left means the round was completed.
   - `settings.sauna = { weeklyTarget: 3, samplesAddedAt }`, filled in by `withDefaults()`.
   - **Backup format v2** includes `saunaEntries`. v1 backups still restore, with no sauna data. Restoring never re-adds the samples.
-  - **Logging:** the sheet pre-fills context, the plan (round count and lengths), bench, temperature and water from the last session. Rounds start as Completed and Feel starts blank (it's required). The fast path is three taps: Log sauna → feel → Save. Save is pinned at the bottom of the sheet (new optional `footer` on `Sheet`).
+  - **Logging:** the sheet pre-fills the context and the plan (round count and lengths) from the last session. Bench, temperature and water were removed in chunk 20. Rounds start as Completed and Feel starts blank (it's required). The fast path is three taps: Log sauna → feel → Save. Save is pinned at the bottom of the sheet (new optional `footer` on `Sheet`).
   - **Time left:** the iPhone number pad has no colon, so digits fill from the right like a timer (3, 3, 7 → 3:37). It must be less than the planned time, and seconds must be under 60.
   - **Skips** count towards the weekly target (`sessions + skips ≥ target`), so a skip can't make a week fall short.
     - "Weeks on target" covers the last 8 weeks, from the week of the first entry. This week only counts once it's met.

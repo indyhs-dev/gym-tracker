@@ -142,6 +142,15 @@ try {
   await page.waitForTimeout(300);
   const copied = await loggedRows(bench).locator('input[aria-label="weight"]').evaluateAll((els) => els.map((e) => e.value));
   check('copy previous session’s sets', JSON.stringify(copied) === '["22.5","22.5"]', copied.join(', '));
+  // Once every ghost is logged the button stays (disabled), so the card never shrinks under your thumb.
+  const copyButton = bench.locator('.copy-previous');
+  check('copy previous stays in place once all logged (no page jump)',
+    (await copyButton.isDisabled()) && ((await copyButton.textContent()) ?? '').includes('all logged'));
+  // Rapid taps on ✕ then Delete (like spamming + nearby) never delete a set.
+  await loggedRows(bench).first().getByRole('button', { name: 'Delete set' }).click();
+  await loggedRows(bench).first().locator('.chip-confirm').click();
+  await page.waitForTimeout(200);
+  check('rapid taps on ✕ don’t delete a set', (await loggedRows(bench).count()) === 2);
   duration = await finish('21:10', '21:55');
   check('second Torso finished with correct duration', duration === '45m', duration);
 
@@ -201,39 +210,53 @@ try {
   const blockText = (await page.locator('.block-card').textContent()) ?? '';
   check('training block shows the week number', blockText.includes('Week 3'), blockText);
 
+  // --- Navigation: Gym · Sauna · Settings, each section with Today · History · Progress ---
+  await go('#/');
+  const bar = await page.locator('.tab').allTextContents();
+  const gymTabs = await page.locator('.section-tab').allTextContents();
+  await go('#/sauna/progress');
+  const saunaOn = `${await page.locator('.tab.active').textContent()} / ${await page.locator('.section-tab.active').textContent()}`;
+  check('navigation: Gym · Sauna · Settings, each with Today · History · Progress',
+    bar.join() === 'Gym,Sauna,Settings' && gymTabs.join() === 'Today,History,Progress' && saunaOn === 'Sauna / Progress', saunaOn);
+
   // --- Sauna ---
   const saunaRows = () => page.locator('.history-row');
-  await go('#/sauna?view=history');
+  const saveSheet = async (name) => {
+    await page.getByRole('button', { name }).click();
+    await page.locator('.sheet').waitFor({ state: 'detached' });
+  };
+  await go('#/sauna/history');
   check('sauna: 3 sample sessions seeded', (await saunaRows().count()) === 3);
   // The usual case: defaults from the last session, pick a feel score, save.
+  await go('#/sauna');
   await page.getByRole('button', { name: /^Log sauna/ }).click();
   await page.getByRole('group', { name: 'Feel, 1 to 5' }).getByRole('button', { name: '4' }).click();
-  await page.getByRole('button', { name: 'Save session' }).click();
-  await page.locator('.sheet').waitFor({ state: 'detached' });
+  await saveSheet('Save session');
+  await go('#/sauna/history');
   check('sauna: logged from defaults in 3 taps', (await saunaRows().count()) === 4);
+  await go('#/sauna');
   await page.getByRole('button', { name: /^Log sauna/ }).click();
   await page.getByLabel('Round 2 time left (m:ss)').pressSequentially('337');
   const preview = (await page.locator('.round-preview').textContent()) ?? '';
   await page.getByRole('group', { name: 'Feel, 1 to 5' }).getByRole('button', { name: '3' }).click();
-  await page.getByRole('button', { name: 'Save session' }).click();
-  await page.locator('.sheet').waitFor({ state: 'detached' });
+  await page.getByLabel('Sauna note').fill('Busy tonight');
+  await saveSheet('Save session');
+  await go('#/sauna/history');
   const leftEarly = (await saunaRows().first().textContent()) ?? '';
-  check('sauna: 3:37 left on 15 min = 11:23 done, shown as entered',
-    preview.includes('11:23 done') && leftEarly.includes('Round 2: 15 min, left with 3:37 remaining'), preview);
+  check('sauna: 3:37 left on 15 min = 11:23 done, shown as entered, with note',
+    preview.includes('11:23 done') && leftEarly.includes('Round 2: 15 min, left with 3:37 remaining') && leftEarly.includes('Busy tonight'), preview);
+  await go('#/sauna');
   await page.getByRole('button', { name: 'Log a skip' }).click();
   await page.locator('.sheet .chip', { hasText: 'Sauna closed' }).click();
-  await page.getByRole('button', { name: 'Save skip' }).click();
-  await page.locator('.sheet').waitFor({ state: 'detached' });
-  await go('#/sauna');
+  await saveSheet('Save skip');
   const saunaWeek = (await page.locator('.card-link .stats').textContent()) ?? '';
   check('sauna: skip logged and shown for the week', saunaWeek.includes('1 skipped'), saunaWeek);
+  await go('#/sauna/progress');
   check('sauna: weekly chart, calendar and feel trend', (await page.locator('.chart-card').count()) === 3 && (await page.locator('.cal').count()) === 1);
-  // Delete the left-early session from History.
-  await go('#/sauna?view=history');
-  await saunaRows().filter({ hasText: '3:37 remaining · ' }).first().waitFor();
+  // Delete the left-early session from History (newest first: skip, then it).
+  await go('#/sauna/history');
   await saunaRows().nth(1).click();
-  await page.getByRole('button', { name: 'Delete session' }).click();
-  await page.locator('.sheet').waitFor({ state: 'detached' });
+  await saveSheet('Delete session');
   check('sauna: deleted from history', (await saunaRows().count()) === 5);
 
   // --- Export JSON and CSV ---
@@ -278,7 +301,7 @@ try {
   check('history back after restore', (await page.locator('.history-row').count()) === 5);
   await go('#/');
   check('training block restored too', ((await page.locator('.block-card').textContent()) ?? '').includes('Week 3'));
-  await go('#/sauna?view=history');
+  await go('#/sauna/history');
   check('sauna entries restored too', (await page.locator('.history-row').count()) === 5);
   await go('#/history');
 
@@ -294,7 +317,7 @@ try {
   await go('#/progress');
   await page.locator('.recharts-surface').first().waitFor({ timeout: 5000 }).catch(() => {});
   check('progress charts offline', (await page.locator('.recharts-surface').count()) > 0);
-  await go('#/sauna');
+  await go('#/sauna/progress');
   await page.locator('.recharts-surface').first().waitFor({ timeout: 5000 }).catch(() => {});
   check('sauna charts offline', (await page.locator('.recharts-surface').count()) > 0);
 

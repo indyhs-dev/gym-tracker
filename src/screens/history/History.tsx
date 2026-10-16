@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
+import SectionHeader from '../../components/SectionHeader';
 import { db } from '../../db/db';
 import { finishedSessions } from '../../db/sessions';
 import type { Exercise, Session } from '../../db/types';
@@ -11,7 +12,7 @@ export default function History() {
 
   return (
     <>
-      <h1 className="screen-title">History</h1>
+      <SectionHeader section="gym" />
       {sessions && sessions.length === 0 && <p className="empty">No sessions yet.</p>}
       {sessions &&
         exercises &&

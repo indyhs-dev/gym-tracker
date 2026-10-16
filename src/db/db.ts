@@ -1,4 +1,5 @@
 import { Dexie, type EntityTable } from 'dexie';
+import { normaliseSaunaEntry } from '../lib/sauna';
 import { defaultSettings } from './defaults';
 import type { Exercise, SaunaEntry, Session, Settings, Template } from './types';
 
@@ -21,6 +22,18 @@ db.version(1).stores({
 db.version(2).stores({
   saunaEntries: 'id, date',
 });
+
+// v3: sauna sessions gain a note and lose bench, temperature and water.
+db.version(3)
+  .stores({ saunaEntries: 'id, date' })
+  .upgrade((tx) =>
+    tx
+      .table<SaunaEntry>('saunaEntries')
+      .toCollection()
+      .modify((entry, ref) => {
+        ref.value = normaliseSaunaEntry(entry);
+      }),
+  );
 
 db.on('populate', (tx) => {
   tx.table('settings').add(defaultSettings());

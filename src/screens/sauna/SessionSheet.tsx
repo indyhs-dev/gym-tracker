@@ -1,20 +1,12 @@
 import { useState } from 'react';
 import ChoiceChips from '../../components/ChoiceChips';
+import NoteField from '../../components/NoteField';
 import Segmented from '../../components/Segmented';
 import Sheet from '../../components/Sheet';
 import Stepper from '../../components/Stepper';
-import Toggle from '../../components/Toggle';
 import { deleteSaunaEntry, saveSaunaSession } from '../../db/sauna';
-import type {
-  SaunaBench,
-  SaunaContext,
-  SaunaExitReason,
-  SaunaFeel,
-  SaunaSession,
-  SaunaTemp,
-} from '../../db/types';
+import type { SaunaContext, SaunaExitReason, SaunaFeel, SaunaSession } from '../../db/types';
 import {
-  BENCH_LABEL,
   CONTEXT_LABEL,
   DEFAULT_ROUND_MINUTES,
   DEFAULT_ROUNDS,
@@ -27,7 +19,6 @@ import {
   parseTimeLeft,
   ROUND_MINUTES,
   saunaToday,
-  TEMP_LABEL,
   timeLeftInput,
 } from '../../lib/sauna';
 
@@ -42,10 +33,8 @@ interface Draft {
   date: string;
   context: SaunaContext;
   rounds: RoundDraft[];
-  bench: SaunaBench;
-  temp: SaunaTemp | null;
   feel: SaunaFeel | null;
-  water: boolean;
+  note: string;
 }
 
 const options = <T extends string>(labels: Record<T, string>) =>
@@ -53,7 +42,7 @@ const options = <T extends string>(labels: Record<T, string>) =>
 
 /**
  * Editing: the session as saved. New: today, every round completed, no feel
- * score yet, and everything else copied from the last session.
+ * score or note yet, and the context and plan copied from the last session.
  */
 function initialDraft(entry: SaunaSession | undefined, last: SaunaSession | null): Draft {
   if (entry) {
@@ -71,10 +60,8 @@ function initialDraft(entry: SaunaSession | undefined, last: SaunaSession | null
     date: saunaToday(),
     context: last?.context ?? 'afterLifting',
     rounds: plan.map((plannedMin) => ({ plannedMin, left: '', reason: null })),
-    bench: last?.bench ?? 'upper',
-    temp: last?.temp ?? null,
     feel: null,
-    water: last?.water ?? false,
+    note: '',
   };
 }
 
@@ -125,10 +112,8 @@ export default function SessionSheet({ entry, last, onClose }: Props) {
             const p = parsed[i];
             return makeRound(r.plannedMin, p.ok ? p.sec : 0, r.reason);
           }),
-          bench: draft.bench,
-          temp: draft.temp,
           feel: draft.feel!,
-          water: draft.water,
+          note: draft.note,
         },
         entry?.id,
       );
@@ -200,21 +185,9 @@ export default function SessionSheet({ entry, last, onClose }: Props) {
       </div>
 
       <div className="field">
-        <span className="field-label">Bench</span>
-        <Segmented label="Bench" options={options(BENCH_LABEL)} value={draft.bench} onChange={(bench) => set({ bench })} />
+        <span className="field-label">Note · optional</span>
+        <NoteField label="Sauna note" placeholder="Anything else worth noting" value={draft.note} onChange={(note) => set({ note })} />
       </div>
-
-      <div className="field">
-        <span className="field-label">Temperature · optional</span>
-        <Segmented
-          label="Temperature (optional; tap again to clear)"
-          options={options(TEMP_LABEL)}
-          value={draft.temp}
-          onChange={(temp) => set({ temp: draft.temp === temp ? null : temp })}
-        />
-      </div>
-
-      <Toggle label="Drank water" checked={draft.water} onChange={(water) => set({ water })} />
 
       {entry && (
         <div className="danger-zone">
