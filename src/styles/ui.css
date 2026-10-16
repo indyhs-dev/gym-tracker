@@ -1452,3 +1452,268 @@
     font-size: 34px;
   }
 }
+
+/* Screen-reader-only text */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Sheet with a pinned footer (Save always in reach) */
+.sheet-body.has-footer {
+  padding-bottom: 16px;
+}
+
+.sheet-footer {
+  padding: 10px var(--gutter) calc(10px + var(--safe-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.sheet-footer-note {
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+/* A wrapping row of single-choice chips */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+/* Sauna: log sheet */
+.round-card {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.round-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.round-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.round-head .segmented {
+  flex: none;
+  width: 190px;
+  background: var(--bg);
+}
+
+.round-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.round-done {
+  min-height: 56px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.round-done[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.round-left {
+  min-height: 56px;
+  background: var(--bg);
+  text-align: center;
+}
+
+.round-left::placeholder {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.round-preview {
+  margin: 8px 0 0 !important;
+}
+
+.round-error {
+  margin: 8px 0 0;
+}
+
+.round-card .chip-row {
+  margin-top: 2px;
+}
+
+.feel-scale {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Sauna: screen */
+.sauna-view {
+  margin-top: 20px;
+  margin-bottom: 4px;
+}
+
+.step-up {
+  border: 1px solid var(--accent);
+}
+
+.step-up p + p {
+  margin-top: 6px;
+}
+
+.step-up-title {
+  margin-bottom: 6px;
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.step-up-dismiss {
+  margin: 6px 0 -8px -18px;
+}
+
+.sauna-met {
+  margin-top: 10px !important;
+}
+
+.sauna-secondary {
+  margin-top: 10px !important;
+}
+
+.sauna-feel {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.chart-key-bar {
+  height: 10px;
+  width: 10px;
+  border-radius: 2px;
+}
+
+.chart-key-dashed {
+  width: 20px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--text) 0 4px, transparent 4px 8px);
+}
+
+/* Sauna: month calendar */
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -8px 0 4px;
+}
+
+.cal-head .icon-button {
+  margin: 0;
+  color: var(--accent);
+  font-size: 26px;
+}
+
+.cal-head .icon-button:disabled {
+  color: var(--faint);
+  opacity: 0.4;
+}
+
+.cal {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 4px;
+  table-layout: fixed;
+}
+
+.cal th {
+  padding-bottom: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cal td {
+  padding: 0;
+  text-align: center;
+}
+
+.cal-day {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  max-height: 44px;
+  margin: 0 auto;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Completed: solid. Left early: ring. Skipped: grey. Shape differs, not just colour. */
+.cal-day.is-completed {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.cal-day.is-partial {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.cal-day.is-skipped {
+  background: rgb(245 245 244 / 0.18);
+  color: var(--text);
+}
+
+.cal-day.is-today {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.cal-day.is-future {
+  color: var(--faint);
+}
+
+.cal-legend {
+  padding-top: 8px;
+}
+
+.cal-key {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+
+.cal-key.is-completed {
+  background: var(--accent);
+}
+
+.cal-key.is-partial {
+  border-color: var(--accent);
+}
+
+.cal-key.is-skipped {
+  background: rgb(245 245 244 / 0.18);
+}

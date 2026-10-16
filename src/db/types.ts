@@ -89,10 +89,67 @@ export interface TrainingBlock {
   weekOffAfter: number;
 }
 
+export interface SaunaSettings {
+  /** Sessions per week (Monday–Sunday) to aim for. */
+  weeklyTarget: number;
+  /** When the sample sessions were added (or would have been); null = not yet. */
+  samplesAddedAt: number | null;
+}
+
 export interface Settings {
   id: 'app';
   rest: RestGuidance;
   lastBackupAt: number | null;
   seededAt: number | null;
   block: TrainingBlock;
+  sauna: SaunaSettings;
 }
+
+// ---- Sauna ----
+
+export type SaunaContext = 'afterLifting' | 'afterCardio' | 'standalone';
+export type SaunaBench = 'upper' | 'lower';
+export type SaunaTemp = 'low' | 'mid' | 'high';
+export type SaunaExitReason = 'tooHot' | 'dehydrated' | 'tired' | 'other';
+export type SaunaSkipReason = 'rest' | 'sick' | 'closed' | 'other';
+export type SaunaFeel = 1 | 2 | 3 | 4 | 5;
+
+export interface SaunaRound {
+  /** Planned length in minutes (15 or 20). */
+  plannedMin: number;
+  /** Time left on the phone timer when leaving early, in seconds. 0 = completed. Kept to show the round as entered. */
+  leftSec: number;
+  /** Seconds actually done = planned − left. Every chart and stat uses this. */
+  completedSec: number;
+  /** Why the round ended early (optional; only when leftSec > 0). */
+  reason: SaunaExitReason | null;
+}
+
+interface SaunaEntryBase {
+  id: string;
+  /** Calendar day in Australia/Brisbane, "YYYY-MM-DD". */
+  date: string;
+  /** Added by the sample-data seed (removable from Settings → Sauna). */
+  sample?: true;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SaunaSession extends SaunaEntryBase {
+  kind: 'session';
+  context: SaunaContext;
+  rounds: SaunaRound[];
+  bench: SaunaBench;
+  temp: SaunaTemp | null;
+  /** 1 = survivable, 3 = comfortable, 5 = easy. */
+  feel: SaunaFeel;
+  water: boolean;
+}
+
+/** A gym day without the sauna. Never counts against the weekly target. */
+export interface SaunaSkip extends SaunaEntryBase {
+  kind: 'skip';
+  reason: SaunaSkipReason;
+}
+
+export type SaunaEntry = SaunaSession | SaunaSkip;

@@ -63,10 +63,12 @@ export default function Backup() {
     try {
       const parsed = parseBackup(await file.text());
       const d = parsed.data;
+      const sauna = d.saunaEntries?.length ?? 0;
       const ok = window.confirm(
         `Replace ALL data in the app with this backup from ${formatDate(parsed.exportedAt)}?\n\n` +
-          `It has ${plural(d.sessions.length, 'session')}, ${plural(d.templates.length, 'template')} and ` +
-          `${plural(d.exercises.length, 'exercise')}. Everything currently in the app will be replaced.`,
+          `It has ${plural(d.sessions.length, 'session')}, ${plural(d.templates.length, 'template')}, ` +
+          `${plural(d.exercises.length, 'exercise')} and ${sauna} sauna ${sauna === 1 ? 'entry' : 'entries'}. ` +
+          'Everything currently in the app will be replaced.',
       );
       if (!ok) return;
       await restoreBackup(parsed);

@@ -4,10 +4,12 @@ interface Props {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Pinned below the scrolling content (e.g. a Save button that's always in reach). */
+  footer?: ReactNode;
 }
 
 /** Bottom sheet over the current screen. Render it only while open. */
-export default function Sheet({ title, onClose, children }: Props) {
+export default function Sheet({ title, onClose, children, footer }: Props) {
   useEffect(() => {
     const root = document.documentElement;
     const previous = root.style.overflow;
@@ -29,7 +31,8 @@ export default function Sheet({ title, onClose, children }: Props) {
             Cancel
           </button>
         </div>
-        <div className="sheet-body">{children}</div>
+        <div className={footer ? 'sheet-body has-footer' : 'sheet-body'}>{children}</div>
+        {footer && <div className="sheet-footer">{footer}</div>}
       </div>
     </div>
   );

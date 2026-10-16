@@ -28,6 +28,12 @@ const tabs: { to: string; label: string; icon: ReactNode }[] = [
     icon: <path d="M3 17l6-6 4 4 8-8M15 7h6v6" />,
   },
   {
+    to: '/sauna',
+    label: 'Sauna',
+    // Heat rising from a bench.
+    icon: <path d="M8 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M12 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M16 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M4 19h16" />,
+  },
+  {
     to: '/settings',
     label: 'Settings',
     icon: (

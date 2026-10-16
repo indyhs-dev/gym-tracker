@@ -1,6 +1,7 @@
 import type { RestGuidance, Settings } from './types';
 
 export const DEFAULT_WEEK_OFF_AFTER = 12;
+export const DEFAULT_SAUNA_WEEKLY_TARGET = 3;
 
 export const DEFAULT_REST: RestGuidance = {
   warmup: '1–2 min',
@@ -16,5 +17,6 @@ export function defaultSettings(): Settings {
     lastBackupAt: null,
     seededAt: null,
     block: { startDate: null, weekOffAfter: DEFAULT_WEEK_OFF_AFTER },
+    sauna: { weeklyTarget: DEFAULT_SAUNA_WEEKLY_TARGET, samplesAddedAt: null },
   };
 }

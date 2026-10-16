@@ -7,6 +7,7 @@ import Backup from './screens/settings/Backup';
 import ExerciseEditor from './screens/settings/ExerciseEditor';
 import Exercises from './screens/settings/Exercises';
 import RestGuidance from './screens/settings/RestGuidance';
+import SaunaSettings from './screens/settings/SaunaSettings';
 import Settings from './screens/settings/Settings';
 import SlotEditor from './screens/settings/SlotEditor';
 import TemplateEditor from './screens/settings/TemplateEditor';
@@ -15,8 +16,9 @@ import TrainingBlock from './screens/settings/TrainingBlock';
 import Today from './screens/today/Today';
 import WorkoutScreen from './screens/workout/WorkoutScreen';
 
-// Charts are the heaviest code; load them only when the Progress tab opens.
+// Charts are the heaviest code; load them only when the Progress or Sauna tab opens.
 const Progress = lazy(() => import('./screens/progress/Progress'));
+const Sauna = lazy(() => import('./screens/sauna/Sauna'));
 
 export default function App() {
   // The workout screen is full-screen: no tab bar.
@@ -36,6 +38,14 @@ export default function App() {
               </Suspense>
             }
           />
+          <Route
+            path="/sauna"
+            element={
+              <Suspense fallback={<h1 className="screen-title">Sauna</h1>}>
+                <Sauna />
+              </Suspense>
+            }
+          />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/exercises" element={<Exercises />} />
           <Route path="/settings/exercises/new" element={<ExerciseEditor />} />
@@ -43,6 +53,7 @@ export default function App() {
           <Route path="/settings/rest" element={<RestGuidance />} />
           <Route path="/settings/backup" element={<Backup />} />
           <Route path="/settings/block" element={<TrainingBlock />} />
+          <Route path="/settings/sauna" element={<SaunaSettings />} />
           <Route path="/settings/templates" element={<Templates />} />
           <Route path="/settings/templates/:id" element={<TemplateEditor />} />
           <Route path="/settings/templates/:id/slots/:slotId" element={<SlotEditor />} />

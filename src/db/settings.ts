@@ -12,6 +12,7 @@ export function withDefaults(stored: Partial<Settings> | undefined): Settings {
     id: 'app',
     rest: { ...defaults.rest, ...stored?.rest },
     block: { ...defaults.block, ...stored?.block },
+    sauna: { ...defaults.sauna, ...stored?.sauna },
   };
 }
 

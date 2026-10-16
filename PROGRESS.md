@@ -28,6 +28,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 
 ## After Phase 2 (user requests)
 - [x] 18. Rest timer (requested 13 Oct 2026 after trying the app at the gym)
+- [x] 19. Sauna tracker (requested 16 Oct 2026): logging, skips, weekly target, charts, step-up card
 
 ## In progress
 Nothing.
@@ -36,6 +37,7 @@ Nothing.
 - Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
 - Everything in the brief is now built. Anything further would be new requests from the user.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
+- Chunk 19 (sauna): the user checks the sample sessions in the charts, then removes them in **Settings → Sauna → Remove 3 sample sessions**.
 
 ## How to run
 ```
@@ -45,11 +47,35 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
-npm run check:dod        # after build: Phase 1 + 2 definition of done in Chrome (35 checks)
+npm run check:dod        # after build: Phase 1 + 2 + sauna definition of done in Chrome (43 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Sauna tracker (chunk 19, 16 Oct 2026).** Logging and tracking only: no timer and no notifications (the user times rounds on the iPhone Clock app).
+  - **Navigation:** a 5th tab, **Sauna** (between Progress and Settings). It's lazy-loaded like Progress and shares the Recharts chunk with it. Settings has a new **Sauna** screen for the weekly target and removing sample data.
+  - **Data:** Dexie **v2** adds one table, `saunaEntries: 'id, date'`. Existing tables are untouched. Each entry is a session or a skip (`kind`).
+    - `date` is a "YYYY-MM-DD" calendar day in **Australia/Brisbane** (`SAUNA_TIME_ZONE`). Week maths works on these strings, so it doesn't depend on the device's time zone or daylight saving.
+    - Each round stores `plannedMin`, `leftSec` (as entered, so it can be shown that way) and `completedSec` = planned − left. `completedSec` is always recomputed on save, and all stats use it. A blank or zero time left means the round was completed.
+  - `settings.sauna = { weeklyTarget: 3, samplesAddedAt }`, filled in by `withDefaults()`.
+  - **Backup format v2** includes `saunaEntries`. v1 backups still restore, with no sauna data. Restoring never re-adds the samples.
+  - **Logging:** the sheet pre-fills context, the plan (round count and lengths), bench, temperature and water from the last session. Rounds start as Completed and Feel starts blank (it's required). The fast path is three taps: Log sauna → feel → Save. Save is pinned at the bottom of the sheet (new optional `footer` on `Sheet`).
+  - **Time left:** the iPhone number pad has no colon, so digits fill from the right like a timer (3, 3, 7 → 3:37). It must be less than the planned time, and seconds must be under 60.
+  - **Skips** count towards the weekly target (`sessions + skips ≥ target`), so a skip can't make a week fall short.
+    - "Weeks on target" covers the last 8 weeks, from the week of the first entry. This week only counts once it's met.
+    - There's no streak counter.
+  - **Charts:** sessions per week (last 8 weeks) with skips stacked in grey and a dashed target line. These are new optional `goal` and `extra` props on `WeeklyBars`; the Progress chart is unchanged.
+    - The month calendar shows completed days as solid accent, left-early days as an accent ring and skipped days as grey. Shape differs as well as colour, and there's a legend with counts.
+    - The feel trend uses the last 20 sessions.
+    - Completion rate and the average minutes per round use the same 20 sessions; the average is small, under the rate.
+  - **"Ready to step up?"** appears when the last 3 sessions were all on the same plan, every round was completed, feel was ≥ 4 each time, and the oldest of the 3 was within 21 days. These constants are at the top of `src/lib/sauna.ts`.
+    - Next step: lengthen every round to 20, then add a 15-minute round, up to 3 rounds (2 × 15 → 2 × 20 → 20 + 20 + 15 → 3 × 20).
+    - "Not now" hides the card until the next session (localStorage `gym-log.sauna-step-up-dismissed`).
+  - **Wording:** early exits read "left with 3:37 remaining" and "Left early". Nothing says failed or tapped out.
+  - **Sample data:** three sessions on Mon–Wed of the current week, added once on launch (`seedSaunaSamplesIfNeeded` in `main.tsx`) and flagged `sample: true`.
+    - Tuesday's session has a round left with 3:37 remaining.
+    - If Wednesday hasn't happened yet, last week's Mon–Wed are used, so nothing is dated in the future.
+    - **Settings → Sauna → Remove sample sessions** deletes only those. Deleting the line in `main.tsx` stops new installs getting them.
 - **Rest timer (chunk 18, 13 Oct 2026).** The user asked for it after testing at the gym, to stop switching to the iPhone stopwatch between sets. This overrides the brief's "text only, no timer" and adds red and green to the palette (used only by the timer).
   - Each set row in a **live** workout gets a round ✓ button. Tapping it ticks the set (green tick and set number), closes the keyboard and starts the rest timer. "✓ Log" on a ghost row logs the set and does the same. Past sessions and History edits have no ✓ and no timer.
   - The timer is a bar pinned to the bottom of the workout screen. It counts up like a stopwatch. It's **red** ("Rest · Ready in 2:14") until the lower number of the rest guidance has passed, then **green** ("Go · Ready · guide 3–5 min"). ✕ hides it. Tapping ✓ on another set restarts it.
