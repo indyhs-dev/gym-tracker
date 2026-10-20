@@ -31,6 +31,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 19. Sauna tracker (requested 16 Oct 2026): logging, skips, weekly target, charts, step-up card
 - [x] 20. Reps + mis-tap fix, simpler sauna log with a note, Gym / Sauna sections (requested 16 Oct 2026)
 - [x] 21. Minimal set logging (table with a Previous column, no ghost rows) + page-jump fix (requested 20 Oct 2026)
+- [x] 22. Warm-up and Go up as small chips, details on tap (requested 20 Oct 2026)
 
 ## In progress
 Nothing.
@@ -41,7 +42,7 @@ Nothing.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
 - Chunk 19 (sauna) is live. The user checks the sample sessions in the charts, then removes them in **Settings → Sauna → Remove 3 sample sessions**.
 - Chunk 20 is pushed, waiting to be tried on the phone (especially spamming reps + at the gym).
-- Chunk 21 is committed, not pushed yet (ask first). Then the user tries the new set table at the gym and asks for changes bit by bit.
+- Chunks 21–22 are committed, not pushed yet (ask first). Then the user tries the new set table at the gym and asks for changes bit by bit.
 
 ## How to run
 ```
@@ -56,6 +57,10 @@ npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Chunk 22 (20 Oct 2026): warm-up and Go up as chips.** The user found the warm-up and Go up text too wordy for the minimal look.
+  - Each is now one small pill in a row under the target line: **"Warm-up 10 · 15 · 17.5"** (weights only) and an accent **"↑ Try 25 kg"** ("↑ Add 2.5 kg" at bodyweight, "↑ Try +12.5 kg" with added load). With no weights to show, the warm-up pill is just the policy, e.g. "1 warm-up set".
+  - Tapping a pill opens an explanation sheet (`ActionSheet` now takes `children` and a `closeLabel`). Warm-up: what the policy means, "Worked out from 22.5 kg each, your first working set last time", and each step's weight, reps and % (`WarmupStep.percent`). Go up: set 1 hit the top of the range; if form was good try X (5–10% more), if not stay at the current weight.
+  - Pills are present from the moment the card loads, so they never shift the sets.
 - **Chunk 21 (20 Oct 2026): minimal set logging and the page-jump fix.** The user sent screenshots: pressing reps + slid the page down, so the next tap hit ✕. They also found the ghost rows (last session's sets pre-listed, logged with one tap) cluttered and unprofessional, and pointed to Hevy and a similar app as examples. "Do whatever you think is best"; they'll adjust bit by bit.
   - **The jump:** the warm-up box appeared *above* the sets the moment set 1 got reps, because "today's first working set" (needs reps > 0) became its source. Now the warm-up line uses **last session's work weight only** (`lastWorkWeight`), so it's fixed for the whole workout. Rule kept for the whole card: nothing above the sets may appear, disappear or change height while logging.
   - **Sets are a table:** Set · Previous · kg · reps · ✓ (✓ only in a live workout). Inputs are plain number fields (keypad) with no −/+ steppers, like the reference apps. Typing reps is fewer taps than spamming +, and there's nothing to spam.
@@ -63,7 +68,7 @@ npm run icons            # regenerate icons from public/icon.svg
   - **Previous column** (`previousBeside`, `src/lib/previous.ts`): last session's matching set, display only. Warm-ups line up with warm-ups and working sets with working sets, so a different number of warm-ups doesn't shift them. "–" where last time had fewer.
   - **Menus instead of row buttons** (`ActionSheet`, iOS-style, from the bottom): tapping the set number opens Make it a warm-up / working set, Add note, Delete set. ••• on the exercise opens Swap exercise, Add note, Remove exercise. Delete no longer sits next to the inputs, so the 2-tap ✕ and the 600 ms delete pause are gone. Removing an exercise only asks when it has sets. "Add note" focuses the field in the same tap (`flushSync`), so iOS opens the keyboard.
   - **Smaller header:** the exercise name in the accent colour, one muted line "2 × 5–12 · Rest 3–5 min" (type, warm-up policy and warm-up rest are no longer shown), the plan note, the exercise note only when it has text or was added from the menu. "Last time · date" is gone.
-  - **Hints are small print**, not boxes: "Warm-up" (steps, or the policy, e.g. "1 set", when there's no work weight) and "Go up".
+  - **Hints are small print**, not boxes: "Warm-up" and "Go up" (made into chips in chunk 22).
   - **Top-set line** sits under + Add set and is a single line (ellipsis if ever too long). With a last time it shows from the start: "Top set to beat · 22.5 × 9", then "↑ Beat last time · 22.5 × 12 vs 22.5 × 9" / "= Matched last time" / "Top set 22.5 × 8 · last time 22.5 × 9".
   - Done sets get a green tint across the row and a green ✓. Red (`--rest`) now also marks destructive menu actions.
   - Narrow phones (< 360 px) get tighter columns; nothing stacks. `StepField` was deleted (no other users).

@@ -14,7 +14,7 @@ import {
 } from '../../db/sessions';
 import type { Exercise, RestGuidance, SessionExercise, WarmupPolicy } from '../../db/types';
 import { formatKg, plural } from '../../lib/format';
-import { setsReps } from '../../lib/labels';
+import { setsReps, WARMUP_LABEL } from '../../lib/labels';
 import { previousBeside } from '../../lib/previous';
 import { compareTopSets, progressionHint, topSet, type TopSet } from '../../lib/progression';
 import { restAfter } from '../../lib/rest';
@@ -36,11 +36,11 @@ interface Props {
   live?: boolean;
 }
 
-/** Warm-up line when there's no work weight to build steps from. */
-const WARMUP_TEXT: Record<Exclude<WarmupPolicy, 'none'>, string> = {
-  full: 'Full, building up to your first set',
-  one: '1 set',
-  zeroToOne: '0–1 sets',
+/** What each warm-up policy asks for, in the warm-up sheet. */
+const WARMUP_ABOUT: Record<Exclude<WarmupPolicy, 'none'>, string> = {
+  full: 'A few lighter sets, building up to your first working set.',
+  one: 'One lighter set before your first working set.',
+  zeroToOne: 'One lighter set if you feel you need it, or go straight in.',
 };
 
 /**
@@ -53,6 +53,8 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
   const [menu, setMenu] = useState(false);
   const [swapping, setSwapping] = useState(false);
   const [noteOpen, setNoteOpen] = useState(item.note !== '');
+  /** Which hint chip's explanation is open. */
+  const [info, setInfo] = useState<'warmup' | 'goUp' | null>(null);
   const exercise = exercises.get(item.exerciseId);
   const name = exercise?.name ?? 'Unknown exercise';
   const slot = item.slot;
@@ -105,13 +107,22 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
     .filter(Boolean)
     .join(' · ');
 
-  // Warm-up line: steps from last time's work weight, else just the slot's policy.
+  // Warm-up chip: the step weights from last time's work weight, else just the slot's policy.
   const warmupPolicy = hints && slot && slot.warmup !== 'none' ? slot.warmup : null;
   const work = exercise && !exercise.bodyweight ? lastWorkWeight(previous?.sets) : null;
   const warmups = warmupPolicy && exercise && work ? warmupSuggestions(warmupPolicy, exercise.type, work, exercise.weightStep) : [];
 
+  // "Go up" chip: the weight to try, with the reasoning in its sheet.
   const progression = hints && exercise && slot ? progressionHint(previous?.sets, slot.repMax, exercise.weightStep) : null;
-  const kgUnit = exercise?.perHand ? 'kg each' : 'kg';
+  const kgUnit = exercise?.perHand ? 'kg each' : exercise?.bodyweight ? 'kg added' : 'kg';
+  const kg = (n: number) => `${formatKg(n)} ${kgUnit}`;
+  const goUpRange =
+    progression && `${formatKg(progression.low)}${progression.high > progression.low ? `–${formatKg(progression.high)}` : ''}`;
+  const goUpChip = !progression
+    ? null
+    : progression.weight === 0
+      ? `↑ Add ${formatKg(progression.low)} kg`
+      : `↑ Try ${exercise?.bodyweight ? '+' : ''}${goUpRange} kg`;
 
   // Top set to beat: shown from the start whenever there's a last time, so it never appears mid-set.
   const lastTop = hints ? topSet(previous?.sets) : null;
@@ -134,6 +145,27 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
       </div>
       {meta && <p className="exercise-meta">{meta}</p>}
       {slot?.planNote && <p className="exercise-plan">{slot.planNote}</p>}
+      {(warmupPolicy || progression) && (
+        <div className="hint-chips">
+          {warmupPolicy && (
+            <button type="button" className="hint-chip warmup-hint" onClick={() => setInfo('warmup')}>
+              {warmups.length > 0 ? (
+                <>
+                  <span className="hint-chip-label">Warm-up</span>
+                  {warmups.map((w) => formatKg(w.weight)).join(' · ')}
+                </>
+              ) : (
+                WARMUP_LABEL[warmupPolicy]
+              )}
+            </button>
+          )}
+          {goUpChip && (
+            <button type="button" className="hint-chip progression-hint" onClick={() => setInfo('goUp')}>
+              {goUpChip}
+            </button>
+          )}
+        </div>
+      )}
       {noteOpen && (
         <NoteField
           id={noteId}
@@ -142,48 +174,6 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
           value={item.note}
           onChange={(note) => setExerciseNote(sessionId, item.id, note)}
         />
-      )}
-
-      {(warmupPolicy || progression) && (
-        <dl className="exercise-hints">
-          {warmupPolicy && (
-            <div className="warmup-hint">
-              <dt>Warm-up</dt>
-              <dd>
-                {warmups.length > 0
-                  ? warmups.map((w, i) => (
-                      <span key={w.weight} className="warmup-step">
-                        {i > 0 && ' · '}
-                        <strong>{formatKg(w.weight)}</strong> × {w.reps}
-                      </span>
-                    ))
-                  : WARMUP_TEXT[warmupPolicy]}
-              </dd>
-            </div>
-          )}
-          {progression && slot && (
-            <div className="progression-hint">
-              <dt>Go up</dt>
-              <dd>
-                Set 1 hit {progression.reps} reps last time (top of {slot.repMin}–{slot.repMax}). If form was good,{' '}
-                {progression.weight === 0 ? (
-                  <>
-                    try adding <strong>{formatKg(progression.low)} kg</strong>.
-                  </>
-                ) : (
-                  <>
-                    try{' '}
-                    <strong>
-                      {formatKg(progression.low)}
-                      {progression.high > progression.low && `–${formatKg(progression.high)}`} {kgUnit}
-                    </strong>
-                    .
-                  </>
-                )}
-              </dd>
-            </div>
-          )}
-        </dl>
       )}
 
       {exercise && item.sets.length > 0 && (
@@ -244,6 +234,52 @@ export default function ExerciseCard({ sessionId, item, exercises, rest, previou
             { label: 'Remove exercise', danger: true, onSelect: remove },
           ]}
         />
+      )}
+      {info === 'warmup' && warmupPolicy && (
+        <ActionSheet title={`Warm-up · ${name}`} closeLabel="Done" onClose={() => setInfo(null)}>
+          <p>{WARMUP_ABOUT[warmupPolicy]}</p>
+          {warmups.length > 0 && work ? (
+            <>
+              <p>
+                Worked out from <strong>{kg(work)}</strong>, your first working set last time:
+              </p>
+              <ol className="info-list">
+                {warmups.map((w) => (
+                  <li key={w.weight}>
+                    <strong>{kg(w.weight)}</strong>
+                    <span>× {w.reps}</span>
+                    <span className="muted">{w.percent}%</span>
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : (
+            <p className="muted">
+              {exercise?.bodyweight
+                ? 'It’s a bodyweight exercise, so there are no weights to suggest.'
+                : work
+                  ? `At ${kg(work)} there’s nothing lighter to step up from.`
+                  : 'Weights show here once you’ve logged this exercise.'}
+            </p>
+          )}
+        </ActionSheet>
+      )}
+      {info === 'goUp' && progression && slot && (
+        <ActionSheet title={`Go up · ${name}`} closeLabel="Done" onClose={() => setInfo(null)}>
+          <p>
+            Last time set 1 hit <strong>{progression.reps} reps</strong>, the top of your {slot.repMin}–{slot.repMax} range.
+          </p>
+          {progression.weight === 0 ? (
+            <p>
+              If your form was good, try adding <strong>{formatKg(progression.low)} kg</strong> today.
+            </p>
+          ) : (
+            <p>
+              If your form was good, try <strong>{goUpRange} {kgUnit}</strong> today (5–10% more). If not, stay at{' '}
+              {kg(progression.weight)} until it’s solid.
+            </p>
+          )}
+        </ActionSheet>
       )}
       {swapping && (
         <ExercisePicker

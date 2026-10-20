@@ -198,11 +198,15 @@ try {
   // --- Warm-up helper and top-set comparison ---
   await startWorkout('Torso');
   const bench3 = card('Flat Dumbbell Bench Press');
-  const warm = (await bench3.locator('.warmup-hint').textContent()) ?? '';
+  const warmChip = (await bench3.locator('.warmup-hint').textContent()) ?? '';
+  await bench3.locator('.warmup-hint').click();
+  const warm = (await page.locator('.action-sheet').textContent()) ?? '';
+  await page.locator('.action-sheet').getByRole('button', { name: 'Done' }).click();
   check(
-    'warm-up helper: 40 / 65 / 75% of last work weight, rounded to the step',
-    warm.includes('10 × 6–10') && warm.includes('15 × 4–8') && warm.includes('17.5 × 2–4'),
-    warm,
+    'warm-up helper: 40 / 65 / 75% of last work weight, rounded to the step (chip, details on tap)',
+    warmChip.includes('10 · 15 · 17.5') && warm.includes('from 22.5 kg each') &&
+      warm.includes('10 kg each× 6–1040%') && warm.includes('15 kg each× 4–865%') && warm.includes('17.5 kg each× 2–475%'),
+    `${warmChip} / ${warm}`,
   );
   const toBeat = (await bench3.locator('.top-set-compare').textContent()) ?? '';
   check('top set to beat shown before logging', toBeat.includes('Top set to beat · 22.5 × 9'), toBeat);
@@ -214,8 +218,13 @@ try {
 
   // --- Progression hint next time ---
   await startWorkout('Torso');
-  const hint = (await card('Flat Dumbbell Bench Press').locator('.progression-hint').textContent()) ?? '';
-  check('"Go up" hint after set 1 hit the top of the range', hint.includes('hit 12 reps') && hint.includes('try 25 kg each'), hint);
+  const goUpChip = card('Flat Dumbbell Bench Press').locator('.progression-hint');
+  const chipText = (await goUpChip.textContent()) ?? '';
+  await goUpChip.click();
+  const hint = (await page.locator('.action-sheet').textContent()) ?? '';
+  await page.locator('.action-sheet').getByRole('button', { name: 'Done' }).click();
+  check('"Go up" chip after set 1 hit the top of the range, reasoning on tap',
+    chipText === '↑ Try 25 kg' && hint.includes('hit 12 reps') && hint.includes('try 25 kg each'), `${chipText} / ${hint}`);
   await page.getByRole('button', { name: 'Discard workout' }).click();
   await page.waitForURL(/#\/$/);
 

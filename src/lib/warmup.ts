@@ -4,6 +4,8 @@ import { isWorkingSet } from './progress';
 export interface WarmupStep {
   weight: number;
   reps: string;
+  /** Share of the work weight before rounding, e.g. 40. */
+  percent: number;
 }
 
 /** Nearest multiple of the exercise's weight step. */
@@ -36,7 +38,7 @@ export function warmupSuggestions(
   for (const [pct, reps] of plan) {
     const weight = roundToStep(workWeight * pct, step);
     if (weight <= 0 || weight >= workWeight || steps.at(-1)?.weight === weight) continue;
-    steps.push({ weight, reps });
+    steps.push({ weight, reps, percent: Math.round(pct * 100) });
   }
   return steps;
 }
