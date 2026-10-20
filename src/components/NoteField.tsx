@@ -5,13 +5,15 @@ interface Props {
   onChange: (value: string) => void;
   placeholder: string;
   label: string;
+  id?: string;
 }
 
 /** Multi-line note that saves as you type and grows with its content. */
-export default function NoteField({ value, onChange, placeholder, label }: Props) {
+export default function NoteField({ value, onChange, placeholder, label, id }: Props) {
   const [text, setText] = useState(value);
   return (
     <textarea
+      id={id}
       className="input note-field"
       aria-label={label}
       placeholder={placeholder}

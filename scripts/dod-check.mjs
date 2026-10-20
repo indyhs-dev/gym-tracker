@@ -49,7 +49,12 @@ const go = async (hash) => {
   await page.waitForTimeout(300);
 };
 const card = (name) => page.locator('.exercise-card').filter({ has: page.locator('.exercise-name', { hasText: name }) });
-const loggedRows = (c) => c.locator('.set-row:not(.is-ghost)');
+const loggedRows = (c) => c.locator('.set-row');
+/** Opens a ••• / set-number menu and picks an action from it. */
+async function menu(opener, action) {
+  await opener.click();
+  await page.locator('.action-sheet .action', { hasText: action }).click();
+}
 
 const localDate = (daysAgo) => {
   const d = new Date(Date.now() - daysAgo * 86400000);
@@ -104,15 +109,18 @@ try {
   check('Torso starts with 7 exercises', (await page.locator('.exercise-card').count()) === 7);
   await logSet('Flat Dumbbell Bench Press', 22.5, 8);
   await logSet('Flat Dumbbell Bench Press', 22.5, 9);
-  await card('Pull-up').locator('.exercise-name').click();
+  await menu(card('Pull-up').getByRole('button', { name: 'Pull-up options' }), 'Swap exercise');
   await page.locator('.sheet .list-row', { hasText: 'Lat Pulldown' }).first().click();
   await card('Lat Pulldown').waitFor();
   check('swap Pull-up → Lat Pulldown', (await card('Lat Pulldown').count()) === 1 && (await card('Pull-up').count()) === 0);
   await logSet('Lat Pulldown', 39, 7);
-  await card('Lat Pulldown').getByRole('button', { name: 'Copy last set' }).click();
-  await page.waitForTimeout(200);
-  const pulldownSets = await loggedRows(card('Lat Pulldown')).count();
-  check('copy last set', pulldownSets === 2, `${pulldownSets} sets`);
+  await card('Lat Pulldown').getByRole('button', { name: '+ Add set' }).click();
+  await loggedRows(card('Lat Pulldown')).nth(1).waitFor();
+  const carried = loggedRows(card('Lat Pulldown')).nth(1);
+  const carriedValues = `${await carried.locator('input[aria-label="weight"]').inputValue()} × ${await carried.locator('input[aria-label="reps"]').inputValue() || '–'}`;
+  check('+ Add set keeps the working weight, reps left blank', carriedValues === '39 × –', carriedValues);
+  await carried.locator('input[aria-label="reps"]').fill('7');
+  await page.waitForTimeout(150);
   let duration = await finish('18:00', '19:12');
   check('past session (yesterday) saved with correct duration', duration === '1h 12m', duration);
   const torsoExercises = await detailExercises();
@@ -132,25 +140,42 @@ try {
   duration = await finish('20:00', '21:00');
   check('Shoulders & Arms finished with correct duration', duration === '1h', duration);
 
-  // --- Torso again: last session's sets as ghosts, copy previous session's sets ---
+  // --- Torso again: no rows until you add them; last session's sets sit beside them in Previous ---
   await startWorkout('Torso');
   const bench = card('Flat Dumbbell Bench Press');
-  const ghosts = await bench.locator('.set-row.is-ghost').count();
-  check('last session shows as ghost rows', ghosts === 2, `${ghosts} ghosts`);
-  await bench.getByRole('button', { name: /Copy previous session/ }).click();
-  await bench.locator('.set-row.is-ghost').first().waitFor({ state: 'detached' });
-  await page.waitForTimeout(300);
-  const copied = await loggedRows(bench).locator('input[aria-label="weight"]').evaluateAll((els) => els.map((e) => e.value));
-  check('copy previous session’s sets', JSON.stringify(copied) === '["22.5","22.5"]', copied.join(', '));
-  // Once every ghost is logged the button stays (disabled), so the card never shrinks under your thumb.
-  const copyButton = bench.locator('.copy-previous');
-  check('copy previous stays in place once all logged (no page jump)',
-    (await copyButton.isDisabled()) && ((await copyButton.textContent()) ?? '').includes('all logged'));
-  // Rapid taps on ✕ then Delete (like spamming + nearby) never delete a set.
-  await loggedRows(bench).first().getByRole('button', { name: 'Delete set' }).click();
-  await loggedRows(bench).first().locator('.chip-confirm').click();
+  check('no sets listed until added (no ghost rows)', (await loggedRows(bench).count()) === 0);
+  await logSet('Flat Dumbbell Bench Press', 22.5, 8);
+  await logSet('Flat Dumbbell Bench Press', 22.5, 9);
+  const previousColumn = await bench.locator('.set-prev').allTextContents();
+  check('Previous column shows last session’s matching sets', JSON.stringify(previousColumn) === '["22.5 × 8","22.5 × 9"]', previousColumn.join(', '));
+  // Typing reps and ticking ✓ on the last exercise, scrolled to the bottom, never moves the row (no mis-taps).
+  const lastCard = page.locator('.exercise-card').last();
+  await lastCard.getByRole('button', { name: '+ Add set' }).click();
+  const lastRow = loggedRows(lastCard).last();
+  await lastRow.waitFor();
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const repsInput = lastRow.locator('input[aria-label="reps"]');
+  const tops = new Set();
+  const measure = async () => tops.add(Math.round((await repsInput.boundingBox()).y));
+  await measure();
+  await lastRow.locator('input[aria-label="weight"]').fill('31');
+  await measure();
+  for (const reps of ['0', '1', '12', '', '10']) {
+    await repsInput.fill(reps);
+    await page.waitForTimeout(100);
+    await measure();
+  }
+  await lastRow.locator('.done-button').click();
+  await page.waitForTimeout(100);
+  await measure();
+  check('logging a set never shifts the row under your thumb', tops.size === 1, [...tops].join(', '));
+  await menu(lastRow.getByRole('button', { name: /options$/ }), 'Delete set');
+  // Deleting is only in the set's menu, never next to the inputs.
+  await bench.getByRole('button', { name: '+ Add set' }).click();
+  await loggedRows(bench).nth(2).waitFor();
+  await menu(loggedRows(bench).nth(2).getByRole('button', { name: 'Set 3 options' }), 'Delete set');
   await page.waitForTimeout(200);
-  check('rapid taps on ✕ don’t delete a set', (await loggedRows(bench).count()) === 2);
+  check('delete a set from its menu', (await loggedRows(bench).count()) === 2 && (await loggedRows(lastCard).count()) === 0);
   duration = await finish('21:10', '21:55');
   check('second Torso finished with correct duration', duration === '45m', duration);
 
@@ -176,13 +201,15 @@ try {
   const warm = (await bench3.locator('.warmup-hint').textContent()) ?? '';
   check(
     'warm-up helper: 40 / 65 / 75% of last work weight, rounded to the step',
-    warm.includes('from 22.5 last time') && warm.includes('10 × 6–10') && warm.includes('15 × 4–8') && warm.includes('17.5 × 2–4'),
+    warm.includes('10 × 6–10') && warm.includes('15 × 4–8') && warm.includes('17.5 × 2–4'),
     warm,
   );
+  const toBeat = (await bench3.locator('.top-set-compare').textContent()) ?? '';
+  check('top set to beat shown before logging', toBeat.includes('Top set to beat · 22.5 × 9'), toBeat);
   check('no "Go up" hint when set 1 missed the top of the range', (await bench3.locator('.progression-hint').count()) === 0);
   await logSet('Flat Dumbbell Bench Press', 22.5, 12);
   const compare = (await bench3.locator('.top-set-compare').textContent()) ?? '';
-  check('top set compared with last session', compare.includes('beats last time (22.5 × 9)'), compare);
+  check('top set compared with last session', compare.includes('Beat last time · 22.5 × 12 vs 22.5 × 9'), compare);
   await finish();
 
   // --- Progression hint next time ---

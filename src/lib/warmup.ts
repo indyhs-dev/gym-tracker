@@ -41,15 +41,11 @@ export function warmupSuggestions(
   return steps;
 }
 
-export interface WorkWeight {
-  weight: number;
-  source: 'today' | 'last time';
-}
-
-/** First working-set weight logged today, otherwise last session's. */
-export function workWeightFor(todaySets: WorkoutSet[], lastSets: WorkoutSet[] | undefined): WorkWeight | null {
-  const today = todaySets.find((s) => isWorkingSet(s) && s.weight > 0);
-  if (today) return { weight: today.weight!, source: 'today' };
-  const last = lastSets?.find((s) => isWorkingSet(s) && s.weight > 0);
-  return last ? { weight: last.weight!, source: 'last time' } : null;
+/**
+ * Last session's first working-set weight: what the warm-ups lead up to.
+ * Only last time counts, never today's sets, so the warm-up line is fixed for
+ * the whole workout and can't appear or change above a set while you log it.
+ */
+export function lastWorkWeight(lastSets: WorkoutSet[] | undefined): number | null {
+  return lastSets?.find((s) => isWorkingSet(s) && s.weight > 0)?.weight ?? null;
 }

@@ -1,144 +1,67 @@
-import { useEffect, useRef, useState } from 'react';
-import StepField from '../../components/StepField';
+import { useState } from 'react';
+import { flushSync } from 'react-dom';
+import ActionSheet from '../../components/ActionSheet';
+import NumberField from '../../components/NumberField';
 import type { SetFields } from '../../db/sessions';
 import type { Exercise, WorkoutSet } from '../../db/types';
-import { formatKg } from '../../lib/format';
+import { setText } from '../../lib/setText';
 
 interface Props {
-  /** The logged set, or undefined for a ghost row. */
-  set?: WorkoutSet;
-  /** Last session's set at this position: its values show dimmed as placeholders. */
-  ghost?: WorkoutSet;
+  set: WorkoutSet;
+  /** Last session's matching set, shown in the Previous column (display only). */
+  previous?: WorkoutSet;
   /** "W" for warm-ups, otherwise the working-set number. */
   label: string;
   exercise: Exercise;
-  weightUnit: string;
-  /** Logged set: saves the change. Ghost row: logs the set (ghost values + this change). */
   onChange: (fields: Partial<SetFields>) => void;
-  onDelete?: () => void;
+  onDelete: () => void;
   /** Live workout only: the ✓ that marks the set done and starts the rest timer. */
   onDone?: () => void;
   /** Ticked done. */
   done?: boolean;
 }
 
-/** Delete only counts after a pause since the previous tap on ✕ / Delete. */
-const DELETE_PAUSE_MS = 600;
-
 /**
- * One set. A ghost row looks the same but dimmed; tapping "Log", typing,
- * using −/+ or the warm-up chip turns it into a real set. In a live workout,
- * "Log" on a ghost row also counts as done and starts the rest timer.
+ * One set as a table row: set number, last time's matching set, kg, reps and
+ * (live workout) ✓. Tapping the set number opens its menu: warm-up, note,
+ * delete. Nothing that can delete sits next to the inputs.
  */
-export default function SetRow({ set, ghost, label, exercise, weightUnit, onChange, onDelete, onDone, done = false }: Props) {
-  const isGhost = set === undefined;
-  const warmup = set?.warmup ?? ghost?.warmup ?? false;
-  const [noteOpen, setNoteOpen] = useState(set !== undefined && set.note !== '');
-  const [note, setNote] = useState(set?.note ?? '');
-  const [confirming, setConfirming] = useState(false);
-  // When the last tap on ✕ / Delete happened: a rapid run of taps (spamming + nearby) never deletes.
-  const lastDeleteTap = useRef(0);
+export default function SetRow({ set, previous, label, exercise, onChange, onDelete, onDone, done = false }: Props) {
+  const [menu, setMenu] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(set.note !== '');
+  const [note, setNote] = useState(set.note);
+  const name = set.warmup ? 'Warm-up set' : `Set ${label}`;
+  const noteId = `set-note-${set.id}`;
+  const classes = ['set-row', set.warmup && 'is-warmup', done && 'is-done'].filter(Boolean).join(' ');
 
-  // A first tap on ✕ arms delete; it disarms itself after 3 s.
-  useEffect(() => {
-    if (!confirming) return;
-    const t = setTimeout(() => setConfirming(false), 3000);
-    return () => clearTimeout(t);
-  }, [confirming]);
-
-  const placeholder = (v: number | null | undefined) => (v === null || v === undefined ? '–' : formatKg(v));
-  const classes = ['set-row', warmup && 'is-warmup', isGhost && 'is-ghost', done && 'is-done'].filter(Boolean).join(' ');
+  /** Shows the note field and focuses it inside the same tap, so iOS brings up the keyboard. */
+  function openNote() {
+    flushSync(() => setNoteOpen(true));
+    document.getElementById(noteId)?.focus();
+  }
 
   return (
     <li className={classes}>
-      <div className="set-top">
-        <span className="set-label">{label}</span>
-        <button type="button" className="chip-hit" aria-pressed={warmup} onClick={() => onChange({ warmup: !warmup })}>
-          <span className="chip">Warm-up</span>
+      <button type="button" className="set-label" aria-label={`${name} options`} onClick={() => setMenu(true)}>
+        {label}
+      </button>
+      <span className="set-prev">{previous ? setText(previous, exercise) : '–'}</span>
+      <NumberField label="weight" value={set.weight} decimal onChange={(weight) => onChange({ weight })} />
+      <NumberField label="reps" value={set.reps} onChange={(reps) => onChange({ reps })} />
+      {onDone && (
+        <button
+          type="button"
+          className="done-button"
+          aria-label={`${name} done, start rest`}
+          aria-pressed={done}
+          onClick={onDone}
+        >
+          <span aria-hidden="true">✓</span>
         </button>
-        <span className="spacer" />
-        {isGhost ? (
-          <button
-            type="button"
-            className="chip-hit"
-            aria-label={`Log set ${label} as last time`}
-            onClick={() => (onDone ? onDone() : onChange({}))}
-          >
-            <span className="chip chip-log">✓ Log</span>
-          </button>
-        ) : (
-          <>
-            {onDone && (
-              <button
-                type="button"
-                className="done-button"
-                aria-label={`Set ${label} done, start rest`}
-                aria-pressed={done}
-                onClick={onDone}
-              >
-                <span aria-hidden="true">✓</span>
-              </button>
-            )}
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Set note"
-              aria-pressed={noteOpen}
-              onClick={() => setNoteOpen((open) => !open)}
-            >
-              ✎
-            </button>
-            {confirming ? (
-              <button
-                type="button"
-                className="chip-hit"
-                onClick={() => {
-                  const tooSoon = Date.now() - lastDeleteTap.current < DELETE_PAUSE_MS;
-                  lastDeleteTap.current = Date.now();
-                  if (!tooSoon) onDelete?.();
-                }}
-              >
-                <span className="chip chip-confirm">Delete</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Delete set"
-                onClick={() => {
-                  lastDeleteTap.current = Date.now();
-                  setConfirming(true);
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </>
-        )}
-      </div>
-      <div className="set-inputs">
-        <StepField
-          label="weight"
-          value={set?.weight ?? null}
-          fallback={isGhost ? ghost?.weight : undefined}
-          step={exercise.weightStep}
-          decimal
-          placeholder={placeholder(ghost?.weight)}
-          unit={weightUnit}
-          onChange={(weight) => onChange({ weight })}
-        />
-        <StepField
-          label="reps"
-          value={set?.reps ?? null}
-          fallback={isGhost ? ghost?.reps : undefined}
-          step={1}
-          placeholder={placeholder(ghost?.reps)}
-          unit="reps"
-          onChange={(reps) => onChange({ reps })}
-        />
-      </div>
-      {noteOpen && !isGhost && (
+      )}
+      {noteOpen && (
         <input
+          id={noteId}
           className="input set-note"
           aria-label="Set note"
           placeholder="Set note"
@@ -149,6 +72,17 @@ export default function SetRow({ set, ghost, label, exercise, weightUnit, onChan
             setNote(e.target.value);
             onChange({ note: e.target.value });
           }}
+        />
+      )}
+      {menu && (
+        <ActionSheet
+          title={name}
+          onClose={() => setMenu(false)}
+          actions={[
+            { label: set.warmup ? 'Make it a working set' : 'Make it a warm-up', onSelect: () => onChange({ warmup: !set.warmup }) },
+            ...(noteOpen ? [] : [{ label: 'Add note', onSelect: openNote }]),
+            { label: 'Delete set', danger: true, onSelect: onDelete },
+          ]}
         />
       )}
     </li>

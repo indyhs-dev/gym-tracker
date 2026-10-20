@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newSet } from '../src/db/sessions';
-import { roundToStep, warmupSuggestions, workWeightFor } from '../src/lib/warmup';
+import { roundToStep, warmupSuggestions, lastWorkWeight } from '../src/lib/warmup';
 
 const set = (weight: number | null, reps: number | null, warmup = false) => newSet({ weight, reps, warmup }, 0);
 
@@ -55,12 +55,10 @@ describe('warmupSuggestions', () => {
   });
 });
 
-describe('workWeightFor', () => {
-  it("uses today's first work set, else last session's, ignoring warm-ups", () => {
-    const last = [set(15, 10, true), set(22.5, 8), set(22.5, 9)];
-    expect(workWeightFor([], last)).toEqual({ weight: 22.5, source: 'last time' });
-    expect(workWeightFor([set(17.5, 8, true)], last)).toEqual({ weight: 22.5, source: 'last time' });
-    expect(workWeightFor([set(17.5, 8, true), set(25, 6)], last)).toEqual({ weight: 25, source: 'today' });
-    expect(workWeightFor([set(null, null)], undefined)).toBeNull();
+describe('lastWorkWeight', () => {
+  it("uses last session's first work set, ignoring warm-ups", () => {
+    expect(lastWorkWeight([set(15, 10, true), set(22.5, 8), set(22.5, 9)])).toBe(22.5);
+    expect(lastWorkWeight([set(15, 10, true), set(null, null)])).toBeNull();
+    expect(lastWorkWeight(undefined)).toBeNull();
   });
 });

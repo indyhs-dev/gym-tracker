@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../src/db/db';
 import { addSet, addSets, newSet, previousSetsFor, startSession } from '../src/db/sessions';
 import type { Session } from '../src/db/types';
+import { previousBeside } from '../src/lib/previous';
 
 const set = (weight: number, reps: number, warmup = false) => newSet({ weight, reps, warmup }, 0);
 
@@ -66,5 +67,15 @@ describe('adding sets', () => {
     const sets = (await db.sessions.get(s.id))!.exercises[0].sets;
     expect(sets[0].id).toBe('fixed-id');
     expect(sets.map((x) => `${x.weight}x${x.reps}`)).toEqual(['20x10', '22.5x8', '22.5x9']);
+  });
+});
+
+describe('previousBeside', () => {
+  it('lines up warm-ups with warm-ups and working sets with working sets', () => {
+    const last = [set(10, 10, true), set(15, 6, true), set(22.5, 8), set(22.5, 7)];
+    const today = [set(10, 10, true), set(22.5, 9), set(22.5, 8), set(22.5, 6)];
+    const beside = previousBeside(today, last).map((s) => s && `${s.weight}×${s.reps}`);
+    expect(beside).toEqual(['10×10', '22.5×8', '22.5×7', undefined]);
+    expect(previousBeside(today, undefined)).toEqual([undefined, undefined, undefined, undefined]);
   });
 });

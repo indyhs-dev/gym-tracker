@@ -30,6 +30,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 18. Rest timer (requested 13 Oct 2026 after trying the app at the gym)
 - [x] 19. Sauna tracker (requested 16 Oct 2026): logging, skips, weekly target, charts, step-up card
 - [x] 20. Reps + mis-tap fix, simpler sauna log with a note, Gym / Sauna sections (requested 16 Oct 2026)
+- [x] 21. Minimal set logging (table with a Previous column, no ghost rows) + page-jump fix (requested 20 Oct 2026)
 
 ## In progress
 Nothing.
@@ -40,6 +41,7 @@ Nothing.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
 - Chunk 19 (sauna) is live. The user checks the sample sessions in the charts, then removes them in **Settings → Sauna → Remove 3 sample sessions**.
 - Chunk 20 is pushed, waiting to be tried on the phone (especially spamming reps + at the gym).
+- Chunk 21 is committed, not pushed yet (ask first). Then the user tries the new set table at the gym and asks for changes bit by bit.
 
 ## How to run
 ```
@@ -49,11 +51,23 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
-npm run check:dod        # after build: Phase 1 + 2 + sauna definition of done in Chrome (46 checks)
+npm run check:dod        # after build: Phase 1 + 2 + sauna definition of done in Chrome (47 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Chunk 21 (20 Oct 2026): minimal set logging and the page-jump fix.** The user sent screenshots: pressing reps + slid the page down, so the next tap hit ✕. They also found the ghost rows (last session's sets pre-listed, logged with one tap) cluttered and unprofessional, and pointed to Hevy and a similar app as examples. "Do whatever you think is best"; they'll adjust bit by bit.
+  - **The jump:** the warm-up box appeared *above* the sets the moment set 1 got reps, because "today's first working set" (needs reps > 0) became its source. Now the warm-up line uses **last session's work weight only** (`lastWorkWeight`), so it's fixed for the whole workout. Rule kept for the whole card: nothing above the sets may appear, disappear or change height while logging.
+  - **Sets are a table:** Set · Previous · kg · reps · ✓ (✓ only in a live workout). Inputs are plain number fields (keypad) with no −/+ steppers, like the reference apps. Typing reps is fewer taps than spamming +, and there's nothing to spam.
+  - **No ghost rows, no "Copy last set", no "Copy previous session's sets".** A card starts with just **+ Add set**. A new set is a working set that keeps the weight of the last *working* set today (blank before the first one, so warm-ups never carry over); reps start blank.
+  - **Previous column** (`previousBeside`, `src/lib/previous.ts`): last session's matching set, display only. Warm-ups line up with warm-ups and working sets with working sets, so a different number of warm-ups doesn't shift them. "–" where last time had fewer.
+  - **Menus instead of row buttons** (`ActionSheet`, iOS-style, from the bottom): tapping the set number opens Make it a warm-up / working set, Add note, Delete set. ••• on the exercise opens Swap exercise, Add note, Remove exercise. Delete no longer sits next to the inputs, so the 2-tap ✕ and the 600 ms delete pause are gone. Removing an exercise only asks when it has sets. "Add note" focuses the field in the same tap (`flushSync`), so iOS opens the keyboard.
+  - **Smaller header:** the exercise name in the accent colour, one muted line "2 × 5–12 · Rest 3–5 min" (type, warm-up policy and warm-up rest are no longer shown), the plan note, the exercise note only when it has text or was added from the menu. "Last time · date" is gone.
+  - **Hints are small print**, not boxes: "Warm-up" (steps, or the policy, e.g. "1 set", when there's no work weight) and "Go up".
+  - **Top-set line** sits under + Add set and is a single line (ellipsis if ever too long). With a last time it shows from the start: "Top set to beat · 22.5 × 9", then "↑ Beat last time · 22.5 × 12 vs 22.5 × 9" / "= Matched last time" / "Top set 22.5 × 8 · last time 22.5 × 9".
+  - Done sets get a green tint across the row and a green ✓. Red (`--rest`) now also marks destructive menu actions.
+  - Narrow phones (< 360 px) get tighter columns; nothing stacks. `StepField` was deleted (no other users).
+  - `check:dod` now checks: no rows until added, the Previous column, + Add set keeping the weight, delete from the menu, and that typing reps and ✓ on the last exercise scrolled to the bottom never moves the row (47 checks).
 - **Chunk 20 (16 Oct 2026), three user requests:**
   - **Reps + mis-tap (bug).** Reproduced: on the last ghost set, + logged it, so the "Copy previous session's sets" button vanished. Scrolled to the bottom, the page got 56 px shorter and slid down, so the next tap landed on that set's ✕ (and the one after on Delete).
     - The button now stays in place, disabled, as "Previous session's sets all logged".
@@ -157,7 +171,7 @@ npm run icons            # regenerate icons from public/icon.svg
 - **Discard workout** (shown only on an active session) asks first, then deletes it. It's needed until Finish exists, and is the agreed "discard a workout started by mistake".
 - **The workout screen** (`/workout/:id`) is full-screen with no tab bar. "‹ Today" leaves the workout running.
 - **Rest text** is "Rest {type text} · warm-ups {warm-up text}". The warm-up part is dropped when the slot's policy is "none"; ad-hoc exercises show both.
-- **Set entry** (chunk 6):
+- **Set entry** (chunk 6; replaced by the set table in chunk 21):
   - A set row is two lines.
     - Line 1: the label ("W" for warm-ups, otherwise 1, 2, 3… counting working sets only), the Warm-up chip, a note toggle (✎), and delete (✕). Delete needs two taps: the first arms it and it disarms after 3 s.
     - Line 2: weight and reps steppers.
@@ -175,7 +189,7 @@ npm run icons            # regenerate icons from public/icon.svg
 - **Notes:** the session note sits at the top, there's an exercise note on each card, and set notes are behind ✎. All autosave. The note fields grow with their text (`field-sizing: content`).
 - **"+ Add exercise"** adds an ad-hoc exercise (`slot: null`: rest text but no target line) and scrolls to it. Removing an exercise asks first and mentions how many sets will go.
 - **Chips** have a 48 px tap area around a 36 px pill.
-- **Ghost rows** (chunk 7):
+- **Ghost rows** (chunk 7; removed in chunk 21, along with copy last set and copy previous):
   - `previousSetsFor(exerciseIds, session)` finds, per exercise, the latest *finished* session that started before this one and has sets for it. Other sessions without sets for it are skipped.
   - Ghosts are last time's sets from position `sets.length` onwards. They're dimmed, and their values show as placeholders.
   - Any of these logs a ghost: "✓ Log", typing, −/+ (which starts from the ghost value), or the warm-up chip. The new set takes the ghost's values plus your change.
@@ -254,7 +268,7 @@ npm run icons            # regenerate icons from public/icon.svg
     - Each has a "Show as table" (`<details>`).
   - These are computed on the fly in `src/lib/progress.ts` (`exercisePRs`, `weeklyWorkingSets`, `sessionDurations`). Nothing extra is stored.
 - **Warm-up helper** (chunk 14, `src/lib/warmup.ts`), shown on exercise cards as "Warm-up · from 25 last time · 10 × 6–10 · 17.5 × 4–8 · 20 × 2–4":
-  - The work weight is the first working set logged today (weight > 0), otherwise last session's.
+  - The work weight is last session's first working set. (Until chunk 21 today's first working set took over, which made the line appear mid-set and push the rows down.)
   - "Full": 40% × 6–10, then 65% × 4–8, then 75% × 2–4 for compound exercises only. "1 set" and "0–1": a single 65% × 4–8.
   - Each step is rounded to the exercise's weight step. Steps that round to 0, reach the work weight, or repeat the previous weight are dropped.
   - Hidden for bodyweight exercises, ad-hoc exercises (no slot) and the "none" policy, and when editing a finished session (`hints` prop).

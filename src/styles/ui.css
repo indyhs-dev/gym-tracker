@@ -560,30 +560,7 @@
 
 .exercise-card {
   margin-top: 12px;
-  padding: 14px 12px;
-}
-
-.exercise-name {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.exercise-target {
-  margin-top: 4px !important;
-  font-size: 15px;
-}
-
-.exercise-rest {
-  margin-top: 2px !important;
-  color: var(--muted);
-  font-size: 15px;
-}
-
-.exercise-plan {
-  margin-top: 6px !important;
-  color: var(--muted);
-  font-size: 15px;
-  font-style: italic;
+  padding: 10px 12px 14px;
 }
 
 .stat-value {
@@ -597,56 +574,136 @@
   color: var(--muted);
 }
 
-/* Workout: exercise card */
-.exercise-name {
+/* Workout: exercise card. Name and ••• menu, small print, then the sets as a table. */
+.exercise-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  width: calc(100% + 16px);
-  min-height: var(--tap);
-  margin: -8px -8px 0;
-  padding: 0 8px;
-  border: none;
-  border-radius: 10px;
-  background: none;
-  color: var(--text);
-  font-size: 20px;
-  font-weight: 700;
-  text-align: left;
+  min-height: 40px;
 }
 
-.swap-hint {
-  flex: none;
+.exercise-name {
+  flex: 1;
+  min-width: 0;
   color: var(--accent);
-  font-size: 20px;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.exercise-more {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: 40px;
+  margin-right: -6px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.exercise-more span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.exercise-meta,
+.exercise-plan {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.exercise-plan {
+  margin-top: 2px !important;
+  font-style: italic;
+}
+
+.exercise-card .note-field {
+  margin-top: 10px;
+}
+
+/* Warm-up steps and "Go up": small print above the sets, fixed once the card loads. */
+.exercise-hints {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+
+.exercise-hints > div {
+  display: contents;
+}
+
+.exercise-hints dt {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.exercise-hints dd {
+  margin: 0;
+}
+
+.progression-hint dt,
+.progression-hint strong {
+  color: var(--accent);
+}
+
+/* Sets: Set | Previous | kg | reps | ✓ (the ✓ column only in a live workout). */
+.set-table {
+  margin-top: 12px;
+}
+
+.set-head,
+.set-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 72px 60px;
+  align-items: center;
+  column-gap: 8px;
+}
+
+.has-done .set-head,
+.has-done .set-row {
+  grid-template-columns: 36px minmax(0, 1fr) 72px 60px 40px;
 }
 
 .set-head {
-  margin-top: 14px;
+  padding-bottom: 6px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-align: center;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .set-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   list-style: none;
-  margin: 4px 0 0;
+  margin: 0;
   padding: 0;
 }
 
+/* Bleeds 6px each side so the done tint has some room; the columns stay lined up with the head. */
 .set-row {
-  padding: 6px 0 10px;
-  border-bottom: 1px solid var(--line);
+  margin: 0 -6px;
+  padding: 3px 6px;
+  border-radius: 10px;
 }
 
-.set-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.set-row.is-done {
+  background: rgb(34 197 94 / 0.14);
 }
 
 .set-label {
@@ -660,8 +717,65 @@
   color: var(--muted);
 }
 
-.spacer {
-  flex: 1;
+.set-row .set-label {
+  width: 36px;
+  height: 40px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.set-row.is-warmup .set-label {
+  color: var(--accent);
+}
+
+.set-prev {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 15px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.num-input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  appearance: none;
+}
+
+.num-input.is-long {
+  font-size: 15px;
+}
+
+.num-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.set-note {
+  grid-column: 1 / -1;
+  margin: 4px 0 2px;
+}
+
+.add-set {
+  margin-top: 10px;
+  min-height: 44px;
+  background: var(--bg);
+  font-size: 15px;
 }
 
 /* 48px tap area around a smaller pill. */
@@ -692,166 +806,12 @@
   color: var(--bg);
 }
 
-.chip-confirm {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 .icon-button[aria-pressed='true'] {
   color: var(--accent);
 }
 
-.set-row .icon-button {
-  margin-right: 0;
-}
-
-/* Weight gets more room than reps ("102.5" vs "12"). */
-.set-inputs,
-.set-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  gap: 8px;
-}
-
-.set-inputs {
-  margin-top: 4px;
-}
-
-/* Very narrow phones (e.g. iPhone SE 1st gen): weight above reps. */
-@media (max-width: 359px) {
-  .set-inputs {
-    grid-template-columns: 1fr;
-  }
-  .set-head {
-    display: none;
-  }
-  .step-input .step-unit {
-    display: block;
-  }
-}
-
-.step-input {
-  position: relative;
+.spacer {
   flex: 1;
-  display: flex;
-  min-width: 0;
-}
-
-.step-unit {
-  display: none;
-  position: absolute;
-  bottom: 3px;
-  left: 0;
-  right: 0;
-  color: var(--faint);
-  font-size: 11px;
-  font-weight: 600;
-  text-align: center;
-  text-transform: uppercase;
-  pointer-events: none;
-}
-
-.step-field {
-  display: flex;
-  align-items: stretch;
-  min-width: 0;
-}
-
-.step-field button {
-  flex: none;
-  width: var(--tap);
-  height: 56px;
-  border: none;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 26px;
-  font-weight: 500;
-}
-
-.step-field button:first-child {
-  border-radius: 12px 0 0 12px;
-}
-
-.step-field button:last-child {
-  border-radius: 0 12px 12px 0;
-}
-
-.num-input {
-  flex: 1;
-  width: 100%;
-  min-width: 0;
-  height: 56px;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 24px;
-  font-weight: 700;
-  text-align: center;
-  appearance: none;
-}
-
-.num-input::placeholder {
-  color: var(--faint);
-}
-
-.num-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.set-note {
-  margin-top: 8px;
-}
-
-.set-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.set-actions .btn + .btn {
-  margin-top: 0;
-}
-
-.copy-previous {
-  margin-top: 8px !important;
-  border: 1px dashed var(--accent);
-  background: none;
-  color: var(--accent);
-}
-
-.copy-previous:disabled {
-  border-color: var(--line);
-  color: var(--muted);
-  opacity: 1;
-}
-
-.last-time {
-  margin-top: 10px !important;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-/* Ghost rows: last session's values, dimmed until logged. */
-.is-ghost .set-label,
-.is-ghost .chip {
-  opacity: 0.55;
-}
-
-.is-ghost .num-input::placeholder {
-  color: rgb(245 245 244 / 0.45);
-}
-
-.is-ghost .step-field button {
-  color: var(--muted);
-}
-
-.chip-log {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 .note-field {
@@ -874,13 +834,52 @@
   margin-top: 16px;
 }
 
-.num-input.is-long {
-  font-size: 17px;
+/* Menu sliding up from the bottom (set and exercise options). */
+.action-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: var(--max-width);
+  padding: 0 8px calc(8px + var(--safe-bottom));
 }
 
-/* Buttons sitting on a card use the page colour so they read as buttons. */
-.set-actions .btn {
-  background: var(--bg);
+.action-group {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.action-title {
+  margin: 0;
+  padding: 12px 16px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.action {
+  min-height: 56px;
+  padding: 0 16px;
+  border: none;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font-size: 18px;
+}
+
+.action.is-danger {
+  color: var(--rest);
+}
+
+.action-cancel {
+  border-top: none;
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* Workout: sticky bar with back, gym timer and Finish */
@@ -1257,53 +1256,15 @@
   width: calc(100% - 8px);
 }
 
-/* Training hints on exercise cards (warm-ups, progression) */
-.hint {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--bg);
-}
-
-.hint-title {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.warmup-steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  font-size: 16px;
-}
-
-.warmup-step strong {
-  font-size: 18px;
-}
-
-.progression-hint {
-  border: 1px solid var(--accent);
-  font-size: 15px;
-}
-
-.progression-hint .hint-title {
-  color: var(--accent);
-}
-
-.progression-hint strong {
-  font-size: 17px;
-}
-
+/* Top set vs last time, under the sets. One line, so its text changing never changes the card's height. */
 .top-set-compare {
   margin: 10px 0 0 !important;
+  overflow: hidden;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .top-set-compare.is-beat {
@@ -1352,11 +1313,10 @@
 
 /* Rest timer: ✓ on a set starts it; a bar pinned to the bottom of the workout. */
 .done-button {
-  flex: none;
   display: grid;
   place-items: center;
-  width: var(--tap);
-  height: var(--tap);
+  width: 40px;
+  height: 40px;
   padding: 0;
   border: none;
   background: none;
@@ -1365,27 +1325,18 @@
 .done-button span {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border: 2px solid var(--muted);
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg);
   color: var(--muted);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
 }
 
 .done-button[aria-pressed='true'] span {
-  border-color: var(--go);
   background: var(--go);
   color: var(--bg);
-}
-
-.is-done .set-label {
-  color: var(--go);
-}
-
-.is-done.is-warmup .set-label {
-  color: var(--muted);
 }
 
 .rest-spacer {
@@ -1471,17 +1422,23 @@
   transform-origin: left;
 }
 
-/* Very narrow phones: room for the ✓ without wrapping the Warm-up chip. */
+/* Very narrow phones (SE 1st gen, Display Zoom): tighter set columns. */
 @media (max-width: 359px) {
-  .set-top {
-    gap: 2px;
+  .set-head,
+  .set-row {
+    grid-template-columns: 30px minmax(0, 1fr) 60px 48px;
+    column-gap: 6px;
   }
-  .set-top .set-label {
-    min-width: 22px;
+  .has-done .set-head,
+  .has-done .set-row {
+    grid-template-columns: 30px minmax(0, 1fr) 60px 48px 36px;
   }
-  .set-top .chip {
-    padding: 0 10px;
-    white-space: nowrap;
+  .set-row .set-label,
+  .done-button {
+    width: 100%;
+  }
+  .set-prev {
+    font-size: 13px;
   }
   .rest-bar-clock {
     font-size: 34px;

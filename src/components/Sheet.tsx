@@ -8,8 +8,8 @@ interface Props {
   footer?: ReactNode;
 }
 
-/** Bottom sheet over the current screen. Render it only while open. */
-export default function Sheet({ title, onClose, children, footer }: Props) {
+/** While a sheet is open: the page behind it doesn't scroll, and Escape closes it. */
+export function useSheet(onClose: () => void) {
   useEffect(() => {
     const root = document.documentElement;
     const previous = root.style.overflow;
@@ -21,6 +21,11 @@ export default function Sheet({ title, onClose, children, footer }: Props) {
       window.removeEventListener('keydown', onKey);
     };
   }, [onClose]);
+}
+
+/** Bottom sheet over the current screen. Render it only while open. */
+export default function Sheet({ title, onClose, children, footer }: Props) {
+  useSheet(onClose);
 
   return (
     <div className="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
