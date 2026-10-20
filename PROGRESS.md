@@ -42,7 +42,7 @@ Nothing.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
 - Chunk 19 (sauna) is live. The user checks the sample sessions in the charts, then removes them in **Settings → Sauna → Remove 3 sample sessions**.
 - Chunk 20 is pushed, waiting to be tried on the phone (especially spamming reps + at the gym).
-- Chunks 21–22 are committed, not pushed yet (ask first). Then the user tries the new set table at the gym and asks for changes bit by bit.
+- Chunks 21–22 are pushed and live (20 Oct 2026). The user tries the new set table at the gym and asks for changes bit by bit.
 
 ## How to run
 ```
