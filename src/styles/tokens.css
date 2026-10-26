@@ -5,7 +5,7 @@
   --accent: #fb923c;
   --text: #f5f5f4;
 
-  /* Rest timer (added at the user's request): red = rest, green = go. Red also marks delete/remove in menus. */
+  /* Added at the user's request. Red marks delete/remove in menus; green = done and "rested, ready". */
   --rest: #ef4444;
   --go: #22c55e;
 

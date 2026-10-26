@@ -1,38 +1,43 @@
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import ActionSheet from '../../components/ActionSheet';
+import { CheckIcon } from '../../components/Icons';
 import NumberField from '../../components/NumberField';
 import type { SetFields } from '../../db/sessions';
-import type { Exercise, WorkoutSet } from '../../db/types';
-import { setText } from '../../lib/setText';
+import { formatKg } from '../../lib/format';
+import type { SetRowData } from '../../lib/setRows';
 
 interface Props {
-  set: WorkoutSet;
-  /** Last session's matching set, shown in the Previous column (display only). */
-  previous?: WorkoutSet;
+  row: SetRowData;
   /** "W" for warm-ups, otherwise the working-set number. */
   label: string;
-  exercise: Exercise;
   onChange: (fields: Partial<SetFields>) => void;
   onDelete: () => void;
-  /** Live workout only: the ✓ that marks the set done and starts the rest timer. */
+  /** During a workout: the ✓ that logs the row (placeholders fill empty inputs) and starts the rest timer. */
   onDone?: () => void;
-  /** Ticked done. */
   done?: boolean;
+  /** The next set to do: accent set number and kg border. */
+  next?: boolean;
 }
 
+export const weightInputId = (rowId: string) => `kg-${rowId}`;
+export const repsInputId = (rowId: string) => `reps-${rowId}`;
+
 /**
- * One set as a table row: set number, last time's matching set, kg, reps and
- * (live workout) ✓. Tapping the set number opens its menu: warm-up, note,
- * delete. Nothing that can delete sits next to the inputs.
+ * One set as a table row: set number, kg, reps and ✓. Last time's values
+ * sit in the empty inputs as placeholders. Tapping the set number opens its
+ * menu (warm-up, note, delete), so nothing that can delete sits next to the
+ * inputs. A pre-filled row that hasn't been logged yet has no menu.
  */
-export default function SetRow({ set, previous, label, exercise, onChange, onDelete, onDone, done = false }: Props) {
+export default function SetRow({ row, label, onChange, onDelete, onDone, done = false, next = false }: Props) {
+  const { set } = row;
   const [menu, setMenu] = useState(false);
-  const [noteOpen, setNoteOpen] = useState(set.note !== '');
-  const [note, setNote] = useState(set.note);
-  const name = set.warmup ? 'Warm-up set' : `Set ${label}`;
-  const noteId = `set-note-${set.id}`;
-  const classes = ['set-row', set.warmup && 'is-warmup', done && 'is-done'].filter(Boolean).join(' ');
+  const [noteOpen, setNoteOpen] = useState((set?.note ?? '') !== '');
+  const [note, setNote] = useState(set?.note ?? '');
+  const name = row.warmup ? 'Warm-up set' : `Set ${label}`;
+  const noteId = `set-note-${row.id}`;
+  const classes = ['set-row', row.warmup && 'is-warmup', done && 'is-done', next && 'is-next'].filter(Boolean).join(' ');
+  const { weight, reps } = row.placeholder;
 
   /** Shows the note field and focuses it inside the same tap, so iOS brings up the keyboard. */
   function openNote() {
@@ -42,24 +47,35 @@ export default function SetRow({ set, previous, label, exercise, onChange, onDel
 
   return (
     <li className={classes}>
-      <button type="button" className="set-label" aria-label={`${name} options`} onClick={() => setMenu(true)}>
-        {label}
-      </button>
-      <span className="set-prev">{previous ? setText(previous, exercise) : '–'}</span>
-      <NumberField label="weight" value={set.weight} decimal onChange={(weight) => onChange({ weight })} />
-      <NumberField label="reps" value={set.reps} onChange={(reps) => onChange({ reps })} />
+      {set ? (
+        <button type="button" className="set-label" aria-label={`${name} options`} onClick={() => setMenu(true)}>
+          {label}
+        </button>
+      ) : (
+        <span className="set-label">{label}</span>
+      )}
+      <NumberField
+        id={weightInputId(row.id)}
+        className="set-kg"
+        label={`${name} weight`}
+        value={set?.weight ?? null}
+        placeholder={weight === null ? undefined : formatKg(weight)}
+        decimal
+        onChange={(w) => onChange({ weight: w })}
+      />
+      <NumberField
+        id={repsInputId(row.id)}
+        label={`${name} reps`}
+        value={set?.reps ?? null}
+        placeholder={reps === null ? undefined : String(reps)}
+        onChange={(r) => onChange({ reps: r })}
+      />
       {onDone && (
-        <button
-          type="button"
-          className="done-button"
-          aria-label={`${name} done, start rest`}
-          aria-pressed={done}
-          onClick={onDone}
-        >
-          <span aria-hidden="true">✓</span>
+        <button type="button" className="done-button" aria-label={`${name} done`} aria-pressed={done} onClick={onDone}>
+          <CheckIcon size={18} />
         </button>
       )}
-      {noteOpen && (
+      {set && noteOpen && (
         <input
           id={noteId}
           className="input set-note"
@@ -74,7 +90,7 @@ export default function SetRow({ set, previous, label, exercise, onChange, onDel
           }}
         />
       )}
-      {menu && (
+      {menu && set && (
         <ActionSheet
           title={name}
           onClose={() => setMenu(false)}

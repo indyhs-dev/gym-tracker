@@ -33,8 +33,14 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 21. Minimal set logging (table with a Previous column, no ghost rows) + page-jump fix (requested 20 Oct 2026)
 - [x] 22. Warm-up and Go up as small chips, details on tap (requested 20 Oct 2026)
 
+## Workout UI redesign (brief and mockups in `docs/redesign/`, requested 26 Oct 2026)
+- [x] Step 1. Workout screen: header, progress bar, collapsed exercises, pre-filled rows, placeholders, Warm-up button
+- [x] Step 2. Rest bar (dark, counts down, wake lock, sound)
+- [x] Step 3. Progression tag + full-screen Finish summary
+- [x] Step 4. Today screen + start sheet
+
 ## In progress
-Nothing.
+Redesign steps 1–4 are built and checked, not committed. Next: the user tries it, then commit and push (ask first). Wake lock and the rest sound can only be confirmed on the iPhone.
 
 ## Next
 - Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
@@ -52,11 +58,49 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
-npm run check:dod        # after build: Phase 1 + 2 + sauna definition of done in Chrome (47 checks)
+npm run check:dod        # after build: Phase 1 + 2 + sauna + redesign definition of done in Chrome (66 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Redesign step 4 (26 Oct 2026): Today and the start sheet.**
+  - **Next up** (`nextTemplate`, `src/lib/rotation.ts`): the template after the most recently finished one, in template order, wrapping round; the first one with no history. Blank sessions and deleted templates are ignored. The card shows the name, exercise count and "last trained {date}" ("not done yet" before the first time). **Start {name}** starts it straight away, dated today. **Choose a different workout** opens the start sheet. While a workout is in progress, Resume replaces the card. With no templates, it's a plain Start workout button.
+  - **This week:** "N sessions · total time" in the header, then Monday–Sunday circles: filled with a tick on days with a finished session, today outlined in the accent (`weekDays`). The big stat numbers are gone.
+  - **Last session:** "Torso · Wed 21 Oct" and "58m · 15 sets · 2 new bests" (working sets; bests only when there are any). It opens the session detail.
+  - The backup reminder and the training block card stay as they were.
+  - **Start sheet:** the next-up template on top with an accent border and a NEXT UP badge, then the others in rotation order after it (`rotationOrder`) with "last done {date}", then Blank workout. The date is a compact "Date · Today ▾" row at the bottom. The native date input sits invisibly over it, so tapping anywhere opens the picker (`showPicker()` where supported). Picking another day shows it ("Sat 24 Oct") with "Logging a past workout."
+  - Steps 2–4 brought `check:dod` to 66 checks: the rest bar label, countdown, +30 s, Skip, Ready/Dismiss and warm-up rest; the Go up tag, Finish screen stats, Go up card, BEST badge, Back to workout and session note; next up before and after history, Start Legs dated today, the week circles, the last session card, and the start sheet order and date row.
+- **Redesign step 3 (26 Oct 2026): progression tag and Finish screen.**
+  - **Collapsed rows** show "↑ Go to 35 kg next time" (or "35–37.5 kg", "+12.5 kg" for added load, "↑ Add 2.5 kg" from bodyweight) in the accent when today's set 1 reached the top of the range (`progressionHint` on today's sets). The next session's card says "↑ Try 35 kg today". Both use `goUpWeight`.
+  - **Finish is a full screen** (`FinishScreen.tsx`, replacing `FinishSheet`): "{Template} done", then the date and time range, e.g. "Sunday 25 Oct · 6:15 – 7:13 pm".
+    - Three tiles: time, working sets, new bests.
+    - A "Go up next time" card (accent border) listing "32.5 → 35 kg", hidden when there's nothing to go up on.
+    - The exercises with their top set, new bests first with a green BEST badge. Up to 3 are shown, or 2 and "+ N more exercises" (tap to show all).
+    - The session note, "N exercises with no sets will be left out", an orange **Save workout** (pinned in reach), and "‹ Back to workout".
+  - **A new best** (`isNewBest`) means today's top set beats the best top set from *every* earlier finished session of that exercise (`previousBestsFor`). The first time an exercise is done isn't a best, or a first workout would be all badges.
+  - **Times:** the end defaults to the last logged set, as before. Tapping the time line opens start and end inputs. When logging a past session they're open from the start, since the default (start + 1 h) is a guess.
+- **Redesign step 2 (26 Oct 2026): the rest bar.**
+  - A dark bar pinned to the bottom. A 4 px line on top runs out as the rest counts **down** to the lower end of the guidance: accent after a working set, grey (`--muted`) after a warm-up rest.
+  - Left: the label ("Rest · Set 2 next" within the same exercise, "Rest · Pull-up next" once it's done, "Warm-up rest · not logged") and a big m:ss countdown. Right: **+30 s** (adds to the countdown, `addRestTime`) and **Skip**.
+  - At zero it turns green: "✓ Ready", the label becomes "Rested 3:12 · go when ready" counting up, and the buttons become **Dismiss**. Only one clock is ever shown. The maths is `restClock` in `restTimer.ts` (tested).
+  - `--rest` red is no longer used by the timer; it only marks delete actions.
+  - **Wake lock** (`src/lib/wakeLock.ts`): a live workout keeps the screen on with the Screen Wake Lock API, asking again whenever the app comes back to the front (iOS drops it when hidden). Feature-detected, fails silently.
+  - **Sound** (`src/lib/sound.ts`): two short soft beeps (Web Audio) when the countdown reaches zero while the app is open. iOS needs a tap first, so ✓, Warm-up and +30 s unlock audio. It never plays when reopening the app after the rest has already run out, plays once per rest, follows the silent switch, and never crashes. No vibration (iOS doesn't support it).
+- **Redesign step 1 (26 Oct 2026): the workout screen.** Built from `docs/redesign/BRIEF.md` and `html/01-workout-screen.html`.
+  - **Header:** "‹ Today" in muted text, the gym timer centred, and a neutral **Finish** (`btn-secondary`: card background, hairline border). Then the template name, "X of Y sets" and a thin accent progress bar. Only working sets count: Y is each exercise's target (or more if more were logged or added), X is the ones ticked.
+  - **One open card at a time.** Done exercises collapse to a row (green tick, muted name, top set like "32.5 × 12" or "BW+2.5 × 9"). The open card is the first exercise with sets left, with an accent border. The rest are rows (name, "2 × 5–12", chevron) under **Up next**. Tapping any row opens it. Ticking off an exercise you tapped open moves on to the next unfinished one *after* it, so skipping a set doesn't bounce you back. Reopening a done exercise keeps it open, without the accent border. An exercise left part-way shows "1 of 2 sets".
+  - **"Done" means ticked ✓** while a session is in progress, including logging a past session (the tick just doesn't start a timer; `tickSet`). Typing never closes a card. When editing a finished session, "done" means reps entered, and only the exercise you tap opens.
+  - **Rows are pre-filled to the target** (`src/lib/setRows.ts`): 2 × 8–15 → 2 rows, an ad-hoc exercise → 1. A pre-filled row isn't stored until you type into it or tick it. It keeps its id when it becomes a set (as the old ghost rows did), so the keypad stays up. Rows above it that are still empty are added first, so the order stays as shown. **+ Add set** (small text button) adds a pre-filled row; when editing history it adds a real set, as before.
+  - **Last time's values are placeholders** inside the kg and reps inputs (`previousBeside`). A row past what was done last time carries the weight of the row above. Bodyweight with no history shows 0. The Previous column is gone.
+  - **✓ on a row** logs typed values, with empty inputs filled from the placeholders. If there's still no weight or reps, it focuses that input instead of logging.
+  - **Next set:** the first unticked row gets an accent set number and an accent border on its kg input. Ticked rows have green-tinted inputs and a solid green ✓.
+  - **Card:** the name in off-white (orange is only for the current set and main actions), then the small print on its own full-width line, "2 × 8–15 · 90 s–3 min rest", so the Warm-up button never squeezes it onto two lines. Then the plan note, kept since it's the user's own template text.
+  - **Removed:** the warm-up chip and its sheet, the Go up sheet and the top-set line. `warmup.ts` and `compareTopSets` are still there (and tested) but no longer shown. The Go up hint is now a plain accent line, "↑ Try 25 kg today" (step 3 reworks it).
+  - **Warm-up button** (stopwatch icon, live workouts only): starts a rest from the warm-up guidance (default 1–2 min) with `startWarmupRest`. It logs and ticks nothing, so it can be tapped after each warm-up. It shows as "Warm-up rest · not logged" in the rest bar.
+  - **Session note** moved from the top of the workout to the Finish screen. It stays at the top when editing a finished session, since that has no Finish step.
+  - **Finishing drops completely empty sets** (no weight and no reps), then exercises with no sets.
+  - Touch targets are 44 px, as in the mockup. Colours not in `tokens.css` are mixed from the tokens (`color-mix`).
+  - `check:dod` now covers: one open card and Up next rows, rows pre-filled to the target, placeholders, ✓ logging placeholders, typed values winning, collapsing to the top set, the "X of Y" count, ✓ with no reps focusing reps, no duplicate sets from fast typing, the Warm-up rest, and the Go up line (52 checks). `check:offline` expected the Today heading to say "Today"; it has said "Gym" since chunk 20, so the check now expects "Gym".
 - **Chunk 22 (20 Oct 2026): warm-up and Go up as chips.** The user found the warm-up and Go up text too wordy for the minimal look.
   - Each is now one small pill in a row under the target line: **"Warm-up 10 · 15 · 17.5"** (weights only) and an accent **"↑ Try 25 kg"** ("↑ Add 2.5 kg" at bodyweight, "↑ Try +12.5 kg" with added load). With no weights to show, the warm-up pill is just the policy, e.g. "1 warm-up set".
   - Tapping a pill opens an explanation sheet (`ActionSheet` now takes `children` and a `closeLabel`). Warm-up: what the policy means, "Worked out from 22.5 kg each, your first working set last time", and each step's weight, reps and % (`WarmupStep.percent`). Go up: set 1 hit the top of the range; if form was good try X (5–10% more), if not stay at the current weight.

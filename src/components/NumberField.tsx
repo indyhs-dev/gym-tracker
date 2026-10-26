@@ -8,6 +8,8 @@ interface Props {
   decimal?: boolean;
   label: string;
   placeholder?: string;
+  id?: string;
+  className?: string;
 }
 
 const show = (v: number | null) => (v === null ? '' : formatKg(v));
@@ -16,7 +18,7 @@ const show = (v: number | null) => (v === null ? '' : formatKg(v));
  * Number input that saves as you type. Keeps your exact text while focused
  * (e.g. "22."), and follows the saved value otherwise (e.g. after +/−).
  */
-export default function NumberField({ value, onChange, decimal = false, label, placeholder }: Props) {
+export default function NumberField({ value, onChange, decimal = false, label, placeholder, id, className }: Props) {
   const [text, setText] = useState(show(value));
   const focused = useRef(false);
 
@@ -30,7 +32,8 @@ export default function NumberField({ value, onChange, decimal = false, label, p
 
   return (
     <input
-      className={long ? 'num-input is-long' : 'num-input'}
+      id={id}
+      className={['num-input', long && 'is-long', className].filter(Boolean).join(' ')}
       inputMode={decimal ? 'decimal' : 'numeric'}
       aria-label={label}
       placeholder={placeholder}

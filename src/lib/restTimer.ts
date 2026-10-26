@@ -9,8 +9,8 @@ import type { RestRange } from './rest';
  */
 export interface RestTimer {
   sessionId: string;
-  /** The set whose ✓ started this rest. */
-  setId: string;
+  /** The set whose ✓ started this rest; null for a warm-up rest, which logs nothing. */
+  setId: string | null;
   startedAt: number;
   /** The rest guidance text, e.g. "3–5 min". */
   text: string;
@@ -52,13 +52,51 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+function ticked(sessionId: string, setId: string): State['done'] {
+  const done = state.done?.sessionId === sessionId ? state.done.setIds.filter((id) => id !== setId) : [];
+  return { sessionId, setIds: [...done, setId] };
+}
+
 /** Ticks the set done and starts resting from now. */
 export function startRest(sessionId: string, setId: string, text: string, range: RestRange, now = Date.now()) {
-  const done = state.done?.sessionId === sessionId ? state.done.setIds.filter((id) => id !== setId) : [];
-  save({
-    timer: { sessionId, setId, startedAt: now, text, range },
-    done: { sessionId, setIds: [...done, setId] },
-  });
+  save({ timer: { sessionId, setId, startedAt: now, text, range }, done: ticked(sessionId, setId) });
+}
+
+/** Ticks the set done without a rest timer (logging a past session). */
+export function tickSet(sessionId: string, setId: string) {
+  save({ ...state, done: ticked(sessionId, setId) });
+}
+
+/** Starts a rest after a warm-up. Nothing is logged or ticked. */
+export function startWarmupRest(sessionId: string, text: string, range: RestRange, now = Date.now()) {
+  const done = state.done?.sessionId === sessionId ? state.done : null;
+  save({ timer: { sessionId, setId: null, startedAt: now, text, range }, done });
+}
+
+/** Adds time to the rest that's counting down ("+30 s"). */
+export function addRestTime(seconds: number) {
+  if (!state.timer) return;
+  const { range } = state.timer;
+  save({ ...state, timer: { ...state.timer, range: { ...range, min: range.min + seconds } } });
+}
+
+export interface RestClock {
+  /** The lower end of the rest guidance has passed. */
+  ready: boolean;
+  /** ms left until ready (0 once ready). */
+  remaining: number;
+  /** ms since the rest started. */
+  elapsed: number;
+  /** Share of the rest still to go, 1 → 0, for the line that counts down. */
+  left: number;
+}
+
+/** Where a rest is at: counting down to the lower end of the guidance, then counting up. */
+export function restClock(timer: Pick<RestTimer, 'startedAt' | 'range'>, now: number): RestClock {
+  const elapsed = Math.max(0, now - timer.startedAt);
+  const target = timer.range.min * 1000;
+  const remaining = Math.max(0, target - elapsed);
+  return { ready: remaining === 0, remaining, elapsed, left: target > 0 ? remaining / target : 0 };
 }
 
 /** Hides the timer; ticked sets stay ticked. */

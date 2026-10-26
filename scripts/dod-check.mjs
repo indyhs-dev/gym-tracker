@@ -48,12 +48,28 @@ const go = async (hash) => {
   await page.goto(URL + hash);
   await page.waitForTimeout(300);
 };
+/** The open exercise card (only one is open at a time). */
 const card = (name) => page.locator('.exercise-card').filter({ has: page.locator('.exercise-name', { hasText: name }) });
-const loggedRows = (c) => c.locator('.set-row');
+/** A closed exercise: one tappable row. */
+const exerciseRow = (name) => page.locator('.exercise-row', { hasText: name });
+const setRows = (c) => c.locator('.set-row');
+const exerciseCount = () => page.locator('.exercise-slot').count();
 /** Opens a ••• / set-number menu and picks an action from it. */
 async function menu(opener, action) {
   await opener.click();
   await page.locator('.action-sheet .action', { hasText: action }).click();
+}
+/** Opens an exercise by tapping its row (if it isn't the open card already). */
+async function openExercise(name) {
+  if ((await card(name).count()) === 0) await exerciseRow(name).first().click();
+  await card(name).waitFor();
+  return card(name);
+}
+/** "weight × reps" as typed in a row's inputs, "placeholder" for the greyed-out values. */
+async function rowText(row, what = 'value') {
+  const get = (field) =>
+    row.locator(`input[aria-label$="${field}"]`).evaluate((el, w) => (w === 'value' ? el.value : el.placeholder) || '–', what);
+  return `${await get('weight')} × ${await get('reps')}`;
 }
 
 const localDate = (daysAgo) => {
@@ -64,31 +80,47 @@ const localDate = (daysAgo) => {
 /** Starts a workout; with `date` ("YYYY-MM-DD") it's logged as a past session. */
 async function startWorkout(template, date) {
   await go('#/');
-  await page.getByRole('button', { name: 'Start workout' }).click();
+  await page.getByRole('button', { name: 'Choose a different workout' }).click();
   if (date) await page.locator('.sheet input[type="date"]').fill(date);
-  await page.locator('.sheet .list-row', { hasText: template }).click();
+  await page.locator('.sheet .start-row', { hasText: template }).first().click();
   await page.locator('.workout-bar').waitFor();
 }
 
+/** Types a set into the next row (adding one if every row is done) and ticks it. */
 async function logSet(name, weight, reps) {
-  const c = card(name);
-  const before = await loggedRows(c).count();
-  await c.getByRole('button', { name: '+ Add set' }).click();
-  // Wait for the new row before typing, or we'd type into the previous set.
-  const row = loggedRows(c).nth(before);
-  await row.waitFor();
-  await row.locator('input[aria-label="weight"]').fill(String(weight));
-  await row.locator('input[aria-label="reps"]').fill(String(reps));
+  const c = await openExercise(name);
+  if ((await c.locator('.set-row.is-next').count()) === 0) await c.getByRole('button', { name: '+ Add set' }).click();
+  await c.locator('.set-row.is-next').waitFor();
+  const index = await setRows(c).evaluateAll((rows) => rows.findIndex((r) => r.classList.contains('is-next')));
+  const row = setRows(c).nth(index);
+  await row.locator('input[aria-label$="weight"]').fill(String(weight));
+  await row.locator('input[aria-label$="reps"]').fill(String(reps));
+  await page.waitForTimeout(150);
+  await row.locator('.done-button').click();
   await page.waitForTimeout(150);
 }
 
-/** Finishes (live) or saves (past) the workout; times are left as suggested if not given. */
+/** Editing a finished session (no ✓): + Add set, then type into the new row. */
+async function addSetEditing(name, weight, reps) {
+  const c = await openExercise(name);
+  const before = await setRows(c).count();
+  await c.getByRole('button', { name: '+ Add set' }).click();
+  const row = setRows(c).nth(before);
+  await row.waitFor();
+  await row.locator('input[aria-label$="weight"]').fill(String(weight));
+  await row.locator('input[aria-label$="reps"]').fill(String(reps));
+  await page.waitForTimeout(150);
+}
+
+/** Finishes (live) or saves (past) the workout from the Finish screen; times are left as suggested if not given. */
 async function finish(start, end) {
   await page.locator('.workout-bar').getByRole('button', { name: /^(Finish|Save)$/ }).click();
-  const times = page.locator('.sheet input[type="time"]');
+  await page.locator('.finish-screen').waitFor();
+  const times = page.locator('.finish-screen input[type="time"]');
+  if ((start || end) && (await times.count()) === 0) await page.locator('.finish-when').click();
   if (start) await times.nth(0).fill(start);
   if (end) await times.nth(1).fill(end);
-  await page.getByRole('button', { name: /^(Finish workout|Save session)$/ }).click();
+  await page.getByRole('button', { name: 'Save workout' }).click();
   await page.waitForURL(/#\/history\//);
   return (await page.locator('.detail-summary .stat-value').first().textContent()).trim();
 }
@@ -104,78 +136,133 @@ try {
   check('seeded: 3 templates and 32 exercises', (await page.locator('main').textContent()).includes('3 templates') &&
     (await page.locator('main').textContent()).includes('32 in library'));
 
+  await go('#/');
+  const firstNext = (await page.locator('.next-up').textContent()) ?? '';
+  check('Today: next up is the first template before any history', firstNext.includes('Torso') && firstNext.includes('not done yet'), firstNext);
+
   // --- Torso (logged as yesterday, so later sessions always come after it) ---
   await startWorkout('Torso', localDate(1));
-  check('Torso starts with 7 exercises', (await page.locator('.exercise-card').count()) === 7);
+  check('Torso starts with 7 exercises', (await exerciseCount()) === 7);
+  check('the first exercise is open, the rest are rows under "Up next"',
+    (await page.locator('.exercise-card').count()) === 1 && (await card('Flat Dumbbell Bench Press').count()) === 1 &&
+      (await page.locator('.up-next').count()) === 1 && (await page.locator('.exercise-row').count()) === 6);
+  const firstBench = card('Flat Dumbbell Bench Press');
+  check('rows pre-filled to the template’s target (2 × 5–12 → 2 rows)', (await setRows(firstBench).count()) === 2);
   await logSet('Flat Dumbbell Bench Press', 22.5, 8);
   await logSet('Flat Dumbbell Bench Press', 22.5, 9);
-  await menu(card('Pull-up').getByRole('button', { name: 'Pull-up options' }), 'Swap exercise');
+  await menu((await openExercise('Pull-up')).getByRole('button', { name: 'Pull-up options' }), 'Swap exercise');
   await page.locator('.sheet .list-row', { hasText: 'Lat Pulldown' }).first().click();
   await card('Lat Pulldown').waitFor();
-  check('swap Pull-up → Lat Pulldown', (await card('Lat Pulldown').count()) === 1 && (await card('Pull-up').count()) === 0);
+  check('swap Pull-up → Lat Pulldown', (await card('Lat Pulldown').count()) === 1 && (await exerciseRow('Pull-up').count()) === 0);
   await logSet('Lat Pulldown', 39, 7);
-  await card('Lat Pulldown').getByRole('button', { name: '+ Add set' }).click();
-  await loggedRows(card('Lat Pulldown')).nth(1).waitFor();
-  const carried = loggedRows(card('Lat Pulldown')).nth(1);
-  const carriedValues = `${await carried.locator('input[aria-label="weight"]').inputValue()} × ${await carried.locator('input[aria-label="reps"]').inputValue() || '–'}`;
-  check('+ Add set keeps the working weight, reps left blank', carriedValues === '39 × –', carriedValues);
-  await carried.locator('input[aria-label="reps"]').fill('7');
+  const carried = setRows(card('Lat Pulldown')).nth(1);
+  const carriedValues = await rowText(carried, 'placeholder');
+  check('the next row carries the working weight as a placeholder, reps left blank', carriedValues === '39 × –', carriedValues);
+  await carried.locator('.done-button').click();
+  const asksReps = await carried.locator('input[aria-label$="reps"]').evaluate((el) => el === document.activeElement);
+  check('✓ with no reps to log asks for them instead', asksReps && (await rowText(carried)) === '– × –');
+  await carried.locator('input[aria-label$="reps"]').fill('7');
+  await page.waitForTimeout(150);
+  await carried.locator('.done-button').click();
   await page.waitForTimeout(150);
   let duration = await finish('18:00', '19:12');
   check('past session (yesterday) saved with correct duration', duration === '1h 12m', duration);
   const torsoExercises = await detailExercises();
   check('skipped exercises left out', JSON.stringify(torsoExercises) === JSON.stringify(['Flat Dumbbell Bench Press', 'Lat Pulldown']), torsoExercises.join(', '));
 
-  // --- Legs ---
-  await startWorkout('Legs');
-  check('Legs starts with 5 exercises', (await page.locator('.exercise-card').count()) === 5);
+  // --- Legs: next up after Torso, started straight from Today ---
+  await go('#/');
+  const legsNext = (await page.locator('.next-up').textContent()) ?? '';
+  check('next up after Torso is Legs', legsNext.includes('Legs') && legsNext.includes('5 exercises'), legsNext);
+  await page.getByRole('button', { name: 'Start Legs' }).click();
+  await page.locator('.workout-bar').waitFor();
+  check('"Start Legs" starts it straight away, dated today (gym timer running)',
+    (await page.locator('.workout-title h1').textContent()) === 'Legs' && (await page.locator('[role="timer"][aria-label="Gym time"]').count()) === 1);
+  check('Legs starts with 5 exercises', (await exerciseCount()) === 5);
   await logSet('Hack Squat', 80, 10);
   duration = await finish('07:00', '08:05');
   check('Legs finished with correct duration', duration === '1h 5m', duration);
 
+  // --- Today after Legs: this week, last session; start sheet in rotation order ---
+  await go('#/');
+  const todayDot = page.locator('.week-day.is-today');
+  check('this week: today is outlined and ticked after training', (await todayDot.count()) === 1 && (await todayDot.getAttribute('class')).includes('is-trained'));
+  const lastCard = (await page.locator('.last-session-card').textContent()) ?? '';
+  check('last session card: template, date, duration and sets', lastCard.includes('Legs ·') && lastCard.includes('1h 5m · 1 set'), lastCard);
+  await page.getByRole('button', { name: 'Choose a different workout' }).click();
+  const nextUpRow = (await page.locator('.sheet .start-next').textContent()) ?? '';
+  const otherRows = await page.locator('.sheet .start-list .row-title').allTextContents();
+  const torsoRow = (await page.locator('.sheet .start-row', { hasText: 'Torso' }).textContent()) ?? '';
+  check('start sheet: next up on top with its badge, then rotation order, Blank last, last done dates',
+    nextUpRow.includes('Shoulders & Arms') && nextUpRow.includes('Next up') &&
+      JSON.stringify(otherRows) === '["Torso","Legs","Blank workout"]' && torsoRow.includes('last done'),
+    `${nextUpRow} / ${otherRows.join(', ')} / ${torsoRow}`);
+  check('start sheet: date row says Today', ((await page.locator('.sheet .start-date-value').textContent()) ?? '').trim() === 'Today');
+  await page.locator('.sheet .start-row', { hasText: 'Shoulders & Arms' }).click();
+  await page.locator('.workout-bar').waitFor();
+
   // --- Shoulders & Arms ---
-  await startWorkout('Shoulders & Arms');
-  check('Shoulders & Arms starts with 8 exercises', (await page.locator('.exercise-card').count()) === 8);
+  check('Shoulders & Arms starts with 8 exercises', (await exerciseCount()) === 8);
   await logSet('Seated Dumbbell Overhead Press', 17.5, 9);
   duration = await finish('20:00', '21:00');
   check('Shoulders & Arms finished with correct duration', duration === '1h', duration);
 
-  // --- Torso again: no rows until you add them; last session's sets sit beside them in Previous ---
+  // --- Torso again (live): last time's sets are the placeholders; ✓ on an empty row logs them ---
   await startWorkout('Torso');
   const bench = card('Flat Dumbbell Bench Press');
-  check('no sets listed until added (no ghost rows)', (await loggedRows(bench).count()) === 0);
-  await logSet('Flat Dumbbell Bench Press', 22.5, 8);
-  await logSet('Flat Dumbbell Bench Press', 22.5, 9);
-  const previousColumn = await bench.locator('.set-prev').allTextContents();
-  check('Previous column shows last session’s matching sets', JSON.stringify(previousColumn) === '["22.5 × 8","22.5 × 9"]', previousColumn.join(', '));
+  const placeholders = [await rowText(setRows(bench).nth(0), 'placeholder'), await rowText(setRows(bench).nth(1), 'placeholder')];
+  check('last session’s sets shown as placeholders', JSON.stringify(placeholders) === '["22.5 × 8","22.5 × 9"]', placeholders.join(', '));
+  const nextRow = await bench.locator('.set-row.is-next .set-label').textContent();
+  await setRows(bench).nth(0).locator('.done-button').click();
+  await page.waitForTimeout(200);
+  const ticked = await rowText(setRows(bench).nth(0));
+  check('✓ on an empty row logs the placeholders; set 1 was the next set', ticked === '22.5 × 8' && nextRow === '1', ticked);
+  const restBar = async () => `${await page.locator('.rest-bar-label').textContent()} | ${await page.locator('.rest-bar-clock').textContent()}`;
+  const resting = await restBar();
+  check('the rest bar counts down, saying what’s next', /^Rest · Set 2 next \| (3:00|2:59)$/.test(resting), resting);
+  await page.getByRole('button', { name: '+30 s' }).click();
+  const longer = await restBar();
+  check('+30 s adds to the rest', /\| (3:30|3:29)$/.test(longer), longer);
+  await setRows(bench).nth(1).locator('input[aria-label$="reps"]').fill('10');
+  await page.waitForTimeout(150);
+  await setRows(bench).nth(1).locator('.done-button').click();
+  await page.waitForTimeout(300);
+  const doneBench = (await exerciseRow('Flat Dumbbell Bench Press').textContent()) ?? '';
+  check('typed reps override the placeholder; the done exercise collapses to its top set and the next one opens',
+    doneBench.includes('22.5 × 10') && (await card('Dips').count()) === 1, doneBench);
+  const count = (await page.locator('.workout-count').textContent()) ?? '';
+  check('progress counts working sets: 2 of 15', count === '2 of 15 sets', count);
+
   // Typing reps and ticking ✓ on the last exercise, scrolled to the bottom, never moves the row (no mis-taps).
-  const lastCard = page.locator('.exercise-card').last();
-  await lastCard.getByRole('button', { name: '+ Add set' }).click();
-  const lastRow = loggedRows(lastCard).last();
-  await lastRow.waitFor();
+  const knee = await openExercise('Hanging Knee Raise');
+  const kneeRow = setRows(knee).first();
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  const repsInput = lastRow.locator('input[aria-label="reps"]');
+  const repsInput = kneeRow.locator('input[aria-label$="reps"]');
   const tops = new Set();
   const measure = async () => tops.add(Math.round((await repsInput.boundingBox()).y));
   await measure();
-  await lastRow.locator('input[aria-label="weight"]').fill('31');
+  await kneeRow.locator('input[aria-label$="weight"]').fill('5');
   await measure();
   for (const reps of ['0', '1', '12', '', '10']) {
     await repsInput.fill(reps);
     await page.waitForTimeout(100);
     await measure();
   }
-  await lastRow.locator('.done-button').click();
+  await kneeRow.locator('.done-button').click();
   await page.waitForTimeout(100);
   await measure();
   check('logging a set never shifts the row under your thumb', tops.size === 1, [...tops].join(', '));
-  await menu(lastRow.getByRole('button', { name: /options$/ }), 'Delete set');
+  check('typing into a pre-filled row keeps one set (no duplicates)', (await knee.getByRole('button', { name: /^Set \d options$/ }).count()) === 1);
+  await menu(knee.getByRole('button', { name: 'Set 1 options' }), 'Delete set');
   // Deleting is only in the set's menu, never next to the inputs.
-  await bench.getByRole('button', { name: '+ Add set' }).click();
-  await loggedRows(bench).nth(2).waitFor();
-  await menu(loggedRows(bench).nth(2).getByRole('button', { name: 'Set 3 options' }), 'Delete set');
+  const bench2 = await openExercise('Flat Dumbbell Bench Press');
+  await bench2.getByRole('button', { name: '+ Add set' }).click();
+  await setRows(bench2).nth(2).locator('input[aria-label$="weight"]').fill('20');
+  await page.waitForTimeout(150);
+  await menu(bench2.getByRole('button', { name: 'Set 3 options' }), 'Delete set');
   await page.waitForTimeout(200);
-  check('delete a set from its menu', (await loggedRows(bench).count()) === 2 && (await loggedRows(lastCard).count()) === 0);
+  check('delete a set from its menu', (await bench2.getByRole('button', { name: /^Set \d options$/ }).count()) === 2 &&
+    (await (await openExercise('Hanging Knee Raise')).getByRole('button', { name: /^Set \d options$/ }).count()) === 0);
   duration = await finish('21:10', '21:55');
   check('second Torso finished with correct duration', duration === '45m', duration);
 
@@ -186,7 +273,7 @@ try {
   await page.locator('.history-row', { hasText: 'Legs' }).click();
   await page.getByRole('link', { name: 'Edit session' }).click();
   await page.locator('.times-editor input[type="time"]').nth(1).fill('08:35');
-  await logSet('Hack Squat', 85, 8);
+  await addSetEditing('Hack Squat', 85, 8);
   await page.locator('.workout-bar').getByRole('button', { name: 'Done' }).click();
   await page.waitForURL(/#\/history\//);
   const edited = (await page.locator('.detail-summary .stat-value').first().textContent()).trim();
@@ -195,36 +282,61 @@ try {
 
   // ===== Phase 2 =====
 
-  // --- Warm-up helper and top-set comparison ---
+  // --- Warm-up rest, and no "Go up" yet ---
   await startWorkout('Torso');
   const bench3 = card('Flat Dumbbell Bench Press');
-  const warmChip = (await bench3.locator('.warmup-hint').textContent()) ?? '';
-  await bench3.locator('.warmup-hint').click();
-  const warm = (await page.locator('.action-sheet').textContent()) ?? '';
-  await page.locator('.action-sheet').getByRole('button', { name: 'Done' }).click();
-  check(
-    'warm-up helper: 40 / 65 / 75% of last work weight, rounded to the step (chip, details on tap)',
-    warmChip.includes('10 · 15 · 17.5') && warm.includes('from 22.5 kg each') &&
-      warm.includes('10 kg each× 6–1040%') && warm.includes('15 kg each× 4–865%') && warm.includes('17.5 kg each× 2–475%'),
-    `${warmChip} / ${warm}`,
-  );
-  const toBeat = (await bench3.locator('.top-set-compare').textContent()) ?? '';
-  check('top set to beat shown before logging', toBeat.includes('Top set to beat · 22.5 × 9'), toBeat);
+  await bench3.getByRole('button', { name: 'Start warm-up rest timer' }).click();
+  await page.waitForTimeout(200);
+  const warmBar = `${await page.locator('.rest-bar-label').textContent()} | ${await page.locator('.rest-bar-clock').textContent()}`;
+  check('Warm-up starts a warm-up rest (1–2 min) and logs nothing',
+    /^Warm-up rest · not logged \| (1:00|0:59)$/.test(warmBar) && (await page.locator('.workout-count').textContent()) === '0 of 15 sets', warmBar);
+  await page.getByRole('button', { name: 'Skip' }).click();
+  check('Skip closes the rest bar', (await page.locator('.rest-bar').count()) === 0);
+  // A rest that has run out: green "Ready" with how long you've rested, one clock only.
+  await page.evaluate(() => {
+    const key = 'gym-log.rest-timer';
+    const state = JSON.parse(localStorage.getItem(key));
+    const sessionId = location.hash.split('/').pop();
+    state.timer = { sessionId, setId: 'x', startedAt: Date.now() - 200_000, text: '3–5 min', range: { min: 180, max: 300 } };
+    localStorage.setItem(key, JSON.stringify(state));
+  });
+  await page.reload();
+  await page.locator('.rest-bar.is-ready').waitFor();
+  const readyBar = `${await page.locator('.rest-bar-label').textContent()} | ${await page.locator('.rest-bar-clock').textContent()}`;
+  check('at zero the rest bar turns to "Ready", rested time counting up, with Dismiss',
+    /^Rested 3:2\d · go when ready \| Ready$/.test(readyBar) && (await page.getByRole('button', { name: 'Dismiss' }).count()) === 1 &&
+      (await page.locator('[role="timer"][aria-label="Rest left"]').count()) === 0, readyBar);
+  await page.getByRole('button', { name: 'Dismiss' }).click();
   check('no "Go up" hint when set 1 missed the top of the range', (await bench3.locator('.progression-hint').count()) === 0);
   await logSet('Flat Dumbbell Bench Press', 22.5, 12);
-  const compare = (await bench3.locator('.top-set-compare').textContent()) ?? '';
-  check('top set compared with last session', compare.includes('Beat last time · 22.5 × 12 vs 22.5 × 9'), compare);
-  await finish();
+  await openExercise('Dips');
+  const benchTag = (await exerciseRow('Flat Dumbbell Bench Press').locator('.exercise-row-goup').textContent()) ?? '';
+  check('set 1 at the top of the range: "Go up" tag on the collapsed row', benchTag === '↑ Go to 25 kg next time', benchTag);
+  await page.locator('.workout-bar').getByRole('button', { name: 'Finish' }).click();
+  await page.locator('.finish-screen').waitFor();
+  await page.locator('.best-badge').first().waitFor({ timeout: 3000 }).catch(() => {}); // bests load from the database
+  const stats = await page.locator('.finish-stat').allTextContents();
+  const goUpCard = (await page.locator('.finish-goup').textContent()) ?? '';
+  const benchLine = (await page.locator('.finish-list-row', { hasText: 'Flat Dumbbell Bench Press' }).textContent()) ?? '';
+  check('Finish screen: title, stats, Go up next time, BEST badge',
+    (await page.locator('.finish-title').textContent()) === 'Torso done' &&
+      JSON.stringify(stats.slice(1)) === '["1working sets","1new best"]' &&
+      goUpCard.includes('Flat Dumbbell Bench Press') && goUpCard.includes('22.5 → 25 kg') &&
+      benchLine.includes('Best') && benchLine.includes('22.5 × 12'),
+    `${stats.join(', ')} / ${goUpCard} / ${benchLine}`);
+  await page.getByRole('button', { name: 'Back to workout' }).click();
+  check('Back to workout', (await page.locator('.workout-bar').count()) === 1);
+  await page.locator('.workout-bar').getByRole('button', { name: 'Finish' }).click();
+  await page.getByLabel('Session note').fill('Felt strong');
+  await page.waitForTimeout(150);
+  await page.getByRole('button', { name: 'Save workout' }).click();
+  await page.waitForURL(/#\/history\//);
+  check('session note from the Finish screen is saved', ((await page.locator('.detail-note').textContent()) ?? '') === 'Felt strong');
 
   // --- Progression hint next time ---
   await startWorkout('Torso');
-  const goUpChip = card('Flat Dumbbell Bench Press').locator('.progression-hint');
-  const chipText = (await goUpChip.textContent()) ?? '';
-  await goUpChip.click();
-  const hint = (await page.locator('.action-sheet').textContent()) ?? '';
-  await page.locator('.action-sheet').getByRole('button', { name: 'Done' }).click();
-  check('"Go up" chip after set 1 hit the top of the range, reasoning on tap',
-    chipText === '↑ Try 25 kg' && hint.includes('hit 12 reps') && hint.includes('try 25 kg each'), `${chipText} / ${hint}`);
+  const goUp = (await card('Flat Dumbbell Bench Press').locator('.progression-hint').textContent()) ?? '';
+  check('"Go up" hint after set 1 hit the top of the range', goUp === '↑ Try 25 kg today', goUp);
   await page.getByRole('button', { name: 'Discard workout' }).click();
   await page.waitForURL(/#\/$/);
 

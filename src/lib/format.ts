@@ -16,9 +16,9 @@ export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
-/** Joins with " | " but keeps each part on one line, so wrapping only happens between parts. */
-export function joinUnbroken(parts: string[]): string {
+/** Joins with " | " (or `separator`) but keeps each part on one line, so wrapping only happens between parts. */
+export function joinUnbroken(parts: string[], separator = ' | '): string {
   // No-break spaces, non-breaking hyphens, and a word joiner after en dashes.
   const keep = (p: string) => p.replace(/ /g, '\u00a0').replace(/-/g, '\u2011').replace(/–/g, '–\u2060');
-  return parts.map(keep).join(' | ');
+  return parts.map(keep).join(separator);
 }

@@ -1,4 +1,5 @@
 import type { WorkoutSet } from '../db/types';
+import { formatKg } from './format';
 import { isWorkingSet } from './progress';
 import { roundToStep } from './warmup';
 
@@ -25,6 +26,15 @@ export function progressionHint(lastSets: WorkoutSet[] | undefined, repMax: numb
   return { weight, reps: first.reps!, low, high };
 }
 
+/**
+ * The weight to go up to: "35 kg", "35–37.5 kg" when 5% and 10% round
+ * differently, or "+12.5 kg" for added load on a bodyweight exercise.
+ */
+export function goUpWeight(hint: ProgressionHint, bodyweight: boolean): string {
+  const range = `${formatKg(hint.low)}${hint.high > hint.low ? `–${formatKg(hint.high)}` : ''}`;
+  return `${bodyweight ? '+' : ''}${range} kg`;
+}
+
 export interface TopSet {
   weight: number;
   reps: number;
@@ -49,4 +59,10 @@ export function compareTopSets(today: TopSet, last: TopSet): Comparison {
   if (today.weight !== last.weight) return today.weight > last.weight ? 'beat' : 'below';
   if (today.reps !== last.reps) return today.reps > last.reps ? 'beat' : 'below';
   return 'matched';
+}
+
+/** Today's top set beats the best from every earlier session (never true the first time an exercise is done). */
+export function isNewBest(sets: WorkoutSet[], previousBest: TopSet | undefined): boolean {
+  const top = topSet(sets);
+  return top !== null && previousBest !== undefined && compareTopSets(top, previousBest) === 'beat';
 }

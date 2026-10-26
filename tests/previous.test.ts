@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../src/db/db';
-import { addSet, addSets, newSet, previousSetsFor, startSession } from '../src/db/sessions';
+import { addSet, addSets, newSet, previousBestsFor, previousSetsFor, startSession } from '../src/db/sessions';
 import type { Session } from '../src/db/types';
 import { previousBeside } from '../src/lib/previous';
 
@@ -58,6 +58,21 @@ describe('previousSetsFor', () => {
   });
 });
 
+describe('previousBestsFor', () => {
+  it('the best top set across every earlier finished session, per exercise', async () => {
+    await db.sessions.bulkAdd([
+      finished('a', 1000, [['bench', [set(25, 6), set(22.5, 10)]]]),
+      finished('b', 2000, [['bench', [set(22.5, 12)]], ['dips', [set(0, 9)]]]),
+      finished('c', 9000, [['bench', [set(40, 5)]]]), // after the current session: ignored
+    ]);
+    const current = await startSession(null, 5000);
+    const bests = await previousBestsFor(['bench', 'dips', 'fly'], current);
+    expect(bests.get('bench')).toEqual({ weight: 25, reps: 6 });
+    expect(bests.get('dips')).toEqual({ weight: 0, reps: 9 });
+    expect(bests.has('fly')).toBe(false);
+  });
+});
+
 describe('adding sets', () => {
   it('addSet can keep a supplied id; addSets adds several in order', async () => {
     const s = await startSession(null, 1000);
@@ -67,6 +82,9 @@ describe('adding sets', () => {
     const sets = (await db.sessions.get(s.id))!.exercises[0].sets;
     expect(sets[0].id).toBe('fixed-id');
     expect(sets.map((x) => `${x.weight}x${x.reps}`)).toEqual(['20x10', '22.5x8', '22.5x9']);
+    await addSets(s.id, 'i1', [{ id: 'a' }, { id: 'b', reps: 5 }]);
+    const more = (await db.sessions.get(s.id))!.exercises[0].sets.slice(3);
+    expect(more.map((x) => [x.id, x.reps])).toEqual([['a', null], ['b', 5]]);
   });
 });
 

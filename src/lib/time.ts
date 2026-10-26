@@ -52,6 +52,11 @@ export function formatLongDate(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
+/** "Sunday 25 Oct" */
+export function formatDayDate(ms: number): string {
+  return new Date(ms).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+}
+
 /** "18:05" or "6:05 pm", following the device's setting. */
 export function formatTime(ms: number): string {
   return new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });

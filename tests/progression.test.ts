@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newSet } from '../src/db/sessions';
-import { compareTopSets, progressionHint, topSet } from '../src/lib/progression';
+import { compareTopSets, goUpWeight, progressionHint, topSet } from '../src/lib/progression';
 
 const set = (weight: number | null, reps: number | null, warmup = false) => newSet({ weight, reps, warmup }, 0);
 
@@ -36,5 +36,13 @@ describe('top set comparison', () => {
     expect(compareTopSets({ weight: 22.5, reps: 9 }, { weight: 22.5, reps: 9 })).toBe('matched');
     expect(compareTopSets({ weight: 22.5, reps: 8 }, { weight: 22.5, reps: 9 })).toBe('below');
     expect(compareTopSets({ weight: 20, reps: 15 }, { weight: 22.5, reps: 9 })).toBe('below');
+  });
+});
+
+describe('goUpWeight', () => {
+  it('one weight, a range when 5% and 10% round differently, + for added load', () => {
+    expect(goUpWeight({ weight: 32.5, reps: 12, low: 35, high: 35 }, false)).toBe('35 kg');
+    expect(goUpWeight({ weight: 60, reps: 12, low: 62.5, high: 65 }, false)).toBe('62.5–65 kg');
+    expect(goUpWeight({ weight: 10, reps: 12, low: 12.5, high: 12.5 }, true)).toBe('+12.5 kg');
   });
 });

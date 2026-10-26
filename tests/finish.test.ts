@@ -63,6 +63,22 @@ describe('finishing', () => {
     expect(() => finishSession(s.id, 2000, 1000)).toThrow();
   });
 
+  it('finish drops sets left completely empty (e.g. pre-filled rows above a logged one)', async () => {
+    const t = await createTemplate('Torso');
+    await addSlot(t.id, 'bench');
+    await addSlot(t.id, 'dips');
+    const s = await startSession(t.id, at(2026, 10, 12, 18, 0));
+    await addSet(s.id, s.exercises[0].id, {});
+    await addSet(s.id, s.exercises[0].id, { weight: 22.5, reps: 8 });
+    await addSet(s.id, s.exercises[0].id, { weight: 22.5 });
+    await addSet(s.id, s.exercises[1].id, {});
+    await finishSession(s.id, at(2026, 10, 12, 18, 0), at(2026, 10, 12, 19, 0));
+    const saved = (await db.sessions.get(s.id))!;
+    expect(saved.exercises.map((e) => [e.exerciseId, e.sets.map((x) => [x.weight, x.reps])])).toEqual([
+      ['bench', [[22.5, 8], [22.5, null]]],
+    ]);
+  });
+
   it('times stay editable afterwards', async () => {
     const s = await startSession(null, 1000);
     await finishSession(s.id, 1000, 5000);

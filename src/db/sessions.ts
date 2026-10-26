@@ -1,4 +1,5 @@
 import { newId } from '../lib/ids';
+import { topSet, type TopSet } from '../lib/progression';
 import { addDays, startOfWeek } from '../lib/time';
 import { db } from './db';
 import type { Session, SessionExercise, WorkoutSet } from './types';
@@ -148,11 +149,15 @@ export function addSet(
   );
 }
 
-/** Adds several sets at once (e.g. copying the previous session's sets). */
-export function addSets(sessionId: string, itemId: string, fieldsList: Partial<SetFields>[]): Promise<Session> {
+/** Adds several sets at once, in order (e.g. a pre-filled row and any empty rows above it). Ids can be supplied. */
+export function addSets(
+  sessionId: string,
+  itemId: string,
+  fieldsList: (Partial<SetFields> & { id?: string })[],
+): Promise<Session> {
   const now = Date.now();
   return mutateSession(sessionId, (s) =>
-    mapExercise(s, itemId, (e) => ({ ...e, sets: [...e.sets, ...fieldsList.map((f) => newSet(f, now))] })),
+    mapExercise(s, itemId, (e) => ({ ...e, sets: [...e.sets, ...fieldsList.map((f) => newSet(f, now, f.id))] })),
   );
 }
 
@@ -228,6 +233,27 @@ export async function previousSetsFor(
   return result;
 }
 
+/**
+ * For each exercise, the best top set (heaviest working set, more reps
+ * breaking a tie) across every finished session before `current`. Exercises
+ * never done before have no entry.
+ */
+export async function previousBestsFor(
+  exerciseIds: string[],
+  current: Pick<Session, 'id' | 'startedAt'>,
+): Promise<Map<string, TopSet>> {
+  const result = new Map<string, TopSet>();
+  for (const exerciseId of new Set(exerciseIds)) {
+    const sessions = await db.sessions.where('exerciseIds').equals(exerciseId).toArray();
+    const sets = sessions
+      .filter((s) => s.id !== current.id && s.status === 'finished' && s.startedAt < current.startedAt)
+      .flatMap((s) => s.exercises.filter((e) => e.exerciseId === exerciseId).flatMap((e) => e.sets));
+    const best = topSet(sets);
+    if (best) result.set(exerciseId, best);
+  }
+  return result;
+}
+
 // ---- Gym time and finishing ----
 
 /** Longest a workout can have been running and still be "live" (timer running). */
@@ -247,7 +273,10 @@ export function suggestedEnd(session: Session, now = Date.now()): number {
   return last > session.startedAt ? last : now;
 }
 
-/** Finishes a workout with the given times. Exercises with no sets (skipped) are dropped. */
+/**
+ * Finishes a workout with the given times. Sets left completely empty are
+ * dropped, then exercises with no sets (skipped).
+ */
 export function finishSession(id: string, startedAt: number, endedAt: number): Promise<Session> {
   if (endedAt < startedAt) throw new Error('End time is before the start time');
   return mutateSession(id, (s) => ({
@@ -255,7 +284,9 @@ export function finishSession(id: string, startedAt: number, endedAt: number): P
     status: 'finished',
     startedAt,
     endedAt,
-    exercises: s.exercises.filter((e) => e.sets.length > 0),
+    exercises: s.exercises
+      .map((e) => ({ ...e, sets: e.sets.filter((set) => set.weight !== null || set.reps !== null) }))
+      .filter((e) => e.sets.length > 0),
   }));
 }
 

@@ -1,23 +1,39 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { Link } from 'react-router';
-import Duration from '../../components/Duration';
+import { Link, useNavigate } from 'react-router';
+import { CheckIcon, ChevronIcon } from '../../components/Icons';
 import SectionHeader from '../../components/SectionHeader';
 import { db } from '../../db/db';
-import { getActiveSession, lastFinishedSession, loadWeekStats } from '../../db/sessions';
+import { finishedSessions, getActiveSession, loadWeekStats, previousBestsFor, startSession } from '../../db/sessions';
 import { useSettings } from '../../db/settings';
+import type { Session } from '../../db/types';
 import { blockStatus } from '../../lib/block';
 import { needsBackupReminder } from '../../lib/export';
-import type { Exercise, Session } from '../../db/types';
+import { plural } from '../../lib/format';
+import { isWorkingSet } from '../../lib/progress';
+import { isNewBest, type TopSet } from '../../lib/progression';
+import { lastDoneByTemplate, nextTemplate, weekDays } from '../../lib/rotation';
 import { formatDate, formatDuration, formatLongDate, formatTime, isSameDay } from '../../lib/time';
 import StartSheet from './StartSheet';
 
+const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 export default function Today() {
+  const navigate = useNavigate();
   const active = useLiveQuery(async () => (await getActiveSession()) ?? null, []);
-  const last = useLiveQuery(async () => (await lastFinishedSession()) ?? null, []);
+  const finished = useLiveQuery(() => finishedSessions(), []);
+  const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
   const week = useLiveQuery(() => loadWeekStats(Date.now()), []);
-  const exercises = useLiveQuery(async () => new Map((await db.exercises.toArray()).map((e) => [e.id, e])), []);
   const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const last = finished?.[0] ?? null;
+  const lastBests = useLiveQuery(
+    async () => (last ? previousBestsFor(last.exerciseIds, last) : null),
+    [last?.id, last?.updatedAt],
+  );
+  const next = templates && finished ? nextTemplate(templates, finished) : null;
+  const lastDone = next && finished ? lastDoneByTemplate(finished).get(next.id) : undefined;
   const settings = useSettings();
   const firstSessionAt = useLiveQuery(
     async () =>
@@ -29,6 +45,16 @@ export default function Today() {
       )?.startedAt ?? null,
     [],
   );
+  /** "Start {name}": straight into the next template, dated today. */
+  async function startNext(templateId: string) {
+    try {
+      const session = await startSession(templateId, Date.now());
+      navigate(`/workout/${session.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   const block = settings ? blockStatus(settings.block, Date.now()) : null;
   const remind =
     settings !== undefined &&
@@ -52,10 +78,35 @@ export default function Today() {
         </Link>
       )}
 
-      {active === null && (
-        <button type="button" className="btn btn-primary btn-hero" onClick={() => setStarting(true)}>
-          Start workout
-        </button>
+      {active === null && templates && finished && (
+        <section className="card next-up" aria-label="Next up">
+          {next ? (
+            <>
+              <div className="next-up-text">
+                <span className="next-up-label">Next up</span>
+                <h2 className="next-up-name">{next.name}</h2>
+                <span className="row-meta">
+                  {plural(next.slots.length, 'exercise')} · {lastDone ? `last trained ${formatDate(lastDone)}` : 'not done yet'}
+                </span>
+              </div>
+              <button type="button" className="btn btn-primary btn-block btn-tall" onClick={() => startNext(next.id)}>
+                Start {next.name}
+              </button>
+              <button type="button" className="text-button" onClick={() => setStarting(true)}>
+                Choose a different workout
+              </button>
+            </>
+          ) : (
+            <button type="button" className="btn btn-primary btn-block btn-tall" onClick={() => setStarting(true)}>
+              Start workout
+            </button>
+          )}
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+        </section>
       )}
       {active && (
         <Link className="btn btn-primary btn-hero" to={`/workout/${active.id}`}>
@@ -85,33 +136,54 @@ export default function Today() {
         </Link>
       )}
 
-      <section className="card stat-card" aria-label="This week">
-        <h2 className="card-title">This week</h2>
-        <div className="stats">
-          <div>
-            <div className="stat-value">{week?.sessions ?? '–'}</div>
-            <div className="stat-label">{week?.sessions === 1 ? 'session' : 'sessions'}</div>
-          </div>
-          <div>
-            <div className="stat-value">{week ? <Duration ms={week.totalMs} /> : '–'}</div>
-            <div className="stat-label">gym time</div>
-          </div>
+      <section className="card week-card" aria-label="This week">
+        <div className="week-head">
+          <h2 className="card-title">This week</h2>
+          {week && (
+            <span className="row-meta">
+              {plural(week.sessions, 'session')} · {formatDuration(week.totalMs)}
+            </span>
+          )}
         </div>
+        <ol className="week-days">
+          {finished &&
+            weekDays(finished, Date.now()).map((d, i) => (
+              <li key={d.day} className={['week-day', d.trained && 'is-trained', d.today && 'is-today'].filter(Boolean).join(' ')}>
+                <span className="week-day-letter" aria-hidden="true">
+                  {DAY_LETTERS[i]}
+                </span>
+                <span className="week-day-dot">{d.trained && <CheckIcon />}</span>
+                <span className="visually-hidden">
+                  {DAY_NAMES[i]}
+                  {d.today ? ', today' : ''}
+                  {d.trained ? ', trained' : ''}
+                </span>
+              </li>
+            ))}
+        </ol>
       </section>
 
-      {last && exercises ? (
-        <Link className="card card-link" to={`/history/${last.id}`} aria-label="Last session">
-          <h2 className="card-title">Last session</h2>
-          <LastSession session={last} exercises={exercises} />
+      {last ? (
+        <Link className="card card-link last-session-card" to={`/history/${last.id}`}>
+          <span className="last-session-text">
+            <span className="card-title">Last session</span>
+            <span className="last-session-title">
+              {last.templateName ?? 'Blank workout'} · {formatDate(last.startedAt)}
+            </span>
+            <span className="row-meta">{lastSessionMeta(last, lastBests ?? null)}</span>
+          </span>
+          <ChevronIcon />
         </Link>
       ) : (
-        <section className="card" aria-label="Last session">
-          <h2 className="card-title">Last session</h2>
-          {last === null && <p className="muted">No sessions yet.</p>}
-        </section>
+        finished && (
+          <section className="card" aria-label="Last session">
+            <h2 className="card-title">Last session</h2>
+            <p className="muted">No sessions yet.</p>
+          </section>
+        )
       )}
 
-      {starting && <StartSheet onClose={() => setStarting(false)} />}
+      {starting && <StartSheet next={next} onClose={() => setStarting(false)} />}
     </>
   );
 }
@@ -123,19 +195,15 @@ function activeMeta(s: Session): string {
     : `${name} · ${formatDate(s.startedAt)}`;
 }
 
-function LastSession({ session, exercises }: { session: Session; exercises: Map<string, Exercise> }) {
-  const names = session.exercises.map((e) => exercises.get(e.exerciseId)?.name ?? 'Unknown exercise');
-  return (
-    <div className="last-session">
-      <div className="last-session-head">
-        <span className="row-title">{session.templateName ?? 'Blank workout'}</span>
-        <span className="last-session-duration">
-          {session.endedAt !== null ? formatDuration(session.endedAt - session.startedAt) : ''}
-        </span>
-      </div>
-      <div className="row-meta">{formatDate(session.startedAt)}</div>
-      {names.length > 0 && <p className="last-session-exercises">{names.join(', ')}</p>}
-    </div>
-  );
+/** "58m · 15 sets · 2 new bests" (working sets; bests only when there are some). */
+function lastSessionMeta(s: Session, bests: Map<string, TopSet> | null): string {
+  const sets = s.exercises.reduce((n, e) => n + e.sets.filter(isWorkingSet).length, 0);
+  const newBests = bests ? s.exercises.filter((e) => isNewBest(e.sets, bests.get(e.exerciseId))).length : 0;
+  return [
+    s.endedAt !== null && formatDuration(s.endedAt - s.startedAt),
+    plural(sets, 'set'),
+    newBests > 0 && plural(newBests, 'new best'),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
-

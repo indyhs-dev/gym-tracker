@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_REST } from '../src/db/defaults';
 import { parseRest, restAfter } from '../src/lib/rest';
+import { restClock } from '../src/lib/restTimer';
 
 describe('parseRest', () => {
   it('reads the default rest texts', () => {
@@ -41,5 +42,20 @@ describe('restAfter', () => {
   it('falls back to the default when the text has no number', () => {
     const rest = { ...DEFAULT_REST, compound: 'as long as it takes' };
     expect(restAfter('compound', false, rest)).toEqual({ text: 'as long as it takes', range: { min: 180, max: 300 } });
+  });
+});
+
+describe('restClock', () => {
+  const timer = { startedAt: 1000, range: { min: 90, max: 180 } };
+
+  it('counts down to the lower end of the guidance, then counts up as rested', () => {
+    expect(restClock(timer, 1000)).toEqual({ ready: false, remaining: 90_000, elapsed: 0, left: 1 });
+    expect(restClock(timer, 1000 + 45_000)).toMatchObject({ ready: false, remaining: 45_000, left: 0.5 });
+    expect(restClock(timer, 1000 + 90_000)).toMatchObject({ ready: true, remaining: 0, left: 0 });
+    expect(restClock(timer, 1000 + 192_000)).toMatchObject({ ready: true, elapsed: 192_000 });
+  });
+
+  it('a clock running behind the start time reads as just started', () => {
+    expect(restClock(timer, 0)).toMatchObject({ elapsed: 0, remaining: 90_000 });
   });
 });
