@@ -17,13 +17,6 @@ const tabs: { to: string; section: Section; label: string; icon: ReactNode }[] =
     ),
   },
   {
-    to: '/sauna',
-    section: 'sauna',
-    label: 'Sauna',
-    // Heat rising from a bench.
-    icon: <path d="M8 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M12 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M16 14c-1.5-1.5-1.5-3 0-4.5s1.5-3 0-4.5M4 19h16" />,
-  },
-  {
     to: '/settings',
     section: 'settings',
     label: 'Settings',

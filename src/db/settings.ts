@@ -3,16 +3,19 @@ import { db } from './db';
 import { defaultSettings } from './defaults';
 import type { Settings } from './types';
 
-/** Stored settings with defaults filled in for anything added since they were saved. */
+/**
+ * Stored settings with defaults filled in for anything added since they were saved,
+ * and anything since removed (the old sauna target) left out.
+ */
 export function withDefaults(stored: Partial<Settings> | undefined): Settings {
   const defaults = defaultSettings();
+  const { sauna: _removed, ...kept } = (stored ?? {}) as Partial<Settings> & { sauna?: unknown };
   return {
     ...defaults,
-    ...stored,
+    ...kept,
     id: 'app',
     rest: { ...defaults.rest, ...stored?.rest },
     block: { ...defaults.block, ...stored?.block },
-    sauna: { ...defaults.sauna, ...stored?.sauna },
   };
 }
 

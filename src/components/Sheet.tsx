@@ -4,8 +4,6 @@ interface Props {
   title: string;
   onClose: () => void;
   children: ReactNode;
-  /** Pinned below the scrolling content (e.g. a Save button that's always in reach). */
-  footer?: ReactNode;
 }
 
 /** While a sheet is open: the page behind it doesn't scroll, and Escape closes it. */
@@ -24,7 +22,7 @@ export function useSheet(onClose: () => void) {
 }
 
 /** Bottom sheet over the current screen. Render it only while open. */
-export default function Sheet({ title, onClose, children, footer }: Props) {
+export default function Sheet({ title, onClose, children }: Props) {
   useSheet(onClose);
 
   return (
@@ -36,8 +34,7 @@ export default function Sheet({ title, onClose, children, footer }: Props) {
             Cancel
           </button>
         </div>
-        <div className={footer ? 'sheet-body has-footer' : 'sheet-body'}>{children}</div>
-        {footer && <div className="sheet-footer">{footer}</div>}
+        <div className="sheet-body">{children}</div>
       </div>
     </div>
   );

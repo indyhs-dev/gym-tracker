@@ -1,8 +1,8 @@
-// Phase 1 + 2 (and sauna) "definition of done", run end to end against the production build
+// Phase 1 + 2 "definition of done", run end to end against the production build
 // in the locally installed Google Chrome (throwaway profile, iPhone-sized window).
 // Usage: npm run build && npm run check:dod
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from 'playwright-core';
@@ -358,54 +358,15 @@ try {
   const blockText = (await page.locator('.block-card').textContent()) ?? '';
   check('training block shows the week number', blockText.includes('Week 3'), blockText);
 
-  // --- Navigation: Gym · Sauna · Settings, each section with Today · History · Progress ---
+  // --- Navigation: Gym · Settings, Gym with Today · History · Progress ---
   await go('#/');
   const bar = await page.locator('.tab').allTextContents();
   const gymTabs = await page.locator('.section-tab').allTextContents();
-  await go('#/sauna/progress');
-  const saunaOn = `${await page.locator('.tab.active').textContent()} / ${await page.locator('.section-tab.active').textContent()}`;
-  check('navigation: Gym · Sauna · Settings, each with Today · History · Progress',
-    bar.join() === 'Gym,Sauna,Settings' && gymTabs.join() === 'Today,History,Progress' && saunaOn === 'Sauna / Progress', saunaOn);
-
-  // --- Sauna ---
-  const saunaRows = () => page.locator('.history-row');
-  const saveSheet = async (name) => {
-    await page.getByRole('button', { name }).click();
-    await page.locator('.sheet').waitFor({ state: 'detached' });
-  };
+  // The sauna tracker was removed; an old #/sauna link lands on Gym → Today.
   await go('#/sauna/history');
-  check('sauna: 3 sample sessions seeded', (await saunaRows().count()) === 3);
-  // The usual case: defaults from the last session, pick a feel score, save.
-  await go('#/sauna');
-  await page.getByRole('button', { name: /^Log sauna/ }).click();
-  await page.getByRole('group', { name: 'Feel, 1 to 5' }).getByRole('button', { name: '4' }).click();
-  await saveSheet('Save session');
-  await go('#/sauna/history');
-  check('sauna: logged from defaults in 3 taps', (await saunaRows().count()) === 4);
-  await go('#/sauna');
-  await page.getByRole('button', { name: /^Log sauna/ }).click();
-  await page.getByLabel('Round 2 time left (m:ss)').pressSequentially('337');
-  const preview = (await page.locator('.round-preview').textContent()) ?? '';
-  await page.getByRole('group', { name: 'Feel, 1 to 5' }).getByRole('button', { name: '3' }).click();
-  await page.getByLabel('Sauna note').fill('Busy tonight');
-  await saveSheet('Save session');
-  await go('#/sauna/history');
-  const leftEarly = (await saunaRows().first().textContent()) ?? '';
-  check('sauna: 3:37 left on 15 min = 11:23 done, shown as entered, with note',
-    preview.includes('11:23 done') && leftEarly.includes('Round 2: 15 min, left with 3:37 remaining') && leftEarly.includes('Busy tonight'), preview);
-  await go('#/sauna');
-  await page.getByRole('button', { name: 'Log a skip' }).click();
-  await page.locator('.sheet .chip', { hasText: 'Sauna closed' }).click();
-  await saveSheet('Save skip');
-  const saunaWeek = (await page.locator('.card-link .stats').textContent()) ?? '';
-  check('sauna: skip logged and shown for the week', saunaWeek.includes('1 skipped'), saunaWeek);
-  await go('#/sauna/progress');
-  check('sauna: weekly chart, calendar and feel trend', (await page.locator('.chart-card').count()) === 3 && (await page.locator('.cal').count()) === 1);
-  // Delete the left-early session from History (newest first: skip, then it).
-  await go('#/sauna/history');
-  await saunaRows().nth(1).click();
-  await saveSheet('Delete session');
-  check('sauna: deleted from history', (await saunaRows().count()) === 5);
+  const oldLink = `${new globalThis.URL(page.url()).hash} ${await page.locator('.tab.active').textContent()}`;
+  check('navigation: Gym · Settings, Gym with Today · History · Progress; old sauna links go to Gym',
+    bar.join() === 'Gym,Settings' && gymTabs.join() === 'Today,History,Progress' && oldLink === '#/ Gym', `${bar.join()} | ${oldLink}`);
 
   // --- Export JSON and CSV ---
   await go('#/settings/backup');
@@ -417,7 +378,18 @@ try {
   await jsonDownload.saveAs(backupPath);
   const backup = JSON.parse(await readFile(backupPath, 'utf8'));
   check('JSON backup exported', backup.format === 'gym-log-backup' && backup.data.sessions.length === 5, jsonDownload.suggestedFilename());
-  check('sauna entries in the backup', backup.data.saunaEntries?.length === 5, `${backup.data.saunaEntries?.length}`);
+  check('no sauna data in the backup', !('saunaEntries' in backup.data) && !backup.data.settings.some((s) => 'sauna' in s),
+    Object.keys(backup.data).join());
+  // A backup from before the sauna tracker was removed still restores (its sauna data is ignored).
+  const oldBackupPath = join(tmp, 'old-backup-with-sauna.json');
+  await writeFile(oldBackupPath, JSON.stringify({
+    ...backup,
+    data: {
+      ...backup.data,
+      settings: backup.data.settings.map((s) => ({ ...s, sauna: { weeklyTarget: 3, samplesAddedAt: backup.exportedAt } })),
+      saunaEntries: [{ id: 'old', date: localDate(1), kind: 'skip', reason: 'rest', createdAt: 1, updatedAt: 1 }],
+    },
+  }));
 
   const [csvDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -442,15 +414,13 @@ try {
   await page.waitForTimeout(500);
   check('data wiped', (await page.locator('.history-row').count()) === 0);
   await go('#/settings/backup');
-  await page.locator('input[type="file"]').setInputFiles(backupPath);
+  await page.locator('input[type="file"]').setInputFiles(oldBackupPath);
   await page.locator('.notice').waitFor();
-  check('restore from JSON', (await page.locator('.notice').textContent()).includes('Restored 5 sessions'));
+  check('restore from JSON (an old backup that still has sauna data)', (await page.locator('.notice').textContent()).includes('Restored 5 sessions'));
   await go('#/history');
   check('history back after restore', (await page.locator('.history-row').count()) === 5);
   await go('#/');
   check('training block restored too', ((await page.locator('.block-card').textContent()) ?? '').includes('Week 3'));
-  await go('#/sauna/history');
-  check('sauna entries restored too', (await page.locator('.history-row').count()) === 5);
   await go('#/history');
 
   // --- Offline ---
@@ -465,9 +435,6 @@ try {
   await go('#/progress');
   await page.locator('.recharts-surface').first().waitFor({ timeout: 5000 }).catch(() => {});
   check('progress charts offline', (await page.locator('.recharts-surface').count()) > 0);
-  await go('#/sauna/progress');
-  await page.locator('.recharts-surface').first().waitFor({ timeout: 5000 }).catch(() => {});
-  check('sauna charts offline', (await page.locator('.recharts-surface').count()) > 0);
 
   check('no page errors', errors.length === 0, errors.join(' | '));
 } catch (err) {

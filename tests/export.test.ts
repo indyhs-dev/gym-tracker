@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { makeBackup, parseBackup, readAll, restoreBackup } from '../src/db/backup';
 import { db } from '../src/db/db';
 import { createExercise } from '../src/db/exercises';
-import { seedSaunaSamplesIfNeeded } from '../src/db/sauna';
 import { seedIfNeeded } from '../src/db/seed';
 import { addSet, finishSession, setExerciseNote, setSessionNote, startSession } from '../src/db/sessions';
 import { updateSettings } from '../src/db/settings';
@@ -84,8 +83,6 @@ describe('JSON backup', () => {
     await logSample();
     await createExercise({ name: 'Incline Dumbbell Press', type: 'compound', perHand: true, bodyweight: false, weightStep: 2.5 });
     await updateSettings({ lastBackupAt: 123 });
-    // As on launch: the sauna samples (which also marks them as added).
-    await seedSaunaSamplesIfNeeded();
     const before = await readAll();
     const text = JSON.stringify(makeBackup(before));
 
@@ -98,11 +95,37 @@ describe('JSON backup', () => {
     expect(sort(after.exercises)).toEqual(sort(before.exercises));
     expect(sort(after.templates)).toEqual(sort(before.templates));
     expect(sort(after.sessions)).toEqual(sort(before.sessions));
-    expect(sort(after.saunaEntries!)).toEqual(sort(before.saunaEntries!));
-    expect(after.saunaEntries).toHaveLength(3);
     expect(after.settings).toEqual(before.settings);
     // Seeding doesn't run again on top of restored data.
     expect(await seedIfNeeded()).toBe(false);
+  });
+
+  it('has no sauna data (the sauna log was removed)', async () => {
+    await logSample();
+    const backup = makeBackup(await readAll());
+    expect(Object.keys(backup.data).sort()).toEqual(['exercises', 'sessions', 'settings', 'templates']);
+    expect(backup.data.settings[0]).not.toHaveProperty('sauna');
+  });
+
+  it('still restores old backups that contain sauna data, ignoring it', async () => {
+    await logSample();
+    const current = await readAll();
+    const old = {
+      format: 'gym-log-backup',
+      version: 2,
+      exportedAt: 1_760_000_000_000,
+      data: {
+        ...current,
+        settings: current.settings.map((s) => ({ ...s, sauna: { weeklyTarget: 3, samplesAddedAt: 1 } })),
+        saunaEntries: [{ id: 'x', date: '2026-10-13', kind: 'skip', reason: 'rest', createdAt: 1, updatedAt: 1 }],
+      },
+    };
+    await db.delete();
+    await db.open();
+    await restoreBackup(parseBackup(JSON.stringify(old)));
+    expect(await db.sessions.count()).toBe(current.sessions.length);
+    expect(await db.settings.get('app')).not.toHaveProperty('sauna');
+    expect(Object.keys(await readAll())).not.toContain('saunaEntries');
   });
 
   it('replaces existing data rather than merging', async () => {

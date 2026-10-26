@@ -60,19 +60,6 @@ export default function Settings() {
           </Link>
         </li>
         <li>
-          <Link className="list-row" to="/settings/sauna">
-            <span className="row-text">
-              <span className="row-title">Sauna</span>
-              <span className="row-meta">
-                {settings ? `Target ${plural(settings.sauna.weeklyTarget, 'session')} a week` : '…'}
-              </span>
-            </span>
-            <span className="chevron" aria-hidden="true">
-              ›
-            </span>
-          </Link>
-        </li>
-        <li>
           <Link className="list-row" to="/settings/backup">
             <span className="row-text">
               <span className="row-title">Backup &amp; export</span>

@@ -1,10 +1,10 @@
-import { normaliseSaunaEntry } from '../lib/sauna';
 import { db } from './db';
 import { withDefaults } from './settings';
-import type { Exercise, SaunaEntry, Session, Settings, Template } from './types';
+import type { Exercise, Session, Settings, Template } from './types';
 
 export const BACKUP_FORMAT = 'gym-log-backup';
-// v2 added saunaEntries; v1 backups (without it) still restore.
+// v2 added saunaEntries (sauna log, since removed). v1 and v2 backups both restore; any
+// saunaEntries in them are ignored. New backups have no sauna data.
 export const BACKUP_VERSION = 2;
 
 export interface Backup {
@@ -16,22 +16,19 @@ export interface Backup {
     templates: Template[];
     sessions: Session[];
     settings: Settings[];
-    /** Missing in v1 backups. */
-    saunaEntries?: SaunaEntry[];
   };
 }
 
 export class BackupError extends Error {}
 
 export async function readAll(): Promise<Backup['data']> {
-  const [exercises, templates, sessions, settings, saunaEntries] = await Promise.all([
+  const [exercises, templates, sessions, settings] = await Promise.all([
     db.exercises.toArray(),
     db.templates.toArray(),
     db.sessions.toArray(),
     db.settings.toArray(),
-    db.saunaEntries.toArray(),
   ]);
-  return { exercises, templates, sessions, settings, saunaEntries };
+  return { exercises, templates, sessions, settings };
 }
 
 export function makeBackup(data: Backup['data'], now = Date.now()): Backup {
@@ -58,9 +55,6 @@ export function parseBackup(text: string): Backup {
   if (!d || !isObjectArray(d.exercises) || !isObjectArray(d.templates) || !isObjectArray(d.sessions) || !isObjectArray(d.settings)) {
     throw new BackupError('This backup file is incomplete or damaged.');
   }
-  if (d.saunaEntries !== undefined && !isObjectArray(d.saunaEntries)) {
-    throw new BackupError('This backup file is incomplete or damaged.');
-  }
   for (const s of d.sessions as Session[]) {
     if (!Array.isArray(s.exercises) || typeof s.startedAt !== 'number') {
       throw new BackupError('This backup file is incomplete or damaged.');
@@ -71,26 +65,14 @@ export function parseBackup(text: string): Backup {
 
 /** Replaces everything in the app with the backup's contents. */
 export async function restoreBackup(backup: Backup): Promise<void> {
-  const { exercises, templates, sessions, settings, saunaEntries = [] } = backup.data;
-  await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.settings, db.saunaEntries], async () => {
-    await Promise.all([
-      db.exercises.clear(),
-      db.templates.clear(),
-      db.sessions.clear(),
-      db.settings.clear(),
-      db.saunaEntries.clear(),
-    ]);
+  const { exercises, templates, sessions, settings } = backup.data;
+  await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.settings], async () => {
+    await Promise.all([db.exercises.clear(), db.templates.clear(), db.sessions.clear(), db.settings.clear()]);
     await db.exercises.bulkAdd(exercises);
     await db.templates.bulkAdd(templates);
     await db.sessions.bulkAdd(sessions);
-    await db.saunaEntries.bulkAdd(saunaEntries.map(normaliseSaunaEntry));
     const saved = settings.find((s) => s.id === 'app');
-    const restored = withDefaults(saved);
-    // Never re-run first-launch seeding (or the sauna samples) on top of restored data.
-    await db.settings.put({
-      ...restored,
-      seededAt: saved?.seededAt ?? backup.exportedAt,
-      sauna: { ...restored.sauna, samplesAddedAt: saved?.sauna?.samplesAddedAt ?? backup.exportedAt },
-    });
+    // Never re-run first-launch seeding on top of restored data.
+    await db.settings.put({ ...withDefaults(saved), seededAt: saved?.seededAt ?? backup.exportedAt });
   });
 }

@@ -32,6 +32,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 20. Reps + mis-tap fix, simpler sauna log with a note, Gym / Sauna sections (requested 16 Oct 2026)
 - [x] 21. Minimal set logging (table with a Previous column, no ghost rows) + page-jump fix (requested 20 Oct 2026)
 - [x] 22. Warm-up and Go up as small chips, details on tap (requested 20 Oct 2026)
+- [x] 23. Sauna tracker removed (requested 26 Oct 2026; chunks 19–20 added it)
 
 ## Workout UI redesign (brief and mockups in `docs/redesign/`, requested 26 Oct 2026)
 - [x] Step 1. Workout screen: header, progress bar, collapsed exercises, pre-filled rows, placeholders, Warm-up button
@@ -46,7 +47,7 @@ Redesign steps 1–4 are built and checked, not committed. Next: the user tries 
 - Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
 - Everything in the brief is now built. Anything further would be new requests from the user.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
-- Chunk 19 (sauna) is live. The user checks the sample sessions in the charts, then removes them in **Settings → Sauna → Remove 3 sample sessions**.
+- Chunk 23 (sauna removed) is built and checked, not committed. Commit and push only when the user says so.
 - Chunk 20 is pushed, waiting to be tried on the phone (especially spamming reps + at the gym).
 - Chunks 21–22 are pushed and live (20 Oct 2026). The user tries the new set table at the gym and asks for changes bit by bit.
 
@@ -58,11 +59,17 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
-npm run check:dod        # after build: Phase 1 + 2 + sauna + redesign definition of done in Chrome (66 checks)
+npm run check:dod        # after build: Phase 1 + 2 + redesign definition of done in Chrome (58 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Sauna tracker removed (chunk 23, 26 Oct 2026).** The user no longer wants to track the sauna, so the app is gym-only again.
+  - **Gone:** the Sauna section (Today, History, Progress), Settings → Sauna, the sample sessions seeded on launch, the sauna code (`src/db/sauna.ts`, `src/lib/sauna.ts`, `src/screens/sauna/`), its CSS and its unit tests. The bottom bar is **Gym · Settings**. Old `#/sauna…` links fall through to Gym → Today.
+  - Shared bits that only the sauna used went too: `ChoiceChips` and the chip styles, the `footer` option on `Sheet`, and the goal line / stacked bars / legend on `WeeklyBars` (gym Progress never used them). The chart colours are all still used by the gym charts, so they stay.
+  - **Old data is left alone, not deleted.** The `saunaEntries` table stays in the database, declared but unused, so any entries on the phone survive (nothing reads or backs them up). Dexie **v4** only removes the old `settings.sauna` target. Dropping the table (`saunaEntries: null`) would have deleted the entries for good, and it can still be done later if wanted.
+  - **Backups:** new backups have no sauna data (no `saunaEntries`, no `settings.sauna`); the format stays v2. Older backups that still contain `saunaEntries` or `settings.sauna` restore without errors: both are ignored (`withDefaults()` leaves out `sauna`).
+  - `check:dod` drops its sauna checks (66 → 58). The navigation check now expects **Gym,Settings** and an old sauna link landing on Gym, the backup check expects no sauna data, and the restore uses a backup with sauna data in it to prove old files still restore. The chunk 19–20 notes below are kept as history.
 - **Redesign step 4 (26 Oct 2026): Today and the start sheet.**
   - **Next up** (`nextTemplate`, `src/lib/rotation.ts`): the template after the most recently finished one, in template order, wrapping round; the first one with no history. Blank sessions and deleted templates are ignored. The card shows the name, exercise count and "last trained {date}" ("not done yet" before the first time). **Start {name}** starts it straight away, dated today. **Choose a different workout** opens the start sheet. While a workout is in progress, Resume replaces the card. With no templates, it's a plain Start workout button.
   - **This week:** "N sessions · total time" in the header, then Monday–Sunday circles: filled with a tick on days with a finished session, today outlined in the accent (`weekDays`). The big stat numbers are gone.

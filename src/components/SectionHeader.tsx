@@ -10,18 +10,10 @@ const SECTIONS: Record<Exclude<Section, 'settings'>, { title: string; tabs: { to
       { to: '/progress', label: 'Progress' },
     ],
   },
-  sauna: {
-    title: 'Sauna',
-    tabs: [
-      { to: '/sauna', label: 'Today' },
-      { to: '/sauna/history', label: 'History' },
-      { to: '/sauna/progress', label: 'Progress' },
-    ],
-  },
 };
 
 /** Section title and its Today · History · Progress tabs (the bottom bar picks the section). */
-export default function SectionHeader({ section }: { section: 'gym' | 'sauna' }) {
+export default function SectionHeader({ section }: { section: Exclude<Section, 'settings'> }) {
   const { title, tabs } = SECTIONS[section];
   return (
     <header className="section-header">
