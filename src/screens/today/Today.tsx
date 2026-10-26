@@ -63,7 +63,7 @@ export default function Today() {
 
   return (
     <>
-      <SectionHeader section="gym" />
+      <SectionHeader />
       <p className="muted intro">{formatLongDate(Date.now())}</p>
 
       {remind && (

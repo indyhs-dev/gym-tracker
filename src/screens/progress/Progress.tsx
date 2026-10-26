@@ -27,13 +27,13 @@ export default function Progress() {
   const exercises = useLiveQuery(async () => new Map((await db.exercises.toArray()).map((e) => [e.id, e])), []);
   const [params, setParams] = useSearchParams();
 
-  if (!sessions || !exercises) return <SectionHeader section="gym" />;
+  if (!sessions || !exercises) return <SectionHeader />;
 
   const trained = trainedExercises(sessions).filter((id) => exercises.has(id));
   if (trained.length === 0) {
     return (
       <>
-        <SectionHeader section="gym" />
+        <SectionHeader />
         <p className="empty">Charts appear here after your first finished workout.</p>
       </>
     );
@@ -51,7 +51,7 @@ export default function Progress() {
 
   return (
     <>
-      <SectionHeader section="gym" />
+      <SectionHeader />
 
       <div className="field">
         <Segmented

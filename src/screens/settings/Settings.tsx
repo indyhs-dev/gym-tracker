@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
+import ScreenHeader from '../../components/ScreenHeader';
 import { db } from '../../db/db';
 import { useSettings } from '../../db/settings';
 import { plural } from '../../lib/format';
@@ -13,7 +14,7 @@ export default function Settings() {
 
   return (
     <>
-      <h1 className="screen-title">Settings</h1>
+      <ScreenHeader title="Settings" back="/" backLabel="Gym" />
       <ul className="list">
         <li>
           <Link className="list-row" to="/settings/templates">

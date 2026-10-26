@@ -12,7 +12,7 @@ export default function History() {
 
   return (
     <>
-      <SectionHeader section="gym" />
+      <SectionHeader />
       {sessions && sessions.length === 0 && <p className="empty">No sessions yet.</p>}
       {sessions &&
         exercises &&

@@ -59,9 +59,9 @@ try {
   await page.waitForSelector('h1', { timeout: 5000 });
   check('app loads offline', (await page.textContent('h1')) === 'Gym');
 
-  await page.click('text=Settings');
+  await page.getByRole('link', { name: 'Settings' }).click();
   await page.waitForFunction(() => document.querySelector('h1')?.textContent === 'Settings', null, { timeout: 3000 });
-  check('tabs work offline', true);
+  check('Settings opens offline', true);
 
   if (process.argv.includes('--screenshot')) {
     await page.goto(URL + '#/');

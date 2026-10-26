@@ -33,6 +33,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 21. Minimal set logging (table with a Previous column, no ghost rows) + page-jump fix (requested 20 Oct 2026)
 - [x] 22. Warm-up and Go up as small chips, details on tap (requested 20 Oct 2026)
 - [x] 23. Sauna tracker removed (requested 26 Oct 2026; chunks 19–20 added it)
+- [x] 24. Settings as a corner button, no bottom bar (requested 26 Oct 2026)
 
 ## Workout UI redesign (brief and mockups in `docs/redesign/`, requested 26 Oct 2026)
 - [x] Step 1. Workout screen: header, progress bar, collapsed exercises, pre-filled rows, placeholders, Warm-up button
@@ -64,8 +65,12 @@ npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **No bottom bar (chunk 24, 26 Oct 2026).** With the sauna gone the footer only held Gym and Settings, and the user asked for Settings as a corner button instead.
+  - Gym's header (`SectionHeader`, on Today, History and Progress) has a round 44 px **gear button** in the top-right corner, next to the "Gym" title, linking to Settings. Settings has "‹ Gym" (`ScreenHeader`) to go back.
+  - `TabBar`, `sectionOf`, `--tabbar-height` and the tab bar CSS are gone. Every screen now has the same bottom padding (safe area + 32 px), so the workout screen's `app-full` special case went too.
+  - `check:dod`'s navigation check now covers: no bottom bar, the gear opening Settings, "‹ Gym" returning, and old sauna links landing on Gym. `check:offline` opens Settings with the gear.
 - **Sauna tracker removed (chunk 23, 26 Oct 2026).** The user no longer wants to track the sauna, so the app is gym-only again.
-  - **Gone:** the Sauna section (Today, History, Progress), Settings → Sauna, the sample sessions seeded on launch, the sauna code (`src/db/sauna.ts`, `src/lib/sauna.ts`, `src/screens/sauna/`), its CSS and its unit tests. The bottom bar is **Gym · Settings**. Old `#/sauna…` links fall through to Gym → Today.
+  - **Gone:** the Sauna section (Today, History, Progress), Settings → Sauna, the sample sessions seeded on launch, the sauna code (`src/db/sauna.ts`, `src/lib/sauna.ts`, `src/screens/sauna/`), its CSS and its unit tests. The bottom bar is **Gym · Settings**. Old `#/sauna…` links fall through to Gym → Today. (The bottom bar itself went in chunk 24.)
   - Shared bits that only the sauna used went too: `ChoiceChips` and the chip styles, the `footer` option on `Sheet`, and the goal line / stacked bars / legend on `WeeklyBars` (gym Progress never used them). The chart colours are all still used by the gym charts, so they stay.
   - **Old data is left alone, not deleted.** The `saunaEntries` table stays in the database, declared but unused, so any entries on the phone survive (nothing reads or backs them up). Dexie **v4** only removes the old `settings.sauna` target. Dropping the table (`saunaEntries: null`) would have deleted the entries for good, and it can still be done later if wanted.
   - **Backups:** new backups have no sauna data (no `saunaEntries`, no `settings.sauna`); the format stays v2. Older backups that still contain `saunaEntries` or `settings.sauna` restore without errors: both are ignored (`withDefaults()` leaves out `sauna`).
@@ -225,7 +230,7 @@ npm run icons            # regenerate icons from public/icon.svg
   - A past-dated session is `active` (a draft) until it's finished, so Today shows "Resume workout · Legs · Fri 9 Oct".
 - **This week** runs Monday 00:00 to Sunday 23:59 local time and counts only finished sessions. **Last session** is the finished session with the latest `startedAt`.
 - **Discard workout** (shown only on an active session) asks first, then deletes it. It's needed until Finish exists, and is the agreed "discard a workout started by mistake".
-- **The workout screen** (`/workout/:id`) is full-screen with no tab bar. "‹ Today" leaves the workout running.
+- **The workout screen** (`/workout/:id`) is full-screen, with no Gym header. "‹ Today" leaves the workout running.
 - **Rest text** is "Rest {type text} · warm-ups {warm-up text}". The warm-up part is dropped when the slot's policy is "none"; ad-hoc exercises show both.
 - **Set entry** (chunk 6; replaced by the set table in chunk 21):
   - A set row is two lines.

@@ -1,25 +1,24 @@
-import { NavLink } from 'react-router';
-import type { Section } from '../lib/nav';
+import { Link, NavLink } from 'react-router';
+import { SettingsIcon } from './Icons';
 
-const SECTIONS: Record<Exclude<Section, 'settings'>, { title: string; tabs: { to: string; label: string }[] }> = {
-  gym: {
-    title: 'Gym',
-    tabs: [
-      { to: '/', label: 'Today' },
-      { to: '/history', label: 'History' },
-      { to: '/progress', label: 'Progress' },
-    ],
-  },
-};
+const TABS = [
+  { to: '/', label: 'Today' },
+  { to: '/history', label: 'History' },
+  { to: '/progress', label: 'Progress' },
+];
 
-/** Section title and its Today · History · Progress tabs (the bottom bar picks the section). */
-export default function SectionHeader({ section }: { section: Exclude<Section, 'settings'> }) {
-  const { title, tabs } = SECTIONS[section];
+/** "Gym" with the Settings button in the corner, then the Today · History · Progress tabs. */
+export default function SectionHeader() {
   return (
     <header className="section-header">
-      <h1 className="screen-title">{title}</h1>
-      <nav className="section-tabs" aria-label={title}>
-        {tabs.map((tab) => (
+      <div className="section-title-row">
+        <h1 className="screen-title">Gym</h1>
+        <Link className="settings-button" to="/settings" aria-label="Settings">
+          <SettingsIcon />
+        </Link>
+      </div>
+      <nav className="section-tabs" aria-label="Gym">
+        {TABS.map((tab) => (
           <NavLink key={tab.to} to={tab.to} end replace className="section-tab">
             {tab.label}
           </NavLink>

@@ -358,15 +358,21 @@ try {
   const blockText = (await page.locator('.block-card').textContent()) ?? '';
   check('training block shows the week number', blockText.includes('Week 3'), blockText);
 
-  // --- Navigation: Gym · Settings, Gym with Today · History · Progress ---
-  await go('#/');
-  const bar = await page.locator('.tab').allTextContents();
+  // --- Navigation: no bottom bar; Settings is the gear in the corner, Gym has Today · History · Progress ---
+  await go('#/history');
   const gymTabs = await page.locator('.section-tab').allTextContents();
+  const noBar = (await page.locator('nav[aria-label="Main"]').count()) === 0;
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.waitForURL(/#\/settings$/);
+  const settingsTitle = await page.locator('h1').textContent();
+  await page.getByRole('button', { name: '‹ Gym' }).click();
+  await page.waitForURL(/#\/history$/);
   // The sauna tracker was removed; an old #/sauna link lands on Gym → Today.
   await go('#/sauna/history');
-  const oldLink = `${new globalThis.URL(page.url()).hash} ${await page.locator('.tab.active').textContent()}`;
-  check('navigation: Gym · Settings, Gym with Today · History · Progress; old sauna links go to Gym',
-    bar.join() === 'Gym,Settings' && gymTabs.join() === 'Today,History,Progress' && oldLink === '#/ Gym', `${bar.join()} | ${oldLink}`);
+  const oldLink = `${new globalThis.URL(page.url()).hash} ${await page.locator('h1').textContent()}`;
+  check('navigation: no bottom bar, Settings from the corner and back, Today · History · Progress; old sauna links go to Gym',
+    noBar && gymTabs.join() === 'Today,History,Progress' && settingsTitle === 'Settings' && oldLink === '#/ Gym',
+    `${gymTabs.join()} | ${settingsTitle} | ${oldLink}`);
 
   // --- Export JSON and CSV ---
   await go('#/settings/backup');

@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router';
-import TabBar from './components/TabBar';
+import { Navigate, Route, Routes } from 'react-router';
 import History from './screens/history/History';
 import SectionHeader from './components/SectionHeader';
 import SessionDetail from './screens/history/SessionDetail';
@@ -20,11 +19,9 @@ import WorkoutScreen from './screens/workout/WorkoutScreen';
 const Progress = lazy(() => import('./screens/progress/Progress'));
 
 export default function App() {
-  // The workout screen is full-screen: no tab bar.
-  const inWorkout = useLocation().pathname.startsWith('/workout/');
   return (
     <>
-      <main className={inWorkout ? 'app app-full' : 'app'}>
+      <main className="app">
         <Routes>
           <Route path="/" element={<Today />} />
           <Route path="/history" element={<History />} />
@@ -32,7 +29,7 @@ export default function App() {
           <Route
             path="/progress"
             element={
-              <Suspense fallback={<SectionHeader section="gym" />}>
+              <Suspense fallback={<SectionHeader />}>
                 <Progress />
               </Suspense>
             }
@@ -51,7 +48,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!inWorkout && <TabBar />}
     </>
   );
 }
