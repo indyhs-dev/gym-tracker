@@ -52,4 +52,46 @@ describe('database upgrade', () => {
     expect(settings).not.toHaveProperty('sauna');
     expect(await db.table('saunaEntries').count()).toBe(1);
   });
+
+  it('opens a phone’s v4 database: starting templates go Legs, Chest & Back, Shoulders & Arms; your own stay put', async () => {
+    db.close();
+    await Dexie.delete('gym-log');
+    const v4 = new Dexie('gym-log');
+    v4.version(4).stores({
+      exercises: 'id, &nameKey',
+      templates: 'id, order',
+      sessions: 'id, status, startedAt, *exerciseIds',
+      settings: 'id',
+      saunaEntries: 'id, date',
+    });
+    const template = (id: string, name: string, order: number) => ({ id, name, order, slots: [], createdAt: 0, updatedAt: 0 });
+    await v4.table('templates').bulkPut([
+      template('mine', 'Mine', 0),
+      template('torso', 'Torso', 1),
+      template('legs', 'Legs', 2),
+      template('arms', 'Shoulders & Arms', 3),
+      template('extra', 'Extra', 4),
+    ]);
+    await v4.table('sessions').put({ id: 's', templateId: 'torso', templateName: 'Torso', status: 'finished', startedAt: 1, exerciseIds: [] });
+    v4.close();
+
+    await db.open();
+    const names = (await db.templates.orderBy('order').toArray()).map((t) => t.name);
+    expect(names).toEqual(['Mine', 'Legs', 'Chest & Back', 'Shoulders & Arms', 'Extra']);
+    expect((await db.sessions.get('s'))?.templateName).toBe('Torso');
+  });
+
+  it('leaves Torso’s name alone if there’s already a Chest & Back', async () => {
+    db.close();
+    await Dexie.delete('gym-log');
+    const v4 = new Dexie('gym-log');
+    v4.version(4).stores({ templates: 'id, order', settings: 'id' });
+    const template = (id: string, name: string, order: number) => ({ id, name, order, slots: [], createdAt: 0, updatedAt: 0 });
+    await v4.table('templates').bulkPut([template('torso', 'Torso', 0), template('cb', 'Chest & Back', 1), template('legs', 'Legs', 2)]);
+    v4.close();
+
+    await db.open();
+    const names = (await db.templates.orderBy('order').toArray()).map((t) => t.name);
+    expect(names).toEqual(['Legs', 'Chest & Back', 'Torso']);
+  });
 });

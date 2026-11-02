@@ -34,6 +34,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 22. Warm-up and Go up as small chips, details on tap (requested 20 Oct 2026)
 - [x] 23. Sauna tracker removed (requested 26 Oct 2026; chunks 19–20 added it)
 - [x] 24. Settings as a corner button, no bottom bar (requested 26 Oct 2026)
+- [x] 25. Swipe to delete sets, templates reordered (Legs, Chest & Back, Shoulders & Arms), warm-up rest timer replaced by a warm-up count (requested 2 Nov 2026)
 
 ## Workout UI redesign (brief and mockups in `docs/redesign/`, requested 26 Oct 2026)
 - [x] Step 1. Workout screen: header, progress bar, collapsed exercises, pre-filled rows, placeholders, Warm-up button
@@ -42,6 +43,8 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] Step 4. Today screen + start sheet
 
 ## In progress
+Chunk 25 (swipe to delete, template order, warm-up count) is built and checked, not committed. Commit and push only when the user says so. Swipe-to-delete has only been tried with a mouse in Chrome.
+
 Redesign steps 1–4 are built and checked, not committed. Next: the user tries it, then commit and push (ask first). Wake lock and the rest sound can only be confirmed on the iPhone.
 
 ## Next
@@ -60,11 +63,19 @@ npm test                 # unit tests
 npm run build            # type-check + production build into dist/
 npm run preview          # serve dist/ at http://localhost:4173 (service worker active)
 npm run check:offline    # after build: proves the app loads with the server stopped
-npm run check:dod        # after build: Phase 1 + 2 + redesign definition of done in Chrome (58 checks)
+npm run check:dod        # after build: Phase 1 + 2 + redesign definition of done in Chrome (66 checks)
 npm run icons            # regenerate icons from public/icon.svg
 ```
 
 ## Decisions made
+- **Swipe to delete, new template order, no warm-up timer (chunk 25, 2 Nov 2026).**
+  - **Swipe left on any set row** (logged or pre-filled) to slide it over a red (`--rest`) **Delete** button; only a tap on Delete deletes. Pointer events with `touch-action: pan-y` and a 10 px sideways threshold, so scrolling and tapping inputs still work and a swipe that starts on ✓ never ticks it. One row open at a time (`ExerciseCard` keeps track); a touch anywhere else closes it. A logged set's number sits on a small grey key to show it opens the menu (warm-up, note, delete); pre-filled rows have no menu.
+  - **Deleting takes the row away.** During a workout, deleting a working row (by swipe or menu) lowers the row count (`extraAfterDelete`, which can go below 0), so a pre-filled row no longer pops up where a deleted logged set was. "+ Add set" brings rows back.
+  - **Templates:** Legs, Chest & Back (was Torso), Shoulders & Arms; Next up and the start sheet follow. Fresh installs get this from the seed. Dexie **v5** applies it to existing phones: only templates with exactly those names move, into the places they already held (so your own templates stay put), and Torso is renamed unless a Chest & Back already exists. Past sessions keep "Torso" as their name, since sessions store the name they were done under. An old backup restored later brings back its old names and order.
+  - **Warm-up rest timer removed:** the Warm-up button, `startWarmupRest` and the grey warm-up rest bar. ✓ on a W row still rests with the warm-up guidance.
+  - **Info line** is now "2 × 8–15 · Rest 90 s–3 min · 2 warm-up sets": full = as many sets as `warmupSuggestions` plans (3 compound, 2 otherwise, via `warmupCount`), then "1 warm-up set", "0–1 warm-up sets", nothing for none. Text only.
+  - **An exercise with every row deleted is passed over** (`pending` in `WorkoutScreen`): it no longer stays the open card, its collapsed row says "No sets", and tapping it opens it again for "+ Add set".
+  - `check:dod` covers the new order, the info line, swipe on a pre-filled and a logged row, a short drag springing back, deleting every row, and the menu delete removing the row. The navigation check now waits for Settings to render (it was reading the heading a moment too early and had been failing since chunk 24).
 - **No bottom bar (chunk 24, 26 Oct 2026).** With the sauna gone the footer only held Gym and Settings, and the user asked for Settings as a corner button instead.
   - Gym's header (`SectionHeader`, on Today, History and Progress) has a round 44 px **gear button** in the top-right corner, next to the "Gym" title, linking to Settings. Settings has "‹ Gym" (`ScreenHeader`) to go back.
   - `TabBar`, `sectionOf`, `--tabbar-height` and the tab bar CSS are gone. Every screen now has the same bottom padding (safe area + 32 px), so the workout screen's `app-full` special case went too.
@@ -362,6 +373,7 @@ npm run icons            # regenerate icons from public/icon.svg
   - the native date/time pickers
   - the safe-area insets
   - keeping the keypad open when typing into a ghost row (works in Chrome)
+  - swipe left to delete a set (checked with a mouse in Chrome)
   - `field-sizing` on notes (Safari 18.4+; older versions just scroll)
 - The Claude app's built-in browser pane can't register service workers. Offline is verified with `npm run check:offline`, which uses the real Chrome, instead.
 - While the Claude app's browser pane is hidden it pauses animation frames, so screenshots taken right after a tap can look stale. Measured navigation is 1–6 ms, so the app itself isn't slow.

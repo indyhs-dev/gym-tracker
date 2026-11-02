@@ -20,6 +20,24 @@ const FULL: [pct: number, reps: string][] = [
 const HEAVY: [number, string] = [0.75, '2–4'];
 const SINGLE: [number, string] = [0.65, '4–8'];
 
+/** The warm-up steps a policy calls for, before any weight is worked out. */
+function warmupPlan(policy: WarmupPolicy, type: ExerciseType): [number, string][] {
+  if (policy === 'none') return [];
+  return policy === 'full' ? [...FULL, ...(type === 'compound' ? [HEAVY] : [])] : [SINGLE];
+}
+
+/**
+ * "3 warm-up sets", "1 warm-up set" or "0–1 warm-up sets" for the exercise's
+ * info line; empty for "none". Full is as many steps as warmupSuggestions
+ * plans: 3 for compound exercises, otherwise 2.
+ */
+export function warmupCount(policy: WarmupPolicy, type: ExerciseType): string {
+  if (policy === 'none') return '';
+  if (policy === 'zeroToOne') return '0–1 warm-up sets';
+  const n = warmupPlan(policy, type).length;
+  return n === 1 ? '1 warm-up set' : `${n} warm-up sets`;
+}
+
 /**
  * Suggested warm-up sets for a work weight:
  * full → 40% × 6–10, 65% × 4–8, and (compound only) 75% × 2–4;
@@ -32,8 +50,8 @@ export function warmupSuggestions(
   workWeight: number,
   step: number,
 ): WarmupStep[] {
-  if (policy === 'none' || workWeight <= 0) return [];
-  const plan = policy === 'full' ? [...FULL, ...(type === 'compound' ? [HEAVY] : [])] : [SINGLE];
+  if (workWeight <= 0) return [];
+  const plan = warmupPlan(policy, type);
   const steps: WarmupStep[] = [];
   for (const [pct, reps] of plan) {
     const weight = roundToStep(workWeight * pct, step);

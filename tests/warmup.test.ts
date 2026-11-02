@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newSet } from '../src/db/sessions';
-import { roundToStep, warmupSuggestions, lastWorkWeight } from '../src/lib/warmup';
+import { roundToStep, warmupCount, warmupSuggestions, lastWorkWeight } from '../src/lib/warmup';
 
 const set = (weight: number | null, reps: number | null, warmup = false) => newSet({ weight, reps, warmup }, 0);
 
@@ -10,6 +10,22 @@ describe('roundToStep', () => {
     expect(roundToStep(14.625, 2.5)).toBe(15);
     expect(roundToStep(8.4, 7)).toBe(7);
     expect(roundToStep(1.2, 2.5)).toBe(0);
+  });
+});
+
+describe('warmupCount', () => {
+  it('says how many warm-up sets the policy plans, with no weights', () => {
+    expect(warmupCount('full', 'compound')).toBe('3 warm-up sets');
+    expect(warmupCount('full', 'isolation')).toBe('2 warm-up sets');
+    expect(warmupCount('full', 'core')).toBe('2 warm-up sets');
+    expect(warmupCount('one', 'compound')).toBe('1 warm-up set');
+    expect(warmupCount('zeroToOne', 'isolation')).toBe('0–1 warm-up sets');
+    expect(warmupCount('none', 'compound')).toBe('');
+  });
+
+  it('matches the full plan warmupSuggestions gives', () => {
+    expect(warmupSuggestions('full', 'compound', 100, 2.5)).toHaveLength(3);
+    expect(warmupSuggestions('full', 'isolation', 100, 2.5)).toHaveLength(2);
   });
 });
 

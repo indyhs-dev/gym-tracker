@@ -26,6 +26,15 @@ export function workingRowCount(item: SessionExercise, prefill: boolean, extra: 
 }
 
 /**
+ * The added-row count after deleting a working row (logged or pre-filled)
+ * during a workout: one row fewer than now, so no pre-filled row takes the
+ * deleted one's place. Below 0 when rows from the target are deleted.
+ */
+export function extraAfterDelete(item: SessionExercise, extra: number): number {
+  return workingRowCount(item, true, extra) - 1 - (item.slot?.targetSets ?? 1);
+}
+
+/**
  * The rows for an exercise: logged sets in order, then ghost rows up to
  * `workingRows`. Placeholders are last time's matching set; a row past what
  * was done last time carries the weight of the row above it.

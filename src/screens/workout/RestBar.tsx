@@ -16,14 +16,13 @@ interface Props {
 
 /**
  * The rest timer, pinned to the bottom of a live workout. It counts down to
- * the lower end of the rest guidance, with a thin line on top running out
- * (accent after a working set, grey after a warm-up). At zero it turns
+ * the lower end of the rest guidance, with a thin accent line on top
+ * running out. At zero it turns
  * green: "Ready", with how long you've rested counting up. One clock only.
  */
 export default function RestBar({ timer, next }: Props) {
   const now = useNow(250);
   const { ready, remaining, elapsed, left } = restClock(timer, now);
-  const warmup = timer.setId === null;
 
   // Beep when the countdown reaches zero while you're watching (not when reopening the app later),
   // once per rest even if the effect runs twice.
@@ -37,10 +36,10 @@ export default function RestBar({ timer, next }: Props) {
     wasReady.current = ready;
   }, [ready, restKey]);
 
-  const label = warmup ? 'Warm-up rest · not logged' : `Rest${next ? ` · ${next}` : ''}`;
+  const label = `Rest${next ? ` · ${next}` : ''}`;
 
   return (
-    <div className={`rest-bar${ready ? ' is-ready' : ''}${warmup ? ' is-warmup' : ''}`}>
+    <div className={ready ? 'rest-bar is-ready' : 'rest-bar'}>
       <span className="rest-bar-line">
         <span style={{ transform: `scaleX(${ready ? 1 : left})` }} />
       </span>

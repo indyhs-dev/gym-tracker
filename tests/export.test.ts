@@ -18,8 +18,8 @@ beforeEach(async () => {
 async function logSample() {
   await seedIfNeeded();
   const byName = new Map((await db.exercises.toArray()).map((e) => [e.name, e]));
-  const torso = (await db.templates.toArray()).find((t) => t.name === 'Torso')!;
-  const s = await startSession(torso.id, at(2026, 10, 12, 18, 0));
+  const chestBack = (await db.templates.toArray()).find((t) => t.name === 'Chest & Back')!;
+  const s = await startSession(chestBack.id, at(2026, 10, 12, 18, 0));
   const bench = s.exercises[0].id;
   await addSet(s.id, bench, { weight: 15, reps: 10, warmup: true });
   await addSet(s.id, bench, { weight: 22.5, reps: 8 });
@@ -43,11 +43,11 @@ describe('CSV export', () => {
     const lines = csv.slice(1).trimEnd().split('\r\n');
     expect(lines).toEqual([
       'date,session,exercise,set number,weight,reps,warm-up,note',
-      '2026-10-12,Torso,Flat Dumbbell Bench Press,1,15,10,yes,',
-      '2026-10-12,Torso,Flat Dumbbell Bench Press,2,22.5,8,no,',
-      '2026-10-12,Torso,Flat Dumbbell Bench Press,3,22.5,9,no,"slow, ""paused"""',
-      '2026-10-12,Torso,Dips,1,0,12,no,',
-      '2026-10-12,Torso,Dips,2,10,6,no,',
+      '2026-10-12,Chest & Back,Flat Dumbbell Bench Press,1,15,10,yes,',
+      '2026-10-12,Chest & Back,Flat Dumbbell Bench Press,2,22.5,8,no,',
+      '2026-10-12,Chest & Back,Flat Dumbbell Bench Press,3,22.5,9,no,"slow, ""paused"""',
+      '2026-10-12,Chest & Back,Dips,1,0,12,no,',
+      '2026-10-12,Chest & Back,Dips,2,10,6,no,',
     ]);
   });
 });
@@ -61,7 +61,7 @@ describe('Copy for Claude', () => {
         'Gym log 2026-10-01 to 2026-10-12: 1 session.',
         'Weights in kg ("each" = per dumbbell, BW = bodyweight, BW+n = added load). W = warm-up set.',
         '',
-        'Mon 12 Oct 2026 · Torso · 18:00–19:12 (1h 12m)',
+        'Mon 12 Oct 2026 · Chest & Back · 18:00–19:12 (1h 12m)',
         'Session note: need to strengthen forearms',
         '- Flat Dumbbell Bench Press (each): W 15×10, 22.5×8, 22.5×9 [slow, "paused"]',
         '- Dips: BW×12, BW+10×6. Note: shoulders, fine',

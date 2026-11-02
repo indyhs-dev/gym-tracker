@@ -9,6 +9,7 @@ import { db } from '../../db/db';
 import {
   addSessionExercise,
   addSet,
+  deleteSet,
   discardSession,
   dropEmptyExercises,
   isLive,
@@ -22,7 +23,7 @@ import { newId } from '../../lib/ids';
 import { useGoBack } from '../../lib/nav';
 import { goUpWeight, progressionHint } from '../../lib/progression';
 import { clearRest, useDoneSets, useRestTimer } from '../../lib/restTimer';
-import { isRowDone, setRows, workingRowCount } from '../../lib/setRows';
+import { extraAfterDelete, isRowDone, setRows, workingRowCount, type SetRowData } from '../../lib/setRows';
 import { formatClock, formatDate } from '../../lib/time';
 import { useNow } from '../../lib/useNow';
 import { useWakeLock } from '../../lib/wakeLock';
@@ -56,10 +57,13 @@ interface WorkoutProps {
   rest: RestGuidance;
 }
 
-/** The exercise you tapped open, and whether it was already done then (so finishing it moves you on). */
+/**
+ * The exercise you tapped open, and whether it had rows left to do then (so
+ * finishing them moves you on). A done or emptied one stays open.
+ */
 interface Picked {
   id: string;
-  wasComplete: boolean;
+  hadRowsLeft: boolean;
 }
 
 function Workout({ session, exercises, rest }: WorkoutProps) {
@@ -96,26 +100,29 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
       : hint.weight === 0
         ? `↑ Add ${formatKg(hint.low)} kg next time`
         : `↑ Go to ${goUpWeight(hint, exercise!.bodyweight)} next time`;
-    return { item, exercise, last, rows, done, working, workingDone, goUp, complete: rows.length > 0 && !done.includes(false) };
+    const complete = rows.length > 0 && !done.includes(false);
+    // Rows left to do. An exercise whose rows were all deleted has none, so it's passed over like a done one.
+    const pending = rows.length > 0 && !complete;
+    return { item, exercise, last, rows, done, working, workingDone, goUp, complete, pending };
   });
   const totalSets = items.reduce((n, x) => n + x.working, 0);
   const doneSets = items.reduce((n, x) => n + x.workingDone, 0);
 
-  // The open card: the one you tapped, else the first exercise with sets left.
+  // The open card: the one you tapped, else the first exercise with rows left.
   // Ticking off a tapped exercise moves on to the next unfinished one after it.
   // When editing history only a tapped one opens: "done" there just means reps
   // are entered, and typing must never close the card.
   const pickedAt = picked ? items.findIndex((x) => x.item.id === picked.id) : -1;
   const firstOpen = (from: number) => {
-    const after = items.findIndex((x, i) => i > from && !x.complete);
-    return after >= 0 ? after : items.findIndex((x) => !x.complete);
+    const after = items.findIndex((x, i) => i > from && x.pending);
+    return after >= 0 ? after : items.findIndex((x) => x.pending);
   };
   const openAt =
-    editing || (pickedAt >= 0 && (picked!.wasComplete || !items[pickedAt].complete))
+    editing || (pickedAt >= 0 && (!picked!.hadRowsLeft || items[pickedAt].pending))
       ? pickedAt
       : firstOpen(pickedAt);
   const openId = openAt >= 0 ? items[openAt].item.id : null;
-  const upNextAt = items.findIndex((x, i) => i > openAt && openAt >= 0 && !x.complete);
+  const upNextAt = items.findIndex((x, i) => i > openAt && openAt >= 0 && x.pending);
 
   // For the rest bar: "Set 2 next" within the exercise you just ticked, else "Pull-up next".
   let restNext: string | null = null;
@@ -137,8 +144,8 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
     if (openId) document.getElementById(`item-${openId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [openId]);
 
-  function open(item: SessionExercise, complete: boolean) {
-    setPicked({ id: item.id, wasComplete: complete });
+  function open(item: SessionExercise, pending: boolean) {
+    setPicked({ id: item.id, hadRowsLeft: pending });
   }
 
   /** One more row: a pre-filled row during a workout, or a new set (keeping the working weight) when editing. */
@@ -153,10 +160,19 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
     void addSet(session.id, item.id, lastWorking ? { weight: lastWorking.weight } : {});
   }
 
+  /**
+   * Deletes a row, logged or pre-filled. During a workout a working row
+   * also comes off the count, so no pre-filled row takes its place.
+   */
+  function deleteRow(item: SessionExercise, row: SetRowData) {
+    if (active && !row.warmup) setExtraRows((x) => ({ ...x, [item.id]: extraAfterDelete(item, x[item.id] ?? 0) }));
+    if (row.set || ghosts.isLogged(row.id)) void deleteSet(session.id, item.id, row.id);
+  }
+
   async function add(exercise: Exercise) {
     setAdding(false);
     const itemId = await addSessionExercise(session.id, exercise.id);
-    setPicked({ id: itemId, wasComplete: false });
+    setPicked({ id: itemId, hadRowsLeft: true });
   }
 
   /** Leaving edit mode: tidy away any exercise left with no sets. */
@@ -250,9 +266,10 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
                 previous={x.last}
                 active={active}
                 live={live}
-                current={!x.complete}
+                current={x.pending}
                 ghosts={ghosts}
                 onAddSet={() => addRow(x.item)}
+                onDeleteRow={(row) => deleteRow(x.item, row)}
               />
             ) : (
               <ExerciseRow
@@ -262,7 +279,7 @@ function Workout({ session, exercises, rest }: WorkoutProps) {
                 workingDone={x.workingDone}
                 workingTotal={x.working}
                 goUp={x.goUp}
-                onOpen={() => open(x.item, x.complete)}
+                onOpen={() => open(x.item, x.pending)}
               />
             )}
           </div>

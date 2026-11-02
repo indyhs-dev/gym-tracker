@@ -34,6 +34,24 @@ db.version(4)
       }),
   );
 
+// v5: the starting templates go Legs, Chest & Back (renamed from Torso), Shoulders & Arms.
+// Only templates with those exact names move, swapping the places they already held,
+// so templates you made yourself stay put. Past sessions keep the name they were done under.
+db.version(5)
+  .stores({})
+  .upgrade(async (tx) => {
+    const templates = tx.table<Template, string>('templates');
+    const all = await templates.toArray();
+    const moving = ['Legs', 'Torso', 'Shoulders & Arms']
+      .map((name) => all.find((t) => t.name === name))
+      .filter((t): t is Template => t !== undefined);
+    const places = moving.map((t) => t.order).sort((a, b) => a - b);
+    const rename = !all.some((t) => t.name === 'Chest & Back');
+    for (const [i, t] of moving.entries()) {
+      await templates.update(t.id, { order: places[i], ...(t.name === 'Torso' && rename ? { name: 'Chest & Back' } : {}) });
+    }
+  });
+
 db.on('populate', (tx) => {
   tx.table('settings').add(defaultSettings());
 });

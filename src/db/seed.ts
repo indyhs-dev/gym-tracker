@@ -6,7 +6,7 @@ import { newSlot } from './templates';
 import type { Exercise, ExerciseType, Template, WarmupPolicy } from './types';
 
 // Starting data only: applied once on first launch, then fully editable in-app.
-// Nothing else in the app refers to these names.
+// Nothing else in the app refers to these names, apart from the one-off v5 reorder in db.ts.
 
 interface SeedExercise {
   name: string;
@@ -26,7 +26,7 @@ interface SeedSlot {
 }
 
 export const SEED_EXERCISES: SeedExercise[] = [
-  // Torso
+  // Chest & Back
   { name: 'Flat Dumbbell Bench Press', type: 'compound', perHand: true },
   { name: 'Dips', type: 'compound', bodyweight: true },
   { name: 'Cable Fly', type: 'isolation' },
@@ -65,7 +65,17 @@ export const SEED_EXERCISES: SeedExercise[] = [
 
 export const SEED_TEMPLATES: { name: string; slots: SeedSlot[] }[] = [
   {
-    name: 'Torso',
+    name: 'Legs',
+    slots: [
+      { exercise: 'Hack Squat', alternatives: ['Back Squat'], sets: 2, reps: [5, 12], warmup: 'full', note: 'Back Squat: use safety pins' },
+      { exercise: 'Leg Extension', sets: 2, reps: [8, 15], warmup: 'one' },
+      { exercise: 'Romanian Deadlift', alternatives: ['Deadlift'], sets: 2, reps: [5, 10], warmup: 'full' },
+      { exercise: 'Lying Leg Curl', sets: 2, reps: [6, 12], warmup: 'one' },
+      { exercise: 'Standing Calf Raise', sets: 3, reps: [8, 15], warmup: 'full' },
+    ],
+  },
+  {
+    name: 'Chest & Back',
     slots: [
       { exercise: 'Flat Dumbbell Bench Press', sets: 2, reps: [5, 12], warmup: 'full' },
       { exercise: 'Dips', sets: 2, reps: [5, 12], warmup: 'one', note: 'Add weight once 12 bodyweight reps are possible' },
@@ -93,16 +103,6 @@ export const SEED_TEMPLATES: { name: string; slots: SeedSlot[] }[] = [
         warmup: 'none',
         note: 'Progression: Knee Raise → L-sit → Pike',
       },
-    ],
-  },
-  {
-    name: 'Legs',
-    slots: [
-      { exercise: 'Hack Squat', alternatives: ['Back Squat'], sets: 2, reps: [5, 12], warmup: 'full', note: 'Back Squat: use safety pins' },
-      { exercise: 'Leg Extension', sets: 2, reps: [8, 15], warmup: 'one' },
-      { exercise: 'Romanian Deadlift', alternatives: ['Deadlift'], sets: 2, reps: [5, 10], warmup: 'full' },
-      { exercise: 'Lying Leg Curl', sets: 2, reps: [6, 12], warmup: 'one' },
-      { exercise: 'Standing Calf Raise', sets: 3, reps: [8, 15], warmup: 'full' },
     ],
   },
   {

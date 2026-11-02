@@ -24,15 +24,6 @@ export function CheckIcon({ size = 14 }: { size?: number }) {
   );
 }
 
-export function StopwatchIcon() {
-  return (
-    <svg className="icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-      <circle cx="8" cy="9" r="5.5" />
-      <path d="M8 9V6.5M6.5 1.5h3" />
-    </svg>
-  );
-}
-
 export function SettingsIcon() {
   return (
     <svg className="icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">

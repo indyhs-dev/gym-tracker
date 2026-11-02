@@ -1001,7 +1001,6 @@
   font-weight: 600;
 }
 
-.warmup-button,
 .exercise-more {
   flex: none;
   display: inline-flex;
@@ -1011,14 +1010,6 @@
   border: none;
   border-radius: 10px;
   background: var(--bg);
-}
-
-.warmup-button {
-  gap: 6px;
-  padding: 0 12px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .exercise-more {
@@ -1058,7 +1049,7 @@
 
 /* Sets: Set | kg | reps | ✓ (the ✓ column only while the session is in progress). */
 .set-head,
-.set-row {
+.set-row-main {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
@@ -1066,8 +1057,48 @@
 }
 
 .has-done .set-head,
-.has-done .set-row {
+.has-done .set-row-main {
   grid-template-columns: 32px minmax(0, 1fr) minmax(0, 1fr) 44px;
+}
+
+.set-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Swiping a set left slides it over to reveal Delete behind it. */
+.set-swipe {
+  position: relative;
+  overflow: hidden;
+}
+
+.set-row-main {
+  position: relative;
+  background: var(--card);
+  touch-action: pan-y;
+  transition: transform 0.2s ease;
+}
+
+.set-row-main.is-dragging {
+  transition: none;
+}
+
+.set-delete {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 80px;
+  border: none;
+  border-radius: 10px;
+  background: var(--rest);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Hidden until the row moves, so no red shows at its edges. */
+.set-swipe:not(.is-revealed) .set-delete {
+  visibility: hidden;
 }
 
 .set-head {
@@ -1108,6 +1139,21 @@
   color: var(--accent);
 }
 
+/* A logged set's number opens its menu, so it sits on a small key. */
+.set-row button.set-label {
+  position: relative;
+  isolation: isolate;
+}
+
+.set-row button.set-label::before {
+  content: '';
+  position: absolute;
+  inset: 6px 0;
+  z-index: -1;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
 .num-input {
   width: 100%;
   min-width: 0;
@@ -1143,10 +1189,6 @@
 .is-done .num-input {
   border-color: transparent;
   background: color-mix(in srgb, var(--go) 12%, transparent);
-}
-
-.set-note {
-  grid-column: 1 / -1;
 }
 
 .add-set {
@@ -1904,10 +1946,6 @@
   transition: transform 0.25s linear;
 }
 
-.rest-bar.is-warmup .rest-bar-line span {
-  background: var(--muted);
-}
-
 .rest-bar.is-ready .rest-bar-line span {
   background: var(--go);
 }
@@ -1966,12 +2004,12 @@
 /* Very narrow phones (SE 1st gen, Display Zoom): tighter set columns. */
 @media (max-width: 359px) {
   .set-head,
-  .set-row {
+  .set-row-main {
     grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr);
     gap: 6px;
   }
   .has-done .set-head,
-  .has-done .set-row {
+  .has-done .set-row-main {
     grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr) 44px;
   }
   .set-row .set-label {

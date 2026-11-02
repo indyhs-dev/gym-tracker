@@ -1,6 +1,6 @@
 /**
  * The "rest's up" sound. iOS only lets a page play audio after the user has
- * tapped something, so `unlockSound` runs inside a tap (✓, Warm-up, +30 s)
+ * tapped something, so `unlockSound` runs inside a tap (✓, +30 s)
  * and the sound can play later. Everything is feature-detected and fails
  * silently; Web Audio follows the silent switch, and there's no vibration
  * (iOS doesn't support it).

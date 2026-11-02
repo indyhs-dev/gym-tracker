@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import ActionSheet from '../../components/ActionSheet';
 import ExercisePicker from '../../components/ExercisePicker';
-import { MoreIcon, StopwatchIcon } from '../../components/Icons';
+import { MoreIcon } from '../../components/Icons';
 import NoteField from '../../components/NoteField';
 import {
   addSets,
-  deleteSet,
   removeSessionExercise,
   setExerciseNote,
   swapExercise,
@@ -18,9 +17,10 @@ import { formatKg, joinUnbroken, plural } from '../../lib/format';
 import { setsReps } from '../../lib/labels';
 import { goUpWeight, progressionHint } from '../../lib/progression';
 import { restAfter } from '../../lib/rest';
-import { startRest, startWarmupRest, tickSet } from '../../lib/restTimer';
+import { startRest, tickSet } from '../../lib/restTimer';
 import { rowValues, type SetRowData } from '../../lib/setRows';
 import { unlockSound } from '../../lib/sound';
+import { warmupCount } from '../../lib/warmup';
 import SetRow, { repsInputId, weightInputId } from './SetRow';
 
 /** Remembers which pre-filled rows have been sent to the database, so fast typing never adds a set twice. */
@@ -41,12 +41,13 @@ interface Props {
   previous?: WorkoutSet[];
   /** Session still in progress (live or logging a past one): rows get a ✓ and hints show. */
   active: boolean;
-  /** A workout happening now: ✓ starts the rest timer, and there's a Warm-up rest button. */
+  /** A workout happening now: ✓ starts the rest timer. */
   live: boolean;
   /** The exercise you're on (has sets left): accent border. */
   current: boolean;
   ghosts: GhostLog;
   onAddSet: () => void;
+  onDeleteRow: (row: SetRowData) => void;
 }
 
 /**
@@ -67,8 +68,11 @@ export default function ExerciseCard({
   current,
   ghosts,
   onAddSet,
+  onDeleteRow,
 }: Props) {
   const [menu, setMenu] = useState(false);
+  /** The row swiped open to show Delete. */
+  const [swipedId, setSwipedId] = useState<string | null>(null);
   const [swapping, setSwapping] = useState(false);
   const [noteOpen, setNoteOpen] = useState(item.note !== '');
   const exercise = exercises.get(item.exerciseId);
@@ -146,15 +150,19 @@ export default function ExerciseCard({
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   }
 
-  /** Warm-up button: a rest using the warm-up guidance. Logs nothing, and can be tapped after each warm-up. */
-  function warmupRest() {
-    unlockSound();
-    const { text, range } = restAfter(exercise?.type ?? 'isolation', true, rest);
-    startWarmupRest(sessionId, text, range);
-  }
+  // A touch anywhere but the open row's Delete closes it.
+  useEffect(() => {
+    if (!swipedId) return;
+    const close = (e: PointerEvent) => {
+      if (!(e.target instanceof Element && e.target.closest('.set-delete'))) setSwipedId(null);
+    };
+    document.addEventListener('pointerdown', close, true);
+    return () => document.removeEventListener('pointerdown', close, true);
+  }, [swipedId]);
 
   const restGuide = exercise && rest[exercise.type];
-  const meta = joinUnbroken([slot ? setsReps(slot) : '', restGuide ? `${restGuide} rest` : ''].filter(Boolean), ' · ');
+  const warmups = exercise && slot ? warmupCount(slot.warmup, exercise.type) : '';
+  const meta = joinUnbroken([slot ? setsReps(slot) : '', restGuide ? `Rest ${restGuide}` : '', warmups].filter(Boolean), ' · ');
 
   // "Go up": last time's set 1 reached the top of the range.
   const progression = active && exercise && slot ? progressionHint(previous, slot.repMax, exercise.weightStep) : null;
@@ -175,12 +183,6 @@ export default function ExerciseCard({
       <div className="exercise-head">
         <h2 className="exercise-name">{name}</h2>
         <div className="exercise-actions">
-          {live && (
-            <button type="button" className="warmup-button" aria-label="Start warm-up rest timer" onClick={warmupRest}>
-              <StopwatchIcon />
-              Warm-up
-            </button>
-          )}
           <button type="button" className="exercise-more" aria-label={`${name} options`} onClick={() => setMenu(true)}>
             <MoreIcon />
           </button>
@@ -213,10 +215,15 @@ export default function ExerciseCard({
                 row={row}
                 label={label(row.warmup)}
                 onChange={(fields) => write(i, fields)}
-                onDelete={() => deleteSet(sessionId, item.id, row.id)}
+                onDelete={() => {
+                  setSwipedId(null);
+                  onDeleteRow(row);
+                }}
                 onDone={active ? () => tick(i) : undefined}
                 done={done[i]}
                 next={active && i === next}
+                swiped={swipedId === row.id}
+                onSwipe={(open) => setSwipedId(open ? row.id : null)}
               />
             ))}
           </ol>

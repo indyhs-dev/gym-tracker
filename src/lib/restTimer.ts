@@ -9,8 +9,8 @@ import type { RestRange } from './rest';
  */
 export interface RestTimer {
   sessionId: string;
-  /** The set whose ✓ started this rest; null for a warm-up rest, which logs nothing. */
-  setId: string | null;
+  /** The set whose ✓ started this rest. */
+  setId: string;
   startedAt: number;
   /** The rest guidance text, e.g. "3–5 min". */
   text: string;
@@ -65,12 +65,6 @@ export function startRest(sessionId: string, setId: string, text: string, range:
 /** Ticks the set done without a rest timer (logging a past session). */
 export function tickSet(sessionId: string, setId: string) {
   save({ ...state, done: ticked(sessionId, setId) });
-}
-
-/** Starts a rest after a warm-up. Nothing is logged or ticked. */
-export function startWarmupRest(sessionId: string, text: string, range: RestRange, now = Date.now()) {
-  const done = state.done?.sessionId === sessionId ? state.done : null;
-  save({ timer: { sessionId, setId: null, startedAt: now, text, range }, done });
 }
 
 /** Adds time to the rest that's counting down ("+30 s"). */

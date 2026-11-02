@@ -34,7 +34,7 @@ describe('seedIfNeeded', () => {
     expect(await seedIfNeeded()).toBe(false);
     const { exercises, templates } = await load();
     expect(exercises).toHaveLength(SEED_EXERCISES.length);
-    expect(templates.map((t) => t.name)).toEqual(['Torso', 'Legs', 'Shoulders & Arms']);
+    expect(templates.map((t) => t.name)).toEqual(['Legs', 'Chest & Back', 'Shoulders & Arms']);
     expect((await db.settings.get('app'))?.seededAt).toEqual(expect.any(Number));
   });
 
@@ -42,6 +42,13 @@ describe('seedIfNeeded', () => {
     await seedIfNeeded();
     const { byId, templates } = await load();
     expect(describeSlots(templates[0], byId)).toEqual([
+      'Hack Squat (Back Squat) | 2 × 5–12 | Full warm-up | Back Squat: use safety pins',
+      'Leg Extension | 2 × 8–15 | 1 warm-up set',
+      'Romanian Deadlift (Deadlift) | 2 × 5–10 | Full warm-up',
+      'Lying Leg Curl | 2 × 6–12 | 1 warm-up set',
+      'Standing Calf Raise | 3 × 8–15 | Full warm-up',
+    ]);
+    expect(describeSlots(templates[1], byId)).toEqual([
       'Flat Dumbbell Bench Press | 2 × 5–12 | Full warm-up',
       'Dips | 2 × 5–12 | 1 warm-up set | Add weight once 12 bodyweight reps are possible',
       'Cable Fly (Pec Deck) | 2 × 8–15 | 0–1 warm-up sets',
@@ -49,13 +56,6 @@ describe('seedIfNeeded', () => {
       'Chest-supported Row (Seated Cable Row, Single-arm Dumbbell Row) | 2 × 5–12 | 1 warm-up set',
       'Back Extension (Seated Back Extension Machine, Reverse Hyper) | 2 × 8–25 | 1 warm-up set',
       'Hanging Knee Raise (Hanging L-sit, Hanging Pike) | 3 × 5 | No warm-up | Progression: Knee Raise → L-sit → Pike',
-    ]);
-    expect(describeSlots(templates[1], byId)).toEqual([
-      'Hack Squat (Back Squat) | 2 × 5–12 | Full warm-up | Back Squat: use safety pins',
-      'Leg Extension | 2 × 8–15 | 1 warm-up set',
-      'Romanian Deadlift (Deadlift) | 2 × 5–10 | Full warm-up',
-      'Lying Leg Curl | 2 × 6–12 | 1 warm-up set',
-      'Standing Calf Raise | 3 × 8–15 | Full warm-up',
     ]);
     expect(describeSlots(templates[2], byId)).toEqual([
       'Seated Dumbbell Overhead Press | 2 × 5–12 | Full warm-up',
@@ -104,8 +104,8 @@ describe('seedIfNeeded', () => {
     await seedIfNeeded();
     const { exercises, templates } = await load();
     expect(exercises).toHaveLength(SEED_EXERCISES.length);
-    expect(templates.map((t) => t.name)).toEqual(['My test', 'Torso', 'Legs', 'Shoulders & Arms']);
-    expect(templates[1].slots[1].exerciseId).toBe(mine.id);
+    expect(templates.map((t) => t.name)).toEqual(['My test', 'Legs', 'Chest & Back', 'Shoulders & Arms']);
+    expect(templates[2].slots[1].exerciseId).toBe(mine.id);
     expect((await db.exercises.get(mine.id))?.weightStep).toBe(5);
   });
 

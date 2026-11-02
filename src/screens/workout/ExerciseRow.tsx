@@ -20,8 +20,8 @@ interface Props {
 /**
  * An exercise that isn't open, as one tappable row. Done: tick, name and top
  * set ("32.5 × 12"), plus "↑ Go to 35 kg next time" if set 1 hit the top of
- * the range. Not done: name and the target ("2 × 5–12"), or how far you got
- * if it was left part-way.
+ * the range. Not done: name and the target ("2 × 5–12"), how far you got
+ * if it was left part-way, or "No sets" if its rows were all deleted.
  */
 export default function ExerciseRow({ item, exercise, complete, workingDone, workingTotal, goUp, onOpen }: Props) {
   const name = exercise?.name ?? 'Unknown exercise';
@@ -32,7 +32,9 @@ export default function ExerciseRow({ item, exercise, complete, workingDone, wor
       : plural(item.sets.length, 'set')
     : workingDone > 0
       ? `${workingDone} of ${workingTotal} sets`
-      : item.slot
+      : workingTotal === 0
+        ? 'No sets'
+        : item.slot
         ? setsReps(item.slot)
         : plural(workingTotal, 'set');
 

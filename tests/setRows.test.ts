@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newSet } from '../src/db/sessions';
 import type { SessionExercise, TemplateSlot } from '../src/db/types';
-import { isRowDone, rowValues, setRows, workingRowCount } from '../src/lib/setRows';
+import { extraAfterDelete, isRowDone, rowValues, setRows, workingRowCount } from '../src/lib/setRows';
 
 const set = (weight: number | null, reps: number | null, warmup = false) => newSet({ weight, reps, warmup }, 0);
 const slot = (targetSets: number): TemplateSlot => ({
@@ -37,6 +37,24 @@ describe('workingRowCount', () => {
     expect(workingRowCount(item([], null), true, 0)).toBe(1);
     // Editing history: just what was logged.
     expect(workingRowCount(item([set(20, 8)]), false, 0)).toBe(1);
+  });
+});
+
+describe('extraAfterDelete', () => {
+  it('leaves one working row fewer, so no pre-filled row takes the deleted one’s place', () => {
+    // A pre-filled row of 2: 1 row left.
+    expect(workingRowCount(item([]), true, extraAfterDelete(item([]), 0))).toBe(1);
+    // Both deleted: none left, and + Add set brings one back.
+    expect(extraAfterDelete(item([]), -1)).toBe(-2);
+    expect(workingRowCount(item([]), true, -2)).toBe(0);
+    // A logged set of 2 deleted (the count is worked out before it's gone): 1 row left once it is.
+    const logged = item([set(20, 8), set(20, 8)]);
+    expect(workingRowCount(item([set(20, 8)]), true, extraAfterDelete(logged, 0))).toBe(1);
+    // A row added with + Add set.
+    expect(workingRowCount(item([]), true, extraAfterDelete(item([]), 1))).toBe(2);
+    // More logged than the target and added rows.
+    const over = item([set(20, 8), set(20, 8), set(20, 6)]);
+    expect(workingRowCount(item([set(20, 8), set(20, 8)]), true, extraAfterDelete(over, 0))).toBe(2);
   });
 });
 
