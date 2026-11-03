@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Session, Template } from '../src/db/types';
-import { lastDoneByTemplate, nextTemplate, rotationOrder, weekDays } from '../src/lib/rotation';
+import { lastDoneByTemplate, nextTemplate, weekDays } from '../src/lib/rotation';
 
 const template = (id: string, order: number): Template => ({ id, name: id, slots: [], order, createdAt: 0, updatedAt: 0 });
-const templates = [template('torso', 0), template('legs', 1), template('arms', 2)];
+const templates = [template('legs', 0), template('chest', 1), template('arms', 2)];
 const at = (y: number, mo: number, d: number, h = 18) => new Date(y, mo - 1, d, h).getTime();
 const session = (templateId: string | null, startedAt: number, status: Session['status'] = 'finished'): Session => ({
   id: `${templateId}-${startedAt}`,
@@ -19,33 +19,44 @@ const session = (templateId: string | null, startedAt: number, status: Session['
 });
 
 describe('nextTemplate', () => {
+  // Thursday 22 Oct 2026; the week runs Monday 19 to Sunday 25.
+  const now = at(2026, 10, 22, 12);
+
   it('the first template when nothing has been done', () => {
-    expect(nextTemplate(templates, [])?.id).toBe('torso');
-    expect(nextTemplate([], [])).toBeNull();
+    expect(nextTemplate(templates, [], now)?.id).toBe('legs');
+    expect(nextTemplate([], [], now)).toBeNull();
   });
 
-  it('the one after the most recently done template, wrapping round', () => {
-    expect(nextTemplate(templates, [session('torso', at(2026, 10, 20)), session('legs', at(2026, 10, 18))])?.id).toBe('legs');
-    expect(nextTemplate(templates, [session('arms', at(2026, 10, 21)), session('torso', at(2026, 10, 20))])?.id).toBe('torso');
+  it('each week starts again from the first template, whatever was done last week', () => {
+    expect(nextTemplate(templates, [session('chest', at(2026, 10, 15)), session('legs', at(2026, 10, 13))], now)?.id).toBe('legs');
+    expect(nextTemplate(templates, [session('arms', at(2026, 10, 18))], now)?.id).toBe('legs');
+  });
+
+  it('then the first one, in template order, not done yet this week', () => {
+    expect(nextTemplate(templates, [session('legs', at(2026, 10, 19))], now)?.id).toBe('chest');
+    expect(nextTemplate(templates, [session('chest', at(2026, 10, 20)), session('legs', at(2026, 10, 19))], now)?.id).toBe('arms');
+    // Done out of order: Legs is still owed this week.
+    expect(nextTemplate(templates, [session('chest', at(2026, 10, 19, 0))], now)?.id).toBe('legs');
+  });
+
+  it('once all are done this week, the one after the most recent, wrapping round', () => {
+    const week = [session('legs', at(2026, 10, 19)), session('chest', at(2026, 10, 20)), session('arms', at(2026, 10, 21))];
+    expect(nextTemplate(templates, week, now)?.id).toBe('legs');
+    expect(nextTemplate(templates, [...week, session('legs', at(2026, 10, 22, 7))], now)?.id).toBe('chest');
   });
 
   it('ignores blank sessions, unfinished ones and deleted templates', () => {
     const sessions = [
-      session('legs', at(2026, 10, 18)),
-      session(null, at(2026, 10, 19)),
-      session('arms', at(2026, 10, 20), 'active'),
+      session('legs', at(2026, 10, 19)),
+      session(null, at(2026, 10, 20)),
+      session('chest', at(2026, 10, 20), 'active'),
       session('gone', at(2026, 10, 21)),
     ];
-    expect(nextTemplate(templates, sessions)?.id).toBe('arms');
+    expect(nextTemplate(templates, sessions, now)?.id).toBe('chest');
   });
 });
 
-describe('rotationOrder and lastDoneByTemplate', () => {
-  it('starts from the given template and continues round', () => {
-    expect(rotationOrder(templates, templates[1]).map((t) => t.id)).toEqual(['legs', 'arms', 'torso']);
-    expect(rotationOrder(templates, null).map((t) => t.id)).toEqual(['torso', 'legs', 'arms']);
-  });
-
+describe('lastDoneByTemplate', () => {
   it('latest finished start per template', () => {
     const done = lastDoneByTemplate([
       session('torso', at(2026, 10, 14)),

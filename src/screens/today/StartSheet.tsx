@@ -7,12 +7,12 @@ import { db } from '../../db/db';
 import { finishedSessions, startSession } from '../../db/sessions';
 import type { Template } from '../../db/types';
 import { plural } from '../../lib/format';
-import { lastDoneByTemplate, rotationOrder } from '../../lib/rotation';
+import { lastDoneByTemplate } from '../../lib/rotation';
 import { formatDate, startTimeFor, toDateInput } from '../../lib/time';
 
 /**
  * Choose a template (or blank); one tap starts the workout. The next-up
- * template is on top, the others follow in rotation order, Blank workout is
+ * template is on top, the others follow in template order, Blank workout is
  * last. The date sits at the bottom: only for logging a past workout.
  */
 export default function StartSheet({ next, onClose }: { next: Template | null; onClose: () => void }) {
@@ -33,9 +33,9 @@ export default function StartSheet({ next, onClose }: { next: Template | null; o
     }
   }
 
-  const ordered = templates ? rotationOrder(templates, next) : [];
-  const first = next && ordered[0]?.id === next.id ? ordered[0] : null;
-  const others = first ? ordered.slice(1) : ordered;
+  // Next up on top, then the rest in template order.
+  const first = next && templates?.find((t) => t.id === next.id) ? next : null;
+  const others = (templates ?? []).filter((t) => t.id !== first?.id);
   const meta = (t: Template) => {
     const done = lastDone?.get(t.id);
     return `${plural(t.slots.length, 'exercise')}${done ? ` · last done ${formatDate(done)}` : ''}`;

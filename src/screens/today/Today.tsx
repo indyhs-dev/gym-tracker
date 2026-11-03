@@ -32,7 +32,7 @@ export default function Today() {
     async () => (last ? previousBestsFor(last.exerciseIds, last) : null),
     [last?.id, last?.updatedAt],
   );
-  const next = templates && finished ? nextTemplate(templates, finished) : null;
+  const next = templates && finished ? nextTemplate(templates, finished, Date.now()) : null;
   const lastDone = next && finished ? lastDoneByTemplate(finished).get(next.id) : undefined;
   const settings = useSettings();
   const firstSessionAt = useLiveQuery(

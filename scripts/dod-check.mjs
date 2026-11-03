@@ -189,42 +189,46 @@ try {
   const chestBackExercises = await detailExercises();
   check('skipped exercises left out', JSON.stringify(chestBackExercises) === JSON.stringify(['Flat Dumbbell Bench Press', 'Lat Pulldown']), chestBackExercises.join(', '));
 
-  // --- Shoulders & Arms: next up after Chest & Back, started straight from Today ---
+  // --- Legs: each week starts with Legs (Chest & Back was yesterday), started straight from Today ---
   await go('#/');
-  const armsNext = (await page.locator('.next-up').textContent()) ?? '';
-  check('next up after Chest & Back is Shoulders & Arms', armsNext.includes('Shoulders & Arms') && armsNext.includes('8 exercises'), armsNext);
-  await page.getByRole('button', { name: 'Start Shoulders & Arms' }).click();
+  const legsNext = (await page.locator('.next-up').textContent()) ?? '';
+  check('next up is Legs: first in the week’s order and not done yet this week', legsNext.includes('Legs') && legsNext.includes('5 exercises'), legsNext);
+  await page.getByRole('button', { name: 'Start Legs' }).click();
   await page.locator('.workout-bar').waitFor();
-  check('"Start Shoulders & Arms" starts it straight away, dated today (gym timer running)',
-    (await page.locator('.workout-title h1').textContent()) === 'Shoulders & Arms' && (await page.locator('[role="timer"][aria-label="Gym time"]').count()) === 1);
-  check('Shoulders & Arms starts with 8 exercises', (await exerciseCount()) === 8);
-  await logSet('Seated Dumbbell Overhead Press', 17.5, 9);
-  duration = await finish('20:00', '21:00');
-  check('Shoulders & Arms finished with correct duration', duration === '1h', duration);
-
-  // --- Today after Shoulders & Arms: this week, last session; start sheet in rotation order ---
-  await go('#/');
-  const todayDot = page.locator('.week-day.is-today');
-  check('this week: today is outlined and ticked after training', (await todayDot.count()) === 1 && (await todayDot.getAttribute('class')).includes('is-trained'));
-  const lastCard = (await page.locator('.last-session-card').textContent()) ?? '';
-  check('last session card: template, date, duration and sets', lastCard.includes('Shoulders & Arms ·') && lastCard.includes('1h · 1 set'), lastCard);
-  await page.getByRole('button', { name: 'Choose a different workout' }).click();
-  const nextUpRow = (await page.locator('.sheet .start-next').textContent()) ?? '';
-  const otherRows = await page.locator('.sheet .start-list .row-title').allTextContents();
-  const chestBackRow = (await page.locator('.sheet .start-row', { hasText: 'Chest & Back' }).textContent()) ?? '';
-  check('start sheet: next up (Legs, wrapping round) on top with its badge, then rotation order, Blank last, last done dates',
-    nextUpRow.includes('Legs') && nextUpRow.includes('Next up') &&
-      JSON.stringify(otherRows) === '["Chest & Back","Shoulders & Arms","Blank workout"]' && chestBackRow.includes('last done'),
-    `${nextUpRow} / ${otherRows.join(', ')} / ${chestBackRow}`);
-  check('start sheet: date row says Today', ((await page.locator('.sheet .start-date-value').textContent()) ?? '').trim() === 'Today');
-  await page.locator('.sheet .start-row', { hasText: 'Legs' }).click();
-  await page.locator('.workout-bar').waitFor();
-
-  // --- Legs ---
+  check('"Start Legs" starts it straight away, dated today (gym timer running)',
+    (await page.locator('.workout-title h1').textContent()) === 'Legs' && (await page.locator('[role="timer"][aria-label="Gym time"]').count()) === 1);
   check('Legs starts with 5 exercises', (await exerciseCount()) === 5);
   await logSet('Hack Squat', 80, 10);
   duration = await finish('07:00', '08:05');
   check('Legs finished with correct duration', duration === '1h 5m', duration);
+
+  // --- Today after Legs: this week, last session; start sheet in template order ---
+  await go('#/');
+  const todayDot = page.locator('.week-day.is-today');
+  check('this week: today is outlined and ticked after training', (await todayDot.count()) === 1 && (await todayDot.getAttribute('class')).includes('is-trained'));
+  const lastCard = (await page.locator('.last-session-card').textContent()) ?? '';
+  check('last session card: template, date, duration and sets', lastCard.includes('Legs ·') && lastCard.includes('1h 5m · 1 set'), lastCard);
+  await page.getByRole('button', { name: 'Choose a different workout' }).click();
+  const nextUpRow = (await page.locator('.sheet .start-next').textContent()) ?? '';
+  const otherRows = await page.locator('.sheet .start-list .row-title').allTextContents();
+  const chestBackRow = (await page.locator('.sheet .start-row', { hasText: 'Chest & Back' }).textContent()) ?? '';
+  // Yesterday's Chest & Back counts towards this week unless today is Monday.
+  const mondayToday = new Date().getDay() === 1;
+  const expectedNext = mondayToday ? 'Chest & Back' : 'Shoulders & Arms';
+  const expectedOthers = mondayToday ? '["Legs","Shoulders & Arms","Blank workout"]' : '["Legs","Chest & Back","Blank workout"]';
+  check('start sheet: next up on top with its badge, the rest in template order, Blank last, last done dates',
+    nextUpRow.includes(expectedNext) && nextUpRow.includes('Next up') &&
+      JSON.stringify(otherRows) === expectedOthers && chestBackRow.includes('last done'),
+    `${nextUpRow} / ${otherRows.join(', ')} / ${chestBackRow}`);
+  check('start sheet: date row says Today', ((await page.locator('.sheet .start-date-value').textContent()) ?? '').trim() === 'Today');
+  await page.locator('.sheet .start-row', { hasText: 'Shoulders & Arms' }).click();
+  await page.locator('.workout-bar').waitFor();
+
+  // --- Shoulders & Arms ---
+  check('Shoulders & Arms starts with 8 exercises', (await exerciseCount()) === 8);
+  await logSet('Seated Dumbbell Overhead Press', 17.5, 9);
+  duration = await finish('20:00', '21:00');
+  check('Shoulders & Arms finished with correct duration', duration === '1h', duration);
 
   // --- Chest & Back again (live): last time's sets are the placeholders; ✓ on an empty row logs them ---
   await startWorkout('Chest & Back');

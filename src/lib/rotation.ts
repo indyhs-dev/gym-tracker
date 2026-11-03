@@ -2,24 +2,23 @@ import type { Session, Template } from '../db/types';
 import { addDays, isSameDay, startOfWeek } from './time';
 
 /**
- * The template to do next: the one after the most recently done template,
- * in template order (wrapping round). The first template if none has been
- * done yet. `templates` is in template order; blank sessions are ignored.
+ * The template to do next. Each week (Monday to Sunday) starts again from
+ * the first template: next up is the first one, in template order, not done
+ * yet this week. Once every template has been done this week, it's the one
+ * after the most recently done (wrapping round). `templates` is in template
+ * order; blank sessions are ignored.
  */
-export function nextTemplate(templates: Template[], sessions: Session[]): Template | null {
+export function nextTemplate(templates: Template[], sessions: Session[], now: number): Template | null {
   if (templates.length === 0) return null;
-  const latest = sessions
-    .filter((s) => s.status === 'finished' && templates.some((t) => t.id === s.templateId))
-    .reduce<Session | null>((a, s) => (a === null || s.startedAt > a.startedAt ? s : a), null);
-  if (!latest) return templates[0];
+  const monday = startOfWeek(now);
+  const thisWeek = sessions.filter(
+    (s) => s.status === 'finished' && s.startedAt >= monday && templates.some((t) => t.id === s.templateId),
+  );
+  const notYet = templates.find((t) => !thisWeek.some((s) => s.templateId === t.id));
+  if (notYet) return notYet;
+  const latest = thisWeek.reduce((a, s) => (s.startedAt > a.startedAt ? s : a));
   const at = templates.findIndex((t) => t.id === latest.templateId);
   return templates[(at + 1) % templates.length];
-}
-
-/** Templates starting from `first`, continuing round in template order. */
-export function rotationOrder(templates: Template[], first: Template | null): Template[] {
-  const at = first ? templates.findIndex((t) => t.id === first.id) : -1;
-  return at < 0 ? templates : [...templates.slice(at), ...templates.slice(0, at)];
 }
 
 /** When each template was last done (the latest finished session's start). */
