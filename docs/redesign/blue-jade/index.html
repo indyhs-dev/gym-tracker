@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en" data-theme="simple">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gym Log · Palettes</title>
+<style>
+/* Each palette sets the same tokens. --bg, --card, --accent, --text and --rest match src/styles/tokens.css;
+   the rest are new roles the redesign would add. Everything else on the page is derived from these. */
+:root, [data-theme="simple"] {
+  --bg: #050a1a; --card: #0d1630; --text: #f5f7ff;
+  --accent: #80fb7f; --on-accent: #050a1a;
+  --done: #d9deec; --on-done: #050a1a;
+  --progress: #00d1f8; --info: #9fb6ea;
+  --hero-a: #0241ac; --hero-b: #01205f; --glow: rgb(0 209 248 / 0.16); --hero-label: #80fb7f;
+  --rest-a: #0241ac; --rest-b: #012a7a; --rest-line: #00d1f8;
+  --ready: #80fb7f; --rest: #ff5a6a;
+  --logo-a: #0241ac; --logo-b: #011a52; --logo-glow: #00d1f8; --logo-glow-o: 0.25;
+  --logo-mark: #80fb7f; --logo-mark2: #00d1f8; --logo-mark3: #0a3a8f;
+}
+[data-theme="current"] {
+  --bg: #0a0a0a; --card: #161616; --text: #f5f5f4;
+  --accent: #fb923c; --on-accent: #0a0a0a;
+  --done: #22c55e; --on-done: #0a0a0a;
+  --progress: #fb923c; --info: #fb923c;
+  --hero-a: #161616; --hero-b: #161616; --glow: transparent; --hero-label: #fb923c;
+  --rest-a: #161616; --rest-b: #161616; --rest-line: #fb923c;
+  --ready: #22c55e; --rest: #ef4444;
+  --logo-a: #0a0a0a; --logo-b: #0a0a0a; --logo-glow: #fb923c; --logo-glow-o: 0;
+  --logo-mark: #fb923c; --logo-mark2: #fdba74; --logo-mark3: #3a2a1c;
+}
+[data-theme="bluejade"] {
+  --bg: #050a1a; --card: #0d1630; --text: #f5f7ff;
+  --accent: #80fb7f; --on-accent: #050a1a;
+  --done: #00d1f8; --on-done: #050a1a;
+  --progress: #00d1f8; --info: #00d1f8;
+  --hero-a: #0241ac; --hero-b: #012368; --glow: rgb(0 209 248 / 0.45); --hero-label: #80fb7f;
+  --rest-a: #0241ac; --rest-b: #012a7a; --rest-line: #00d1f8;
+  --ready: #80fb7f; --rest: #ff5a6a;
+  --logo-a: #0a52d6; --logo-b: #012368; --logo-glow: #00d1f8; --logo-glow-o: 0.55;
+  --logo-mark: #80fb7f; --logo-mark2: #00d1f8; --logo-mark3: #0241ac;
+}
+[data-theme="graphite"] {
+  --bg: #0c0d0f; --card: #1a1c20; --text: #f4f5f2;
+  --accent: #c6ff3d; --on-accent: #0c0d0f;
+  --done: #e6e8e3; --on-done: #0c0d0f;
+  --progress: #c6ff3d; --info: #c6ff3d;
+  --hero-a: #25282d; --hero-b: #17191c; --glow: rgb(198 255 61 / 0.13); --hero-label: #c6ff3d;
+  --rest-a: #25282d; --rest-b: #1a1c20; --rest-line: #c6ff3d;
+  --ready: #c6ff3d; --rest: #ff5a5a;
+  --logo-a: #2a2d33; --logo-b: #0c0d0f; --logo-glow: #c6ff3d; --logo-glow-o: 0.2;
+  --logo-mark: #c6ff3d; --logo-mark2: #f4f5f2; --logo-mark3: #33373d;
+}
+[data-theme="blues"] {
+  --bg: #050a1a; --card: #0d1630; --text: #f5f7ff;
+  --accent: #8fe3ff; --on-accent: #04132e;
+  --done: #5b8cff; --on-done: #050a1a;
+  --progress: #8fe3ff; --info: #8fe3ff;
+  --hero-a: #0241ac; --hero-b: #012368; --glow: rgb(0 209 248 / 0.38); --hero-label: #8fe3ff;
+  --rest-a: #0241ac; --rest-b: #012a7a; --rest-line: #8fe3ff;
+  --ready: #80fb7f; --rest: #ff5a6a;
+  --logo-a: #0a52d6; --logo-b: #012368; --logo-glow: #00d1f8; --logo-glow-o: 0.5;
+  --logo-mark: #8fe3ff; --logo-mark2: #5b8cff; --logo-mark3: #0241ac;
+}
+[data-theme="amber"] {
+  --bg: #0e0c0a; --card: #1b1815; --text: #f7f3ec;
+  --accent: #ffa53d; --on-accent: #1a0f03;
+  --done: #4ade80; --on-done: #0e0c0a;
+  --progress: #ffa53d; --info: #ffa53d;
+  --hero-a: #3a2412; --hero-b: #1d1612; --glow: rgb(255 165 61 / 0.2); --hero-label: #ffa53d;
+  --rest-a: #2a1f16; --rest-b: #1d1814; --rest-line: #ffa53d;
+  --ready: #4ade80; --rest: #ef4444;
+  --logo-a: #3a2412; --logo-b: #0e0c0a; --logo-glow: #ffa53d; --logo-glow-o: 0.3;
+  --logo-mark: #ffa53d; --logo-mark2: #ffd29a; --logo-mark3: #4a3220;
+}
+:root {
+  --muted: color-mix(in srgb, var(--text) 62%, transparent);
+  --faint: color-mix(in srgb, var(--text) 35%, transparent);
+  --line: color-mix(in srgb, var(--text) 10%, transparent);
+  --line-strong: color-mix(in srgb, var(--text) 18%, transparent);
+  --hero-dim: color-mix(in srgb, var(--text) 75%, transparent);
+  --hero-bg: radial-gradient(120% 90% at 100% 0%, var(--glow), transparent 60%), linear-gradient(160deg, var(--hero-a), var(--hero-b));
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: color-mix(in srgb, var(--bg) 65%, black); }
+body { margin: 0; color: var(--text); font-family: var(--font); transition: background .2s; }
+button, input { font: inherit; color: inherit; }
+
+/* Switcher */
+.switcher { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.switcher-in { max-width: 1680px; margin: 0 auto; padding: 12px 24px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.switcher button { flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.switcher button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.switcher .chips { display: flex; }
+.switcher .chips i { width: 12px; height: 12px; border-radius: 6px; margin-left: -3px; border: 1.5px solid var(--card); }
+.switcher button[aria-pressed="true"] .chips i { border-color: var(--text); }
+.switcher .rec { font-size: 11px; font-weight: 800; letter-spacing: .4px; color: var(--accent); }
+.switcher button[aria-pressed="true"] .rec { color: inherit; opacity: .7; }
+
+.page { max-width: 1680px; margin: 0 auto; padding: 32px 24px 80px; }
+.page > h1 { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin: 0 0 6px; }
+.page > h1 em { font-style: normal; color: var(--accent); }
+.lede { color: var(--muted); font-size: 16px; max-width: 780px; line-height: 1.5; margin: 0 0 8px; }
+.verdict { font-size: 15px; max-width: 780px; line-height: 1.5; margin: 0 0 28px; padding: 12px 14px; border-radius: 12px; background: var(--card); border-left: 3px solid var(--accent); }
+h2.sec { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin: 40px 0 16px; }
+
+/* Palette strip */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.sw { border-radius: 16px; padding: 14px; min-height: 140px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; border: 1px solid var(--line); color: #f5f7ff; }
+.sw.dark { color: #0b0d12; }
+.sw b { font-size: 17px; }
+.sw code { font-size: 12px; opacity: .75; }
+.sw span { font-size: 13px; opacity: .85; line-height: 1.35; }
+
+/* Phones */
+.phones { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+.phone-wrap { display: flex; flex-direction: column; gap: 10px; }
+.phone-wrap > span { color: var(--muted); font-size: 14px; font-weight: 600; }
+.phone { width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--bg); border-radius: 44px; border: 1px solid var(--line); display: flex; flex-direction: column; box-shadow: 0 30px 80px rgb(0 0 0 / .5); }
+.status { height: 47px; flex: none; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 30px 6px; font-size: 15px; font-weight: 600; }
+.muted { color: var(--muted); }
+.label { font-size: 12px; font-weight: 700; letter-spacing: .7px; color: var(--muted); text-transform: uppercase; }
+.num { font-variant-numeric: tabular-nums; }
+.card { border-radius: 18px; background: var(--card); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.btn-primary { height: 56px; border-radius: 14px; border: 0; background: var(--accent); color: var(--on-accent); font-size: 18px; font-weight: 700; }
+.btn-sec { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--card); font-size: 16px; font-weight: 600; }
+.text-btn { min-height: 44px; border: 0; background: none; font-size: 15px; font-weight: 600; }
+.chev { width: 8px; height: 14px; flex: none; color: var(--faint); }
+
+/* Today */
+.gym-head { padding: 8px 16px 0; }
+.gym-title { display: flex; align-items: center; justify-content: space-between; }
+.gym-title h1 { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -.6px; display: flex; align-items: center; gap: 10px; }
+.gear { width: 44px; height: 44px; border-radius: 22px; border: 0; background: var(--card); color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.tabs { display: flex; gap: 28px; margin-top: 12px; border-bottom: 1px solid var(--line); }
+.tabs a { padding: 8px 0 10px; color: var(--muted); text-decoration: none; font-size: 17px; font-weight: 600; }
+.tabs a.on { color: var(--text); border-bottom: 2px solid var(--accent); }
+.stack { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.hero { border-radius: 20px; padding: 18px 16px 12px; display: flex; flex-direction: column; gap: 14px; background: var(--hero-bg); }
+.hero .label { color: var(--hero-label); }
+.hero h2 { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -.6px; }
+.hero .meta { font-size: 15px; color: var(--hero-dim); }
+.days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+.day { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.dot { width: 32px; height: 32px; border-radius: 16px; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--on-done); }
+.dot.on { background: var(--done); }
+.dot.today { border: 2px solid var(--accent); }
+.day.today { color: var(--text); font-weight: 700; }
+.row-card { flex-direction: row; align-items: center; gap: 12px; }
+.block { flex-direction: row; align-items: center; gap: 12px; padding: 12px 16px; }
+.block b { font-size: 15px; color: var(--info); }
+
+/* Workout */
+.w-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 10px; border-bottom: 1px solid var(--line); }
+.back { display: flex; align-items: center; gap: 4px; min-height: 44px; color: var(--muted); font-size: 17px; }
+.timer { font-size: 22px; font-weight: 700; }
+.w-title { padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 10px; }
+.w-title h1 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+.bar { height: 6px; border-radius: 3px; background: var(--card); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--progress); border-radius: 3px; }
+.list { flex: 1; overflow: hidden; padding: 4px 16px 0; display: flex; flex-direction: column; gap: 8px; }
+.ex-row { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-radius: 14px; background: var(--card); }
+.ex-row.done { background: color-mix(in srgb, var(--card) 60%, transparent); }
+.tick { width: 24px; height: 24px; border-radius: 12px; background: color-mix(in srgb, var(--done) 18%, transparent); color: var(--done); display: flex; align-items: center; justify-content: center; flex: none; }
+.hint { font-size: 13px; font-weight: 600; color: var(--accent); }
+.current { border-radius: 16px; background: var(--card); border: 1.5px solid color-mix(in srgb, var(--accent) 55%, transparent); padding: 16px 14px 10px; display: flex; flex-direction: column; gap: 12px; }
+.current h2 { margin: 0; font-size: 21px; font-weight: 700; }
+.chip-btn { min-height: 44px; padding: 0 12px; border-radius: 10px; border: 0; background: var(--bg); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.grid { display: grid; grid-template-columns: 32px 1fr 1fr 44px; gap: 8px; align-items: center; }
+.cell { height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; }
+.cell.logged { background: color-mix(in srgb, var(--done) 12%, transparent); }
+.cell.input { background: var(--bg); border: 1px solid var(--line); color: var(--faint); }
+.cell.input.now { border: 1.5px solid var(--accent); }
+.tbtn { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.tbtn.on { background: var(--done); border: 0; color: var(--on-done); }
+
+/* Rest bar */
+.rest { background: linear-gradient(180deg, var(--rest-a), var(--rest-b)); border-top: 1px solid var(--line); }
+.rest.abs { position: absolute; left: 0; right: 0; bottom: 0; }
+.rest .line { height: 4px; background: rgb(0 0 0 / .3); }
+.rest .line i { display: block; height: 100%; background: var(--rest-line); }
+.rest .body { display: flex; align-items: center; gap: 12px; padding: 12px 16px 26px; }
+.rest .lbl { font-size: 13px; color: var(--hero-dim); }
+.rest .clock { font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+.rest button { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 0; background: rgb(0 0 0 / .28); font-size: 15px; font-weight: 600; }
+.rest.warm { background: var(--card); }
+.rest.warm .line i { background: var(--faint); }
+.rest.ready { background: linear-gradient(180deg, color-mix(in srgb, var(--ready) 20%, var(--bg)), color-mix(in srgb, var(--ready) 10%, var(--bg))); }
+.rest.ready .line i { background: var(--ready); }
+.rest.ready .clock { color: var(--ready); display: flex; align-items: center; gap: 8px; }
+.bars { display: flex; flex-direction: column; gap: 14px; width: 390px; }
+.bars .rest { border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
+.bars .rest .body { padding-bottom: 14px; }
+
+/* Finish */
+.fin-hero { padding: 20px 16px 22px; background: var(--hero-bg); }
+.fin-hero h1 { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -.6px; }
+.fin-hero h1 em { font-style: normal; color: var(--accent); }
+.fin-hero .back, .fin-hero .when { color: var(--hero-dim); }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.tile { background: rgb(0 0 0 / .25); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.tile b { font-size: 24px; font-weight: 800; }
+.tile span { font-size: 12px; color: var(--hero-dim); }
+.goup { border: 1.5px solid color-mix(in srgb, var(--accent) 55%, transparent); }
+.goup .label { color: var(--accent); }
+.gu-row { display: flex; justify-content: space-between; font-size: 16px; }
+.gu-row b { color: var(--accent); }
+.best { font-size: 11px; font-weight: 800; letter-spacing: .6px; background: var(--accent); color: var(--on-accent); border-radius: 6px; padding: 3px 6px; }
+.ex-line { display: flex; align-items: center; gap: 10px; font-size: 16px; min-height: 28px; }
+.note { height: 48px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); display: flex; align-items: center; padding: 0 14px; color: var(--faint); font-size: 15px; }
+
+/* Logos */
+.logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+.logo { background: var(--card); border-radius: 22px; padding: 22px; display: flex; flex-direction: column; gap: 16px; border: 1px solid var(--line); }
+.logo .big { width: 180px; height: 180px; border-radius: 40px; overflow: hidden; align-self: center; box-shadow: 0 16px 40px rgb(0 0 0 / .45); }
+.logo .big svg, .ic svg { width: 100%; height: 100%; display: block; }
+.logo h3 { margin: 0; font-size: 20px; display: flex; gap: 10px; align-items: baseline; }
+.logo h3 .letter { font-size: 14px; font-weight: 800; color: var(--on-accent); background: var(--accent); border-radius: 6px; padding: 2px 8px; }
+.logo p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.sizes { display: flex; align-items: flex-end; gap: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
+.sizes figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.ic { overflow: hidden; display: inline-block; flex: none; }
+.ic.s60 { width: 60px; height: 60px; border-radius: 13.4px; }
+.ic.s29 { width: 29px; height: 29px; border-radius: 6.5px; }
+.ic.mask { width: 60px; height: 60px; border-radius: 50%; }
+.ic.head { width: 34px; height: 34px; border-radius: 9px; }
+.homescreen { margin-top: 20px; border-radius: 28px; padding: 26px; background: radial-gradient(80% 80% at 20% 0%, color-mix(in srgb, var(--hero-a) 55%, var(--bg)), var(--bg)); display: grid; grid-template-columns: repeat(auto-fill, 76px); gap: 22px 18px; }
+.homescreen figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; }
+.homescreen .ic { width: 62px; height: 62px; border-radius: 14px; }
+.notes { margin-top: 36px; color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 820px; }
+.notes code { color: var(--text); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gLogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--logo-a)"/><stop offset="1" style="stop-color:var(--logo-b)"/></linearGradient>
+    <linearGradient id="gLogoV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--logo-a)"/><stop offset="1" style="stop-color:var(--logo-b)"/></linearGradient>
+    <radialGradient id="gGlow" cx="1" cy="0" r="1"><stop offset="0" style="stop-color:var(--logo-glow);stop-opacity:var(--logo-glow-o)"/><stop offset=".6" style="stop-color:var(--logo-glow);stop-opacity:0"/></radialGradient>
+    <linearGradient id="gCard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--card)"/><stop offset="1" style="stop-color:var(--bg)"/></linearGradient>
+
+    <!-- A: Dumbbell, recoloured -->
+    <symbol id="logoA" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#gLogo)"/>
+      <rect width="512" height="512" fill="url(#gGlow)"/>
+      <g style="fill:var(--logo-mark)">
+        <rect x="150" y="244" width="212" height="24" rx="6"/>
+        <rect x="118" y="166" width="44" height="180" rx="12"/>
+        <rect x="350" y="166" width="44" height="180" rx="12"/>
+        <rect x="82" y="196" width="36" height="120" rx="10"/>
+        <rect x="394" y="196" width="36" height="120" rx="10"/>
+        <rect x="62" y="236" width="20" height="40" rx="6"/>
+        <rect x="430" y="236" width="20" height="40" rx="6"/>
+      </g>
+    </symbol>
+
+    <!-- B: Tick that turns into an up arrow -->
+    <symbol id="logoB" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#gLogoV)"/>
+      <rect width="512" height="512" fill="url(#gGlow)"/>
+      <path d="M138 276 L218 356 L332 214" fill="none" style="stroke:var(--logo-mark)" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M386 142 L376 252 L282 176 Z" style="fill:var(--logo-mark);stroke:var(--logo-mark)" stroke-width="18" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- C: Weight plate as a progress ring -->
+    <symbol id="logoC" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#gCard)"/>
+      <circle cx="256" cy="256" r="160" fill="none" style="stroke:var(--logo-mark3)" stroke-width="52"/>
+      <circle cx="256" cy="256" r="160" fill="none" style="stroke:var(--logo-mark2)" stroke-width="52" stroke-linecap="round" stroke-dasharray="640 1005" transform="rotate(-90 256 256)"/>
+      <circle cx="256" cy="256" r="160" fill="none" style="stroke:var(--logo-mark)" stroke-width="52" stroke-linecap="round" stroke-dasharray="110 1005" stroke-dashoffset="-660" transform="rotate(-90 256 256)"/>
+      <circle cx="256" cy="256" r="58" style="fill:var(--card);stroke:var(--text)" stroke-opacity=".9" stroke-width="20"/>
+    </symbol>
+
+    <!-- D: Rising bars -->
+    <symbol id="logoD" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#gLogo)"/>
+      <rect width="512" height="512" fill="url(#gGlow)"/>
+      <rect x="128" y="250" width="72" height="120" rx="22" style="fill:var(--logo-mark2)" fill-opacity=".55"/>
+      <rect x="220" y="195" width="72" height="175" rx="22" style="fill:var(--logo-mark2)"/>
+      <rect x="312" y="140" width="72" height="230" rx="22" style="fill:var(--logo-mark)"/>
+    </symbol>
+
+    <!-- E: G monogram with a barbell crossbar -->
+    <symbol id="logoE" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#gLogoV)"/>
+      <rect width="512" height="512" fill="url(#gGlow)"/>
+      <path d="M362 162 A140 140 0 1 0 396 256" fill="none" style="stroke:var(--text)" stroke-width="58" stroke-linecap="round"/>
+      <path d="M396 256 H300" style="stroke:var(--logo-mark)" stroke-width="34" stroke-linecap="round"/>
+      <rect x="262" y="206" width="38" height="100" rx="13" style="fill:var(--logo-mark)"/>
+    </symbol>
+
+    <!-- F: Kettlebell with an up chevron -->
+    <symbol id="logoF" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#gLogo)"/>
+      <rect width="512" height="512" fill="url(#gGlow)"/>
+      <path d="M170 262 C150 150 186 118 256 118 C326 118 362 150 342 262" fill="none" style="stroke:var(--logo-mark)" stroke-width="40" stroke-linecap="round"/>
+      <path d="M256 196 a124 124 0 0 1 104 192 H152 a124 124 0 0 1 104 -192 Z" style="fill:var(--logo-mark)"/>
+      <path d="M204 336 L256 284 L308 336" fill="none" style="stroke:var(--logo-b)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="switcher" role="toolbar" aria-label="Palette"><div class="switcher-in" id="switcher"></div></div>
+
+<div class="page">
+  <h1 id="title"></h1>
+  <p class="lede" id="lede"></p>
+  <p class="verdict" id="verdict"></p>
+
+  <h2 class="sec">Palette</h2>
+  <div class="swatches" id="swatches"></div>
+
+  <h2 class="sec">Screens</h2>
+  <div class="phones">
+
+    <!-- TODAY -->
+    <div class="phone-wrap"><span>Today</span>
+    <div class="phone">
+      <div class="status num"><span>4:08</span><span>●●● ▮</span></div>
+      <div class="gym-head">
+        <div class="gym-title">
+          <h1><span class="ic head"><svg><use href="#logoB"/></svg></span>Gym</h1>
+          <button class="gear" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.820 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        </div>
+        <nav class="tabs"><a class="on">Today</a><a>History</a><a>Progress</a></nav>
+      </div>
+      <div class="stack">
+        <span class="muted" style="font-size:15px">Friday, November 13</span>
+        <section class="hero">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="label">Next up</span>
+            <h2>Legs</h2>
+            <span class="meta">5 exercises · last trained Mon 9 Nov</span>
+          </div>
+          <button class="btn-primary">Start Legs</button>
+          <button class="text-btn">Choose a different workout</button>
+        </section>
+        <section class="card block"><b>Week 4</b><span class="muted" style="font-size:14px">Training block</span><span style="flex:1"></span><svg class="chev" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5.5-5 5.5"/></svg></section>
+        <section class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="label">This week</span><span class="muted" style="font-size:14px">3 sessions · 3h 08m</span></div>
+          <div class="days">
+            <div class="day">M<span class="dot on"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg></span></div>
+            <div class="day">T<span class="dot"></span></div>
+            <div class="day">W<span class="dot on"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg></span></div>
+            <div class="day">T<span class="dot on"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg></span></div>
+            <div class="day today">F<span class="dot today"></span></div>
+            <div class="day">S<span class="dot"></span></div>
+            <div class="day">S<span class="dot"></span></div>
+          </div>
+        </section>
+        <section class="card row-card">
+          <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+            <span class="label">Last session</span>
+            <span style="font-size:17px;font-weight:600">Torso · Thu 12 Nov</span>
+            <span class="muted" style="font-size:14px">1h 02m · 15 sets · <span style="color:var(--accent);font-weight:600">2 new bests</span></span>
+          </div>
+          <svg class="chev" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5.5-5 5.5"/></svg>
+        </section>
+      </div>
+    </div></div>
+
+    <!-- WORKOUT -->
+    <div class="phone-wrap"><span>Workout, resting</span>
+    <div class="phone">
+      <div class="status num"><span>4:31</span><span>●●● ▮</span></div>
+      <header class="w-head">
+        <span class="back"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 2 8l6 6"/></svg>Today</span>
+        <span class="timer num">24:12</span>
+        <button class="btn-sec">Finish</button>
+      </header>
+      <div class="w-title">
+        <div style="display:flex;align-items:baseline;justify-content:space-between"><h1>Torso</h1><span class="muted num" style="font-size:14px">5 of 15 sets</span></div>
+        <div class="bar"><i style="width:33%"></i></div>
+      </div>
+      <div class="list">
+        <div class="ex-row done">
+          <span class="tick"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg></span>
+          <span style="flex:1;display:flex;flex-direction:column;gap:2px;padding:8px 0"><span class="muted" style="font-size:16px">Flat Dumbbell Bench Press</span><span class="hint">↑ Go to 35 kg next time</span></span>
+          <span class="muted num" style="font-size:14px">32.5 × 12</span>
+        </div>
+        <div class="ex-row done">
+          <span class="tick"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg></span>
+          <span class="muted" style="flex:1;font-size:16px">Dips</span><span class="muted num" style="font-size:14px">BW × 11</span>
+        </div>
+        <section class="current">
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><h2>Cable Fly</h2><span class="muted" style="font-size:14px">2 × 8–15 · 90 s–3 min</span></div>
+            <button class="chip-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="5.5"/><path d="M8 9V6.5M6.5 1.5h3"/></svg>Warm-up</button>
+            <button class="chip-btn" style="width:44px;justify-content:center;color:var(--muted)"><svg width="18" height="4" viewBox="0 0 18 4" fill="currentColor"><circle cx="2" cy="2" r="2"/><circle cx="9" cy="2" r="2"/><circle cx="16" cy="2" r="2"/></svg></button>
+          </div>
+          <div class="grid label" style="text-align:center"><span>Set</span><span>Kg each</span><span>Reps</span><span></span></div>
+          <div class="grid">
+            <span class="muted" style="text-align:center;font-weight:700">1</span>
+            <div class="cell logged num">15</div><div class="cell logged num">13</div>
+            <span class="tbtn on"><svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg></span>
+          </div>
+          <div class="grid">
+            <span style="text-align:center;font-weight:700;color:var(--accent)">2</span>
+            <div class="cell input now num">15</div><div class="cell input num">12</div>
+            <span class="tbtn"><svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg></span>
+          </div>
+          <button class="text-btn" style="align-self:center">+ Add set</button>
+        </section>
+        <div class="label" style="padding:6px 2px 0">Up next</div>
+        <div class="ex-row"><span style="flex:1;font-size:16px">Pull-up</span><span class="muted" style="font-size:14px">2 × 5–12</span><svg class="chev" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5.5-5 5.5"/></svg></div>
+        <div class="ex-row"><span style="flex:1;font-size:16px">Chest-supported Row</span><span class="muted" style="font-size:14px">2 × 5–12</span><svg class="chev" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5.5-5 5.5"/></svg></div>
+      </div>
+      <div class="rest abs">
+        <div class="line"><i style="width:38%"></i></div>
+        <div class="body">
+          <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="lbl">Rest · Set 2 next</span><span class="clock num">1:52</span></div>
+          <button>+30 s</button><button>Skip</button>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- FINISH -->
+    <div class="phone-wrap"><span>Finish</span>
+    <div class="phone">
+      <div class="fin-hero">
+        <div class="status num" style="padding:0 14px 16px;height:31px"><span>5:14</span><span>●●● ▮</span></div>
+        <span class="back"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 2 8l6 6"/></svg>Back to workout</span>
+        <h1>Torso <em>done.</em></h1>
+        <span class="when" style="font-size:15px">Fri 13 Nov · 4:07 – 5:09 pm</span>
+        <div class="tiles">
+          <div class="tile"><b class="num">1:02</b><span>Time</span></div>
+          <div class="tile"><b class="num">15</b><span>Working sets</span></div>
+          <div class="tile"><b class="num" style="color:var(--accent)">2</b><span>New bests</span></div>
+        </div>
+      </div>
+      <div class="stack" style="flex:1">
+        <section class="card goup">
+          <span class="label">Go up next time</span>
+          <div class="gu-row"><span>Flat DB Bench Press</span><span class="num">32.5 → <b>35 kg</b></span></div>
+          <div class="gu-row"><span>Cable Fly</span><span class="num">15 → <b>17.5 kg</b></span></div>
+        </section>
+        <section class="card" style="gap:10px">
+          <span class="label">Exercises</span>
+          <div class="ex-line"><span style="flex:1">Flat Dumbbell Bench Press</span><span class="best">BEST</span><span class="muted num">32.5 × 12</span></div>
+          <div class="ex-line"><span style="flex:1">Cable Fly</span><span class="best">BEST</span><span class="muted num">15 × 13</span></div>
+          <div class="ex-line"><span style="flex:1">Dips</span><span class="muted num">BW × 11</span></div>
+          <span class="muted" style="font-size:14px">+ 3 more</span>
+        </section>
+        <div class="note">Add a note (optional)</div>
+        <div style="flex:1"></div>
+        <button class="btn-primary" style="margin-bottom:18px">Save workout</button>
+      </div>
+    </div></div>
+
+    <!-- REST BAR STATES -->
+    <div class="phone-wrap"><span>Rest bar: working, warm-up, ready</span>
+      <div class="bars">
+        <div class="rest"><div class="line"><i style="width:62%"></i></div><div class="body"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="lbl">Rest · Pull-up next</span><span class="clock num">1:14</span></div><button>+30 s</button><button>Skip</button></div></div>
+        <div class="rest warm"><div class="line"><i style="width:45%"></i></div><div class="body"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="lbl">Warm-up rest · not logged</span><span class="clock num">0:41</span></div><button>+30 s</button><button>Skip</button></div></div>
+        <div class="rest ready"><div class="line"><i style="width:100%"></i></div><div class="body"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="lbl">Rested 0:23</span><span class="clock"><svg width="24" height="24" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 7.5 3 3 6-7"/></svg>Ready</span></div><button>Dismiss</button></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">App icon options <span style="text-transform:none;letter-spacing:0;font-weight:500">(they follow the palette too)</span></h2>
+  <div class="logos">
+    <div class="logo">
+      <div class="big"><svg><use href="#logoA"/></svg></div>
+      <h3><span class="letter">A</span>Dumbbell, recoloured</h3>
+      <p>Today's icon in the new colours. Safest change; still reads as a gym app.</p>
+      <div class="sizes"><figure><span class="ic s60"><svg><use href="#logoA"/></svg></span>Home</figure><figure><span class="ic s29"><svg><use href="#logoA"/></svg></span>Settings</figure><figure><span class="ic mask"><svg><use href="#logoA"/></svg></span>Android</figure></div>
+    </div>
+    <div class="logo">
+      <div class="big"><svg><use href="#logoB"/></svg></div>
+      <h3><span class="letter">B</span>Tick-up</h3>
+      <p>A set-done tick that becomes an up arrow: "logged it, go up next time." The app's progression idea in one mark.</p>
+      <div class="sizes"><figure><span class="ic s60"><svg><use href="#logoB"/></svg></span>Home</figure><figure><span class="ic s29"><svg><use href="#logoB"/></svg></span>Settings</figure><figure><span class="ic mask"><svg><use href="#logoB"/></svg></span>Android</figure></div>
+    </div>
+    <div class="logo">
+      <div class="big"><svg><use href="#logoC"/></svg></div>
+      <h3><span class="letter">C</span>Plate ring</h3>
+      <p>A weight plate drawn as a progress ring, with an accent tip for the next set. Dark, minimal.</p>
+      <div class="sizes"><figure><span class="ic s60"><svg><use href="#logoC"/></svg></span>Home</figure><figure><span class="ic s29"><svg><use href="#logoC"/></svg></span>Settings</figure><figure><span class="ic mask"><svg><use href="#logoC"/></svg></span>Android</figure></div>
+    </div>
+    <div class="logo">
+      <div class="big"><svg><use href="#logoD"/></svg></div>
+      <h3><span class="letter">D</span>Rising bars</h3>
+      <p>Three bars climbing, the last in the accent. Says "log" and "progress"; the most abstract option.</p>
+      <div class="sizes"><figure><span class="ic s60"><svg><use href="#logoD"/></svg></span>Home</figure><figure><span class="ic s29"><svg><use href="#logoD"/></svg></span>Settings</figure><figure><span class="ic mask"><svg><use href="#logoD"/></svg></span>Android</figure></div>
+    </div>
+    <div class="logo">
+      <div class="big"><svg><use href="#logoE"/></svg></div>
+      <h3><span class="letter">E</span>G-bar monogram</h3>
+      <p>A bold G whose crossbar is a little barbell. The most "brand"-like option.</p>
+      <div class="sizes"><figure><span class="ic s60"><svg><use href="#logoE"/></svg></span>Home</figure><figure><span class="ic s29"><svg><use href="#logoE"/></svg></span>Settings</figure><figure><span class="ic mask"><svg><use href="#logoE"/></svg></span>Android</figure></div>
+    </div>
+    <div class="logo">
+      <div class="big"><svg><use href="#logoF"/></svg></div>
+      <h3><span class="letter">F</span>Kettlebell up</h3>
+      <p>A chunky kettlebell with an up chevron cut in. Friendly and very legible at small sizes.</p>
+      <div class="sizes"><figure><span class="ic s60"><svg><use href="#logoF"/></svg></span>Home</figure><figure><span class="ic s29"><svg><use href="#logoF"/></svg></span>Settings</figure><figure><span class="ic mask"><svg><use href="#logoF"/></svg></span>Android</figure></div>
+    </div>
+  </div>
+
+  <div class="homescreen">
+    <figure><span class="ic"><svg><use href="#logoA"/></svg></span>A</figure>
+    <figure><span class="ic"><svg><use href="#logoB"/></svg></span>B</figure>
+    <figure><span class="ic"><svg><use href="#logoC"/></svg></span>C</figure>
+    <figure><span class="ic"><svg><use href="#logoD"/></svg></span>D</figure>
+    <figure><span class="ic"><svg><use href="#logoE"/></svg></span>E</figure>
+    <figure><span class="ic"><svg><use href="#logoF"/></svg></span>F</figure>
+  </div>
+
+  <div class="notes">
+    <p><b style="color:var(--text)">When we build it:</b> the chosen palette's values go into <code>src/styles/tokens.css</code> and <code>src/styles/chartColors.ts</code>, the chosen icon replaces <code>public/icon.svg</code>, and the <code>#0A0A0A</code> background in <code>pwa-assets.config.ts</code>, <code>vite.config.ts</code> and the theme-color meta in <code>index.html</code> changes to the new background. The Blue &amp; Jade hex values were sampled from a small, compressed screenshot, so they may be a shade off the real swatches.</p>
+  </div>
+</div>
+
+<script>
+const THEMES = [
+  {
+    id: 'current', name: 'Current (orange)',
+    title: 'The current app, <em>for comparison</em>',
+    lede: 'What the app looks like today: black, one orange accent, green for done and ready.',
+    verdict: 'Clear and calm because there is only one bright colour. Its weakness is that orange on black looks like a lot of other gym apps.',
+    swatches: [
+      ['Black', '#0A0A0A', 'Background'], ['Card', '#161616', 'Cards and rows'],
+      ['Orange', '#FB923C', 'Main buttons, current set, hints', true], ['Green', '#22C55E', 'Done ticks and "Ready"', true],
+      ['Red', '#EF4444', 'Delete only'],
+    ],
+  },
+  {
+    id: 'bluejade', name: 'Blue & Jade',
+    title: 'Blue &amp; <em>Jade</em>, full strength',
+    lede: 'The first mockup: Sapphire surfaces with a glow, Ocean for everything done, Neon Jade for everything to do.',
+    verdict: 'The most striking option, but three bright colours compete. The Ocean done-ticks pull your eye almost as much as the current set.',
+    swatches: [
+      ['Navy black', '#050A1A', 'Background'], ['Card', '#0D1630', 'Cards and rows'],
+      ['Sapphire Blue', '#0241AC', 'Next up, rest bar, Finish header'], ['Ocean Blue', '#00D1F8', 'Done ticks, progress, trained days', true],
+      ['Neon Jade', '#80FB7F', 'Main buttons, current set, Ready', true], ['Delete red', '#FF5A6A', 'Delete only'],
+    ],
+  },
+  {
+    id: 'simple', name: 'Simple Blue & Jade', rec: true,
+    title: 'Simple Blue &amp; <em>Jade</em>',
+    lede: 'Your colours with fewer of them used at once: jade is the only bright colour, Sapphire only on the Next up card and rest bar, Ocean only on progress lines. Done ticks go back to soft white.',
+    verdict: 'My pick. It keeps the new look but works like the current app, where only the thing you should tap next stands out.',
+    swatches: [
+      ['Navy black', '#050A1A', 'Background'], ['Card', '#0D1630', 'Cards and rows'],
+      ['Sapphire Blue', '#0241AC', 'Next up card and rest bar only'], ['Ocean Blue', '#00D1F8', 'Progress bar and rest line only', true],
+      ['Neon Jade', '#80FB7F', 'The one accent: buttons, current set, Ready', true], ['Soft white', '#D9DEEC', 'Done ticks and trained days', true],
+    ],
+  },
+  {
+    id: 'graphite', name: 'Graphite & Lime',
+    title: 'Graphite &amp; <em>Lime</em>',
+    lede: 'Charcoal greys with a single electric lime. Sporty, and the easiest to read in a bright gym.',
+    verdict: 'Very easy to read and very "training app", but it drops your reference colours entirely.',
+    swatches: [
+      ['Graphite', '#0C0D0F', 'Background'], ['Card', '#1A1C20', 'Cards and rows'],
+      ['Lime', '#C6FF3D', 'The one accent: buttons, current set, progress, Ready', true], ['Soft white', '#E6E8E3', 'Done ticks and trained days', true],
+      ['Red', '#FF5A5A', 'Delete only'],
+    ],
+  },
+  {
+    id: 'blues', name: 'All blues',
+    title: 'All <em>blues</em>',
+    lede: 'Navy and Sapphire with a light ice-blue accent. Jade appears only when rest is over ("Ready").',
+    verdict: 'The calmest option. Main buttons stand out less than with jade or lime, but "Ready" really pops.',
+    swatches: [
+      ['Navy black', '#050A1A', 'Background'], ['Card', '#0D1630', 'Cards and rows'],
+      ['Sapphire Blue', '#0241AC', 'Next up, rest bar, Finish header'], ['Ice blue', '#8FE3FF', 'Main buttons, current set, progress', true],
+      ['Bright blue', '#5B8CFF', 'Done ticks and trained days'], ['Neon Jade', '#80FB7F', '"Ready" only', true],
+    ],
+  },
+  {
+    id: 'amber', name: 'Warm amber',
+    title: 'Warm <em>amber</em>',
+    lede: 'The current design, refreshed: a warmer black, a richer amber, and a warm glow on the Next up card.',
+    verdict: 'Pick this if you mostly wanted the app to feel fresher, not to change colour.',
+    swatches: [
+      ['Warm black', '#0E0C0A', 'Background'], ['Card', '#1B1815', 'Cards and rows'],
+      ['Amber', '#FFA53D', 'Main buttons, current set, hints', true], ['Green', '#4ADE80', 'Done ticks and "Ready"', true],
+      ['Red', '#EF4444', 'Delete only'],
+    ],
+  },
+];
+
+const root = document.documentElement;
+const bar = document.getElementById('switcher');
+
+function apply(id) {
+  const t = THEMES.find((x) => x.id === id) ?? THEMES.find((x) => x.rec);
+  root.dataset.theme = t.id;
+  document.getElementById('title').innerHTML = t.title;
+  document.getElementById('lede').textContent = t.lede;
+  document.getElementById('verdict').textContent = t.verdict;
+  document.getElementById('swatches').innerHTML = t.swatches
+    .map(([name, hex, role, dark]) => `<div class="sw${dark ? ' dark' : ''}" style="background:${hex}"><b>${name}</b><code>${hex}</code><span>${role}</span></div>`)
+    .join('');
+  for (const b of bar.children) {
+    b.setAttribute('aria-pressed', String(b.dataset.id === t.id));
+    if (b.dataset.id === t.id) bar.scrollTo({ left: b.offsetLeft - 24, behavior: 'smooth' });
+  }
+  try { localStorage.setItem('palette', t.id); } catch {}
+  history.replaceState(null, '', '#' + t.id);
+}
+
+for (const t of THEMES) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.dataset.id = t.id;
+  const chips = t.swatches.slice(2).filter(([, , role]) => role !== 'Delete only').slice(0, 3).map(([, hex]) => `<i style="background:${hex}"></i>`).join('');
+  b.innerHTML = `<span class="chips">${chips}</span>${t.name}${t.rec ? ' <span class="rec">MY PICK</span>' : ''}`;
+  b.addEventListener('click', () => apply(t.id));
+  bar.appendChild(b);
+}
+
+let start = location.hash.slice(1);
+if (!start) { try { start = localStorage.getItem('palette') ?? ''; } catch {} }
+apply(start);
+</script>
+</body>
+</html>

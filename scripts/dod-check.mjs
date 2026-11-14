@@ -366,7 +366,7 @@ try {
   const goUpCard = (await page.locator('.finish-goup').textContent()) ?? '';
   const benchLine = (await page.locator('.finish-list-row', { hasText: 'Flat Dumbbell Bench Press' }).textContent()) ?? '';
   check('Finish screen: title, stats, Go up next time, BEST badge',
-    (await page.locator('.finish-title').textContent()) === 'Chest & Back done' &&
+    (await page.locator('.finish-title').textContent()) === 'Chest & Back done.' &&
       JSON.stringify(stats.slice(1)) === '["1working sets","1new best"]' &&
       goUpCard.includes('Flat Dumbbell Bench Press') && goUpCard.includes('22.5 → 25 kg') &&
       benchLine.includes('Best') && benchLine.includes('22.5 × 12'),

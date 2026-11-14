@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router';
-import { SettingsIcon } from './Icons';
+import { AppIcon, SettingsIcon } from './Icons';
 
 const TABS = [
   { to: '/', label: 'Today' },
@@ -12,7 +12,10 @@ export default function SectionHeader() {
   return (
     <header className="section-header">
       <div className="section-title-row">
-        <h1 className="screen-title">Gym</h1>
+        <h1 className="screen-title">
+          <AppIcon />
+          Gym
+        </h1>
         <Link className="settings-button" to="/settings" aria-label="Settings">
           <SettingsIcon />
         </Link>

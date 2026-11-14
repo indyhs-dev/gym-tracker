@@ -35,6 +35,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 23. Sauna tracker removed (requested 26 Oct 2026; chunks 19–20 added it)
 - [x] 24. Settings as a corner button, no bottom bar (requested 26 Oct 2026)
 - [x] 25. Swipe to delete sets, templates reordered (Legs, Chest & Back, Shoulders & Arms), warm-up rest timer replaced by a warm-up count (requested 2 Nov 2026)
+- [x] 26. Warm amber palette and tick-up app icon (requested 13 Nov 2026; palette options in `docs/redesign/blue-jade/`)
 
 ## Workout UI redesign (brief and mockups in `docs/redesign/`, requested 26 Oct 2026)
 - [x] Step 1. Workout screen: header, progress bar, collapsed exercises, pre-filled rows, placeholders, Warm-up button

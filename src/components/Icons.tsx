@@ -42,3 +42,25 @@ export function MoreIcon() {
     </svg>
   );
 }
+
+/** The app icon (public/icon.svg) beside the "Gym" title. Keep the two in sync. */
+export function AppIcon() {
+  return (
+    <svg className="app-icon" width="34" height="34" viewBox="0 0 512 512" aria-hidden="true">
+      <defs>
+        <linearGradient id="app-icon-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3A2412" />
+          <stop offset="1" stopColor="#0E0C0A" />
+        </linearGradient>
+        <radialGradient id="app-icon-glow" cx="1" cy="0" r="1">
+          <stop offset="0" stopColor="#FFA53D" stopOpacity="0.3" />
+          <stop offset="0.6" stopColor="#FFA53D" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="512" height="512" fill="url(#app-icon-bg)" />
+      <rect width="512" height="512" fill="url(#app-icon-glow)" />
+      <path d="M138 276 L218 356 L332 214" fill="none" stroke="#FFA53D" strokeWidth="56" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M386 142 L376 252 L282 176 Z" fill="#FFA53D" stroke="#FFA53D" strokeWidth="18" strokeLinejoin="round" />
+    </svg>
+  );
+}

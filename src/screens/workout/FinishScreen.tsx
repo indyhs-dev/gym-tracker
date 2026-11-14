@@ -81,49 +81,53 @@ export default function FinishScreen({ session, exercises, live, onBack, onFinis
 
   return (
     <div className="finish-screen">
-      <button type="button" className="back finish-back" onClick={onBack}>
-        <BackIcon />
-        Back to workout
-      </button>
+      <div className="finish-hero">
+        <button type="button" className="back finish-back" onClick={onBack}>
+          <BackIcon />
+          Back to workout
+        </button>
 
-      <h1 className="finish-title">{session.templateName ?? 'Workout'} done</h1>
-      <button
-        type="button"
-        className="finish-when"
-        aria-expanded={editingTimes}
-        aria-label={`${when}. Change start and end times`}
-        onClick={() => setEditingTimes(true)}
-      >
-        {when}
-      </button>
+        <h1 className="finish-title">
+          {session.templateName ?? 'Workout'} <em>done.</em>
+        </h1>
+        <button
+          type="button"
+          className="finish-when"
+          aria-expanded={editingTimes}
+          aria-label={`${when}. Change start and end times`}
+          onClick={() => setEditingTimes(true)}
+        >
+          {when}
+        </button>
 
-      {editingTimes && (
-        <div className="time-grid finish-times">
-          <label className="field">
-            <span className="field-label">Start</span>
-            <input className="input input-number" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
-          </label>
-          <label className="field">
-            <span className="field-label">End</span>
-            <input className="input input-number" type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
-          </label>
-        </div>
-      )}
+        {editingTimes && (
+          <div className="time-grid finish-times">
+            <label className="field">
+              <span className="field-label">Start</span>
+              <input className="input input-number" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">End</span>
+              <input className="input input-number" type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </label>
+          </div>
+        )}
 
-      <div className="finish-stats">
-        <div className="finish-stat">
-          <span className="finish-stat-value">
-            {startedAt !== null && endedAt !== null ? formatDuration(endedAt - startedAt) : '–'}
-          </span>
-          <span className="finish-stat-label">time</span>
-        </div>
-        <div className="finish-stat">
-          <span className="finish-stat-value">{workingSets}</span>
-          <span className="finish-stat-label">working sets</span>
-        </div>
-        <div className="finish-stat">
-          <span className="finish-stat-value">{newBests}</span>
-          <span className="finish-stat-label">{newBests === 1 ? 'new best' : 'new bests'}</span>
+        <div className="finish-stats">
+          <div className="finish-stat">
+            <span className="finish-stat-value">
+              {startedAt !== null && endedAt !== null ? formatDuration(endedAt - startedAt) : '–'}
+            </span>
+            <span className="finish-stat-label">time</span>
+          </div>
+          <div className="finish-stat">
+            <span className="finish-stat-value">{workingSets}</span>
+            <span className="finish-stat-label">working sets</span>
+          </div>
+          <div className="finish-stat">
+            <span className="finish-stat-value finish-stat-bests">{newBests}</span>
+            <span className="finish-stat-label">{newBests === 1 ? 'new best' : 'new bests'}</span>
+          </div>
         </div>
       </div>
 
@@ -134,7 +138,7 @@ export default function FinishScreen({ session, exercises, live, onBack, onFinis
             <div key={item.id} className="finish-goup-row">
               <span>{exercise?.name ?? 'Unknown exercise'}</span>
               <span className="finish-goup-weights">
-                {weightText(hint!.weight, exercise)} → {goUpWeight(hint!, exercise?.bodyweight ?? false)}
+                {weightText(hint!.weight, exercise)} → <b>{goUpWeight(hint!, exercise?.bodyweight ?? false)}</b>
               </span>
             </div>
           ))}
@@ -143,6 +147,7 @@ export default function FinishScreen({ session, exercises, live, onBack, onFinis
 
       {listed.length > 0 && (
         <section className="finish-list">
+          <h2>Exercises</h2>
           {visible.map(({ item, exercise, top, best }) => (
             <div key={item.id} className="finish-list-row">
               <span className="finish-list-name">{exercise?.name ?? 'Unknown exercise'}</span>

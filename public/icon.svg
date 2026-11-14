@@ -1,12 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0A0A0A"/>
-  <g fill="#FB923C">
-    <rect x="150" y="244" width="212" height="24" rx="6"/>
-    <rect x="118" y="166" width="44" height="180" rx="12"/>
-    <rect x="350" y="166" width="44" height="180" rx="12"/>
-    <rect x="82" y="196" width="36" height="120" rx="10"/>
-    <rect x="394" y="196" width="36" height="120" rx="10"/>
-    <rect x="62" y="236" width="20" height="40" rx="6"/>
-    <rect x="430" y="236" width="20" height="40" rx="6"/>
-  </g>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3A2412"/>
+      <stop offset="1" stop-color="#0E0C0A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="1" cy="0" r="1">
+      <stop offset="0" stop-color="#FFA53D" stop-opacity="0.3"/>
+      <stop offset="0.6" stop-color="#FFA53D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <!-- A set-done tick that turns into an up arrow. -->
+  <path d="M138 276 L218 356 L332 214" fill="none" stroke="#FFA53D" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M386 142 L376 252 L282 176 Z" fill="#FFA53D" stroke="#FFA53D" stroke-width="18" stroke-linejoin="round"/>
 </svg>

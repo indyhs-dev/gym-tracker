@@ -40,7 +40,7 @@ export default function WeeklyBars({ data, label, format, height = 200 }: Props)
             axisLine={false}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(245, 245, 244, 0.06)' }}
+            cursor={{ fill: 'rgba(247, 243, 236, 0.06)' }}
             isAnimationActive={false}
             content={({ active, payload }) => {
               const p = payload?.[0]?.payload as Week | undefined;

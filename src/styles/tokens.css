@@ -1,18 +1,28 @@
 :root {
   /* The four design colours. Everything else is derived from them. */
-  --bg: #0a0a0a;
-  --card: #161616;
-  --accent: #fb923c;
-  --text: #f5f5f4;
+  --bg: #0e0c0a;
+  --card: #1b1815;
+  --accent: #ffa53d;
+  --text: #f7f3ec;
 
   /* Added at the user's request. Red marks delete/remove in menus; green = done and "rested, ready". */
   --rest: #ef4444;
-  --go: #22c55e;
+  --go: #4ade80;
+
+  /* Warm surfaces: the Next up card and Finish header (brown with an amber glow), and the rest bar. */
+  --hero-top: #3a2412;
+  --hero-bottom: #1d1612;
+  --hero-glow: rgb(255 165 61 / 0.2);
+  --rest-bar-top: #2a1f16;
+  --rest-bar-bottom: #1d1814;
+  --hero: radial-gradient(120% 90% at 100% 0%, var(--hero-glow), transparent 60%),
+    linear-gradient(160deg, var(--hero-top), var(--hero-bottom));
+  --hero-muted: rgb(247 243 236 / 0.75);
 
   /* Off-white at reduced opacity: secondary text, ghost values, hairlines. */
-  --muted: rgb(245 245 244 / 0.6);
-  --faint: rgb(245 245 244 / 0.35);
-  --line: rgb(245 245 244 / 0.1);
+  --muted: rgb(247 243 236 / 0.6);
+  --faint: rgb(247 243 236 / 0.35);
+  --line: rgb(247 243 236 / 0.1);
 
   --tap: 48px;
   --radius: 14px;

@@ -32,6 +32,7 @@ export default function Today() {
     async () => (last ? previousBestsFor(last.exerciseIds, last) : null),
     [last?.id, last?.updatedAt],
   );
+  const lastNewBests = last ? countNewBests(last, lastBests ?? null) : 0;
   const next = templates && finished ? nextTemplate(templates, finished, Date.now()) : null;
   const lastDone = next && finished ? lastDoneByTemplate(finished).get(next.id) : undefined;
   const settings = useSettings();
@@ -133,6 +134,7 @@ export default function Today() {
               </span>
             </>
           )}
+          <ChevronIcon />
         </Link>
       )}
 
@@ -170,7 +172,15 @@ export default function Today() {
             <span className="last-session-title">
               {last.templateName ?? 'Blank workout'} · {formatDate(last.startedAt)}
             </span>
-            <span className="row-meta">{lastSessionMeta(last, lastBests ?? null)}</span>
+            <span className="row-meta">
+              {lastSessionMeta(last)}
+              {lastNewBests > 0 && (
+                <>
+                  {' · '}
+                  <span className="new-bests">{plural(lastNewBests, 'new best')}</span>
+                </>
+              )}
+            </span>
           </span>
           <ChevronIcon />
         </Link>
@@ -195,15 +205,12 @@ function activeMeta(s: Session): string {
     : `${name} · ${formatDate(s.startedAt)}`;
 }
 
-/** "58m · 15 sets · 2 new bests" (working sets; bests only when there are some). */
-function lastSessionMeta(s: Session, bests: Map<string, TopSet> | null): string {
+/** "58m · 15 sets" (working sets). The new bests follow it, in orange. */
+function lastSessionMeta(s: Session): string {
   const sets = s.exercises.reduce((n, e) => n + e.sets.filter(isWorkingSet).length, 0);
-  const newBests = bests ? s.exercises.filter((e) => isNewBest(e.sets, bests.get(e.exerciseId))).length : 0;
-  return [
-    s.endedAt !== null && formatDuration(s.endedAt - s.startedAt),
-    plural(sets, 'set'),
-    newBests > 0 && plural(newBests, 'new best'),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  return [s.endedAt !== null && formatDuration(s.endedAt - s.startedAt), plural(sets, 'set')].filter(Boolean).join(' · ');
+}
+
+function countNewBests(s: Session, bests: Map<string, TopSet> | null): number {
+  return bests ? s.exercises.filter((e) => isNewBest(e.sets, bests.get(e.exerciseId))).length : 0;
 }
