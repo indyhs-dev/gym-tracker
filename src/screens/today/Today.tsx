@@ -3,17 +3,20 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { CheckIcon, ChevronIcon } from '../../components/Icons';
 import SectionHeader from '../../components/SectionHeader';
+import { useScans } from '../../db/bodyScans';
 import { db } from '../../db/db';
 import { finishedSessions, getActiveSession, loadWeekStats, previousBestsFor, startSession } from '../../db/sessions';
 import { useSettings } from '../../db/settings';
 import type { Session } from '../../db/types';
 import { blockStatus } from '../../lib/block';
+import { dateMs, scanBannerDue, scanDueDate } from '../../lib/bodyScan';
 import { needsBackupReminder } from '../../lib/export';
 import { plural } from '../../lib/format';
 import { isWorkingSet } from '../../lib/progress';
 import { isNewBest, type TopSet } from '../../lib/progression';
 import { lastDoneByTemplate, nextTemplate, weekDays } from '../../lib/rotation';
-import { formatDate, formatDuration, formatLongDate, formatTime, isSameDay } from '../../lib/time';
+import { formatDate, formatDuration, formatLongDate, formatTime, isSameDay, toDateInput } from '../../lib/time';
+import ScanSheet from '../body/ScanSheet';
 import StartSheet from './StartSheet';
 
 const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -26,6 +29,8 @@ export default function Today() {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
   const week = useLiveQuery(() => loadWeekStats(Date.now()), []);
   const [starting, setStarting] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const scans = useScans();
   const [error, setError] = useState<string | null>(null);
   const last = finished?.[0] ?? null;
   const lastBests = useLiveQuery(
@@ -62,10 +67,27 @@ export default function Today() {
     firstSessionAt !== undefined &&
     needsBackupReminder(settings.lastBackupAt, firstSessionAt, Date.now());
 
+  // Nothing until the scans have loaded, so the banner doesn't flash.
+  const scanDue = scans !== undefined && scanBannerDue(scans, Date.now()) ? scanDueDate(scans) : null;
+
   return (
     <>
       <SectionHeader />
       <p className="muted intro">{formatLongDate(Date.now())}</p>
+
+      {scanDue && (
+        <section className="card scan-banner" aria-label="Body scan">
+          <span className="row-text">
+            <span className="row-title scan-banner-title">READY FOR BODY SCAN</span>
+            <span className="row-meta">
+              {scanDue < toDateInput(Date.now()) ? 'Was due' : 'Due'} {formatDate(dateMs(scanDue))}
+            </span>
+          </span>
+          <button type="button" className="btn btn-primary" onClick={() => setScanning(true)}>
+            Done
+          </button>
+        </section>
+      )}
 
       {remind && (
         <Link className="card card-link backup-reminder" to="/settings/backup">
@@ -194,6 +216,7 @@ export default function Today() {
       )}
 
       {starting && <StartSheet next={next} onClose={() => setStarting(false)} />}
+      {scanning && <ScanSheet onClose={() => setScanning(false)} />}
     </>
   );
 }

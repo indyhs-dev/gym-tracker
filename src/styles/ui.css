@@ -2092,3 +2092,90 @@
 .field .note-field {
   margin-top: 0;
 }
+
+/* Body scans */
+.scan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  border: 1px solid var(--accent);
+}
+
+.scan-banner-title {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.scan-banner .btn {
+  flex: none;
+}
+
+.scan-paste {
+  min-height: 120px;
+  padding: 12px 14px;
+  font: 14px/1.45 ui-monospace, 'SF Mono', Menlo, monospace;
+  resize: vertical;
+}
+
+.scan-section {
+  margin: 12px 0 8px;
+}
+
+.scan-fields {
+  margin-bottom: 20px;
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.scan-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+}
+
+.scan-field + .scan-field {
+  border-top: 1px solid var(--line);
+}
+
+.scan-field-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.scan-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+.scan-inputs.is-plain {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 3.5fr);
+}
+
+.scan-inputs .input,
+.scan-balance .input {
+  min-height: 44px;
+  padding: 0 10px;
+  background-color: var(--bg);
+  font-size: 16px;
+}
+
+.scan-inputs .select,
+.scan-balance .select {
+  padding-right: 28px;
+  background-position: calc(100% - 16px) 50%, calc(100% - 10px) 50%;
+  font-weight: 500;
+}
+
+.scan-error {
+  margin-top: 4px;
+}
+
+.scan-save {
+  margin-top: 4px;
+}
