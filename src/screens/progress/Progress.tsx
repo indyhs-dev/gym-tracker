@@ -19,6 +19,9 @@ import {
 import { weightText } from '../../lib/setText';
 import { formatDate, formatDuration } from '../../lib/time';
 import { CHART } from '../../styles/chartColors';
+import BodyView from './BodyView';
+
+type View = 'exercise' | 'overall' | 'body';
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
@@ -29,41 +32,58 @@ export default function Progress() {
 
   if (!sessions || !exercises) return <SectionHeader />;
 
-  const trained = trainedExercises(sessions).filter((id) => exercises.has(id));
-  if (trained.length === 0) {
-    return (
-      <>
-        <SectionHeader />
-        <p className="empty">Charts appear here after your first finished workout.</p>
-      </>
-    );
-  }
-
-  const view = params.get('view') === 'overall' ? 'overall' : 'exercise';
-  const selectedId = trained.includes(params.get('exercise') ?? '') ? params.get('exercise')! : trained[0];
-  const exercise = exercises.get(selectedId)!;
-  const history = exerciseHistory(sessions, selectedId);
+  const param = params.get('view');
+  const view: View = param === 'overall' || param === 'body' ? param : 'exercise';
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     next.set(key, value);
     setParams(next, { replace: true });
   };
+  const toggle = (
+    <div className="field">
+      <Segmented
+        label="View"
+        options={[
+          { value: 'exercise', label: 'By exercise' },
+          { value: 'overall', label: 'Overall' },
+          { value: 'body', label: 'Body' },
+        ]}
+        value={view}
+        onChange={(v) => setParam('view', v)}
+      />
+    </div>
+  );
+
+  // The Body view doesn't need any workouts.
+  if (view === 'body') {
+    return (
+      <>
+        <SectionHeader />
+        {toggle}
+        <BodyView />
+      </>
+    );
+  }
+
+  const trained = trainedExercises(sessions).filter((id) => exercises.has(id));
+  if (trained.length === 0) {
+    return (
+      <>
+        <SectionHeader />
+        {toggle}
+        <p className="empty">Charts appear here after your first finished workout.</p>
+      </>
+    );
+  }
+
+  const selectedId = trained.includes(params.get('exercise') ?? '') ? params.get('exercise')! : trained[0];
+  const exercise = exercises.get(selectedId)!;
+  const history = exerciseHistory(sessions, selectedId);
 
   return (
     <>
       <SectionHeader />
-
-      <div className="field">
-        <Segmented
-          label="View"
-          options={[
-            { value: 'exercise', label: 'By exercise' },
-            { value: 'overall', label: 'Overall' },
-          ]}
-          value={view}
-          onChange={(v) => setParam('view', v)}
-        />
-      </div>
+      {toggle}
 
       {view === 'overall' ? (
         <Overall sessions={sessions} />

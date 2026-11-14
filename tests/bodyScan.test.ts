@@ -6,6 +6,7 @@ import { db } from '../src/db/db';
 import { toDateInput } from '../src/lib/time';
 import {
   formatChange,
+  scanTicks,
   leftRightBalance,
   parseScanDate,
   parseScanText,
@@ -82,6 +83,8 @@ describe('paste reader', () => {
         'Abdominal Circumference: 86 cm',
         'Left Leg Lean Mass: 8.85 / Optimal [7.50 - 9.00]',
         'Trunk Fat: 7.1 / Optimal [5 - 8]',
+        '8. Visceral Fat Mass kg/lbs/%: 1.9 [2.4%]',
+        '7. SUBCUTANEOUS FAT MASS KG/LBS/%: 13.1 [16.4%]',
       ].join('\n'),
     );
     expect(p.date).toBe('2027-02-03');
@@ -94,6 +97,8 @@ describe('paste reader', () => {
     expect(p.values.abdominalCircumference).toEqual({ value: 86 });
     expect(p.values.leftLegLean?.value).toBe(8.85);
     expect(p.values.torsoFat?.value).toBe(7.1);
+    expect(p.values.visceralFatMass).toEqual({ value: 1.9, share: 2.4 });
+    expect(p.values.subcutaneousFatMass).toEqual({ value: 13.1, share: 16.4 });
   });
 
   it('fills in what it can from a partial or jumbled paste without crashing', () => {
@@ -176,6 +181,12 @@ describe('balance lines', () => {
   it('left vs right: kg difference, biggest first', () => {
     expect(leftRightBalance(sample)).toBe('Right leg 0.32 kg heavier than left. Arms within 0.04 kg.');
     expect(leftRightBalance({ values: {} })).toBeNull();
+  });
+
+  it('chart ticks are evenly spaced whole numbers', () => {
+    expect(scanTicks([7.3, 9.3])).toEqual([6, 7, 8, 9, 10]);
+    expect(scanTicks([80, 81.2])).toEqual([79, 80, 81, 82]);
+    expect(scanTicks([60, 75])).toEqual([55, 60, 65, 70, 75, 80]);
   });
 
   it('changes are plain +/− text', () => {

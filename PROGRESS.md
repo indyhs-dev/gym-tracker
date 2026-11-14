@@ -36,6 +36,10 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 24. Settings as a corner button, no bottom bar (requested 26 Oct 2026)
 - [x] 25. Swipe to delete sets, templates reordered (Legs, Chest & Back, Shoulders & Arms), warm-up rest timer replaced by a warm-up count (requested 2 Nov 2026)
 - [x] 26. Warm amber palette and tick-up app icon (requested 13 Nov 2026; palette options in `docs/redesign/blue-jade/`)
+- [x] 27. Evolt body scans (requested 14 Nov 2026), on branch `body-scans`, not merged or pushed:
+  - [x] 27a. Storage, paste reader and backup
+  - [x] 27b. Today banner and Add scan sheet
+  - [x] 27c. Body view in Progress
 
 ## Workout UI redesign (brief and mockups in `docs/redesign/`, requested 26 Oct 2026)
 - [x] Step 1. Workout screen: header, progress bar, collapsed exercises, pre-filled rows, placeholders, Warm-up button
@@ -49,6 +53,7 @@ Chunk 25 (swipe to delete, template order, warm-up count) is built and checked, 
 Redesign steps 1–4 are built and checked, not committed. Next: the user tries it, then commit and push (ask first). Wake lock and the rest sound can only be confirmed on the iPhone.
 
 ## Next
+- Chunk 27 (body scans) is on branch `body-scans`. Merge to `main` and push to deploy (ask the user first). The user then pastes their real scan into the app on the phone; real scan data never goes in this public repo.
 - Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
 - Everything in the brief is now built. Anything further would be new requests from the user.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
@@ -367,6 +372,14 @@ npm run icons            # regenerate icons from public/icon.svg
   - Phase 2 checks: warm-up line, no "Go up" below the top of the range, top-set "beats", "Go up" after 22.5 × 12, chart lines, PR, overall charts, training block week (also after restore), and Progress charts offline.
 - **Backup reminder:** a card on Today when it's been more than 14 days since the last JSON backup. Before the first backup, the 14 days count from the first finished session, so a brand-new app doesn't nag. CSV doesn't reset it.
 - **Dates and times** follow the device's locale (`toLocaleDateString` / `toLocaleTimeString`). Durations look like "1h 12m"; on Today, the units are drawn smaller than the numbers.
+
+### Body scans (chunk 27, 14 Nov 2026)
+- **Data:** `bodyScans` table (Dexie v6), one row per Evolt 360 scan: `date` ("YYYY-MM-DD", local), `time`, `values` (each `{ value, rating?, min?, max?, share? }`), `upperLower` and `leftRight` (Balanced / Unbalanced). Only the date is required. Logic in `src/lib/bodyScan.ts`, storage in `src/db/bodyScans.ts`.
+- **Due date** is worked out, not stored: latest scan's date + 42 days, or 16 Dec 2026 with no scans. The Today banner ("READY FOR BODY SCAN", Done) shows from the Monday of that week until a newer scan is saved, so an overdue scan keeps showing. Done opens the Add scan sheet.
+- **Paste reader:** one field per line, `Label: value / Rating [min - max]`. Matches labels regardless of case, punctuation, numbering ("10.") and units, and accepts the Evolt report's own names. Dates DD-MM-YYYY or YYYY-MM-DD. `[67%]` is a share, not a range. Unknown lines are ignored. Values fill an editable form that's checked before saving. A same-date scan asks to replace.
+- **Body view** (Progress → Body, `?view=body`, shown even with no workouts): body outline coloured by lean-mass rating with the existing tokens (red `--rest` = Under, amber `--accent` = Optimal, green `--go` = High, dashed = no rating). Dashed waist line when upper–lower is unbalanced. Balance card with Evolt's flags plus a worked-out line: upper (arms + torso) and lower (legs) lean mass vs the sum of their range tops; left vs right kg difference. Latest numbers with plain +/− changes, charts once there are 2+ scans (lean mass picker Arms / Torso / Legs), and every scan (tap to edit or delete).
+- **Backup v3** includes scans. Restoring a backup with scans replaces them; an older backup (no scans) leaves the phone's scans alone, and the restore prompt says so.
+- **Privacy:** the repo is public, so tests use made-up numbers only.
 
 ## Known issues
 - **Not yet tested on a real iPhone.** These can only be checked on the device:

@@ -74,13 +74,14 @@ export const SCAN_FIELDS: ScanFieldInfo[] = [
 
 export const FIELD_INFO = new Map(SCAN_FIELDS.map((f) => [f.key, f]));
 
-/** "10. Intracellular Fluid (ICF) kg/lbs" → "intracellularfluid". */
+/** "10. Intracellular Fluid (ICF) kg/lbs" → "intracellularfluid"; "8. Visceral Fat Mass kg/lbs/%" → "visceralfatmass". */
 export function normaliseLabel(label: string): string {
   return label
     .toLowerCase()
     .replace(/^\s*\d+\s*[.)]\s*/, '')
     .replace(/\([^)]*\)/g, ' ')
-    .replace(/\b(kg\/lbs|kg\/lbs\/%|kg|lbs|cm2|cm|kcal)\b/g, ' ')
+    .replace(/\bkg\/lbs(?:\/%)?/g, ' ')
+    .replace(/\b(kg|lbs|cm2|cm|kcal)\b/g, ' ')
     .replace(/[^a-z0-9%]/g, '');
 }
 
@@ -306,4 +307,16 @@ export function formatChange(diff: number, decimals = 1): string {
   const r = Number(diff.toFixed(decimals));
   if (r === 0) return '0';
   return `${r > 0 ? '+' : '−'}${Math.abs(r).toFixed(decimals)}`;
+}
+
+/** Evenly spaced whole-number y ticks around the values (step 1, 2, 5 or 10, at most 6 ticks). */
+export function scanTicks(values: number[]): number[] {
+  const lo = Math.floor(Math.min(...values) - 0.5);
+  const hi = Math.ceil(Math.max(...values) + 0.5);
+  const step = [1, 2, 5, 10, 20, 50].find((s) => (hi - lo) / s <= 5) ?? 100;
+  const start = Math.floor(lo / step) * step;
+  const end = Math.ceil(hi / step) * step;
+  const ticks: number[] = [];
+  for (let t = start; t <= end; t += step) ticks.push(t);
+  return ticks;
 }

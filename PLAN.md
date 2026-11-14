@@ -119,6 +119,8 @@ settings:  'id'
 ```
 Phase 2 adds a `bodyweights` table and block-tracker settings through a Dexie version bump. Existing data is kept.
 
+Later versions: v2–v3 sauna log (removed; table left declared), v4 drops the sauna setting, v5 reorders templates, v6 adds `bodyScans: 'id, date'` (Evolt body scans, see PROGRESS.md chunk 27).
+
 ### Rules the model enforces
 - **Snapshots:** each session copies its slot targets when it starts. Editing or deleting a template later never changes past sessions.
 - **Variations stay separate:** history, prefill and PRs are always looked up by `exerciseId`. Swapping a slot only changes `exerciseId` on that session exercise.
