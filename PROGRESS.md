@@ -36,7 +36,7 @@ SPEC.md = the original brief; PLAN.md = how it's being built + decisions.
 - [x] 24. Settings as a corner button, no bottom bar (requested 26 Oct 2026)
 - [x] 25. Swipe to delete sets, templates reordered (Legs, Chest & Back, Shoulders & Arms), warm-up rest timer replaced by a warm-up count (requested 2 Nov 2026)
 - [x] 26. Warm amber palette and tick-up app icon (requested 13 Nov 2026; palette options in `docs/redesign/blue-jade/`)
-- [x] 27. Evolt body scans (requested 14 Nov 2026), on branch `body-scans`, not merged or pushed:
+- [x] 27. Evolt body scans (requested 14 Nov 2026), pushed to `main` 14 Nov 2026:
   - [x] 27a. Storage, paste reader and backup
   - [x] 27b. Today banner and Add scan sheet
   - [x] 27c. Body view in Progress
@@ -53,7 +53,7 @@ Chunk 25 (swipe to delete, template order, warm-up count) is built and checked, 
 Redesign steps 1–4 are built and checked, not committed. Next: the user tries it, then commit and push (ask first). Wake lock and the rest sound can only be confirmed on the iPhone.
 
 ## Next
-- Chunk 27 (body scans) is on branch `body-scans`. Merge to `main` and push to deploy (ask the user first). The user then pastes their real scan into the app on the phone; real scan data never goes in this public repo.
+- Chunk 27 (body scans) is pushed and deploying. The user pastes their real scan into the app on the phone and tries it there (not yet checked on the iPhone). Real scan data never goes in this public repo.
 - Push to `main` to redeploy (ask the user first), then the user tries Phase 2 on the phone.
 - Everything in the brief is now built. Anything further would be new requests from the user.
 - Chunk 18 (rest timer) is committed, waiting to be pushed and tried at the gym.
