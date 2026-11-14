@@ -1,11 +1,12 @@
 import { db } from './db';
 import { withDefaults } from './settings';
-import type { Exercise, Session, Settings, Template } from './types';
+import type { BodyScan, Exercise, Session, Settings, Template } from './types';
 
 export const BACKUP_FORMAT = 'gym-log-backup';
 // v2 added saunaEntries (sauna log, since removed). v1 and v2 backups both restore; any
 // saunaEntries in them are ignored. New backups have no sauna data.
-export const BACKUP_VERSION = 2;
+// v3 added bodyScans. Older backups have none; restoring one leaves the scans on the phone alone.
+export const BACKUP_VERSION = 3;
 
 export interface Backup {
   format: typeof BACKUP_FORMAT;
@@ -16,19 +17,22 @@ export interface Backup {
     templates: Template[];
     sessions: Session[];
     settings: Settings[];
+    /** Missing in backups made before v3. */
+    bodyScans?: BodyScan[];
   };
 }
 
 export class BackupError extends Error {}
 
 export async function readAll(): Promise<Backup['data']> {
-  const [exercises, templates, sessions, settings] = await Promise.all([
+  const [exercises, templates, sessions, settings, bodyScans] = await Promise.all([
     db.exercises.toArray(),
     db.templates.toArray(),
     db.sessions.toArray(),
     db.settings.toArray(),
+    db.bodyScans.toArray(),
   ]);
-  return { exercises, templates, sessions, settings };
+  return { exercises, templates, sessions, settings, bodyScans };
 }
 
 export function makeBackup(data: Backup['data'], now = Date.now()): Backup {
@@ -55,6 +59,9 @@ export function parseBackup(text: string): Backup {
   if (!d || !isObjectArray(d.exercises) || !isObjectArray(d.templates) || !isObjectArray(d.sessions) || !isObjectArray(d.settings)) {
     throw new BackupError('This backup file is incomplete or damaged.');
   }
+  if (d.bodyScans !== undefined && !(isObjectArray(d.bodyScans) && d.bodyScans.every((s) => typeof s.date === 'string'))) {
+    throw new BackupError('This backup file is incomplete or damaged.');
+  }
   for (const s of d.sessions as Session[]) {
     if (!Array.isArray(s.exercises) || typeof s.startedAt !== 'number') {
       throw new BackupError('This backup file is incomplete or damaged.');
@@ -63,11 +70,18 @@ export function parseBackup(text: string): Backup {
   return b as Backup;
 }
 
-/** Replaces everything in the app with the backup's contents. */
+/**
+ * Replaces everything in the app with the backup's contents. Body scans are replaced only if
+ * the backup has them: an older backup (no scans) leaves the scans on the phone untouched.
+ */
 export async function restoreBackup(backup: Backup): Promise<void> {
-  const { exercises, templates, sessions, settings } = backup.data;
-  await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.settings], async () => {
+  const { exercises, templates, sessions, settings, bodyScans } = backup.data;
+  await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.settings, db.bodyScans], async () => {
     await Promise.all([db.exercises.clear(), db.templates.clear(), db.sessions.clear(), db.settings.clear()]);
+    if (bodyScans) {
+      await db.bodyScans.clear();
+      await db.bodyScans.bulkAdd(bodyScans);
+    }
     await db.exercises.bulkAdd(exercises);
     await db.templates.bulkAdd(templates);
     await db.sessions.bulkAdd(sessions);

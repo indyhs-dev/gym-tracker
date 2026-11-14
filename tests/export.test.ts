@@ -103,7 +103,7 @@ describe('JSON backup', () => {
   it('has no sauna data (the sauna log was removed)', async () => {
     await logSample();
     const backup = makeBackup(await readAll());
-    expect(Object.keys(backup.data).sort()).toEqual(['exercises', 'sessions', 'settings', 'templates']);
+    expect(Object.keys(backup.data).sort()).toEqual(['bodyScans', 'exercises', 'sessions', 'settings', 'templates']);
     expect(backup.data.settings[0]).not.toHaveProperty('sauna');
   });
 

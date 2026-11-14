@@ -65,8 +65,13 @@ export default function Backup() {
       const d = parsed.data;
       const ok = window.confirm(
         `Replace ALL data in the app with this backup from ${formatDate(parsed.exportedAt)}?\n\n` +
-          `It has ${plural(d.sessions.length, 'session')}, ${plural(d.templates.length, 'template')} and ` +
-          `${plural(d.exercises.length, 'exercise')}. Everything currently in the app will be replaced.`,
+          (d.bodyScans
+            ? `It has ${plural(d.sessions.length, 'session')}, ${plural(d.templates.length, 'template')}, ` +
+              `${plural(d.exercises.length, 'exercise')} and ${plural(d.bodyScans.length, 'body scan')}. ` +
+              'Everything currently in the app will be replaced.'
+            : `It has ${plural(d.sessions.length, 'session')}, ${plural(d.templates.length, 'template')} and ` +
+              `${plural(d.exercises.length, 'exercise')}. Everything currently in the app will be replaced, ` +
+              'except body scans: this backup has none, so the ones on this phone are kept.'),
       );
       if (!ok) return;
       await restoreBackup(parsed);

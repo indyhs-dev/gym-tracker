@@ -1,12 +1,13 @@
 import { Dexie, type EntityTable } from 'dexie';
 import { defaultSettings } from './defaults';
-import type { Exercise, Session, Settings, Template } from './types';
+import type { BodyScan, Exercise, Session, Settings, Template } from './types';
 
 export const db = new Dexie('gym-log') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>;
   templates: EntityTable<Template, 'id'>;
   sessions: EntityTable<Session, 'id'>;
   settings: EntityTable<Settings, 'id'>;
+  bodyScans: EntityTable<BodyScan, 'id'>;
 };
 
 db.version(1).stores({
@@ -51,6 +52,11 @@ db.version(5)
       await templates.update(t.id, { order: places[i], ...(t.name === 'Torso' && rename ? { name: 'Chest & Back' } : {}) });
     }
   });
+
+// v6: Evolt body scans, one row per scan, indexed by local date ("YYYY-MM-DD").
+db.version(6).stores({
+  bodyScans: 'id, date',
+});
 
 db.on('populate', (tx) => {
   tx.table('settings').add(defaultSettings());

@@ -96,3 +96,62 @@ export interface Settings {
   seededAt: number | null;
   block: TrainingBlock;
 }
+
+/** Evolt 360's rating for a value. */
+export type ScanRating = 'Under' | 'Optimal' | 'High';
+export type ScanBalance = 'Balanced' | 'Unbalanced';
+
+/** One number from a body scan, with Evolt's rating and range where the report gives them. */
+export interface ScanMeasure {
+  value: number;
+  rating?: ScanRating;
+  /** Evolt's normal range. */
+  min?: number;
+  max?: number;
+  /** A bracketed share instead of a range, e.g. "[67%]". */
+  share?: number;
+}
+
+export type ScanField =
+  | 'weight'
+  | 'leanBodyMass'
+  | 'skeletalMuscleMass'
+  | 'protein'
+  | 'mineral'
+  | 'totalBodyWater'
+  | 'bodyFatMass'
+  | 'subcutaneousFatMass'
+  | 'visceralFatMass'
+  | 'visceralFatArea'
+  | 'bodyFatPercentage'
+  | 'visceralFatLevel'
+  | 'intracellularFluid'
+  | 'extracellularFluid'
+  | 'bioAge'
+  | 'bwiScore'
+  | 'abdominalCircumference'
+  | 'waistToHipRatio'
+  | 'leftArmLean'
+  | 'leftArmFat'
+  | 'rightArmLean'
+  | 'rightArmFat'
+  | 'torsoLean'
+  | 'torsoFat'
+  | 'leftLegLean'
+  | 'leftLegFat'
+  | 'rightLegLean'
+  | 'rightLegFat';
+
+/** An Evolt 360 body scan. Only the date is required; everything else can be filled in later. */
+export interface BodyScan {
+  id: string;
+  /** Local calendar date, "YYYY-MM-DD". The due date counts from this. */
+  date: string;
+  /** "HH:MM", or null. Stored but not used for the due date. */
+  time: string | null;
+  values: Partial<Record<ScanField, ScanMeasure>>;
+  upperLower: ScanBalance | null;
+  leftRight: ScanBalance | null;
+  createdAt: number;
+  updatedAt: number;
+}
