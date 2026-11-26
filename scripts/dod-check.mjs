@@ -138,7 +138,6 @@ async function swipeLeft(row, distance = 110) {
 }
 
 /** An exercise's info line as plain text (joinUnbroken adds no-break spaces, non-breaking hyphens and word joiners). */
-const metaText = async (c) => ((await c.locator('.exercise-meta').textContent()) ?? '').replace(/\u2060/g, '').replace(/\u2011/g, '-').replace(/\u00a0/g, ' ');
 
 const detailExercises = () => page.locator('.exercise-name-static').allTextContents();
 
@@ -163,10 +162,8 @@ try {
       (await page.locator('.up-next').count()) === 1 && (await page.locator('.exercise-row').count()) === 6);
   const firstBench = card('Flat Dumbbell Bench Press');
   check('rows pre-filled to the template’s target (2 × 5–12 → 2 rows)', (await setRows(firstBench).count()) === 2);
-  const benchMeta = await metaText(firstBench);
-  check('info line ends with the warm-up count (full, compound → 3); no Warm-up rest button',
-    benchMeta === '2 × 5–12 · Rest 3–5 min · 3 warm-up sets' && (await page.getByRole('button', { name: /warm-up rest/i }).count()) === 0,
-    benchMeta);
+  check('no info line or plan note under the name; no Warm-up rest button',
+    (await page.locator('.exercise-meta, .exercise-plan').count()) === 0 && (await page.getByRole('button', { name: /warm-up rest/i }).count()) === 0);
   await logSet('Flat Dumbbell Bench Press', 22.5, 8);
   await logSet('Flat Dumbbell Bench Press', 22.5, 9);
   await menu((await openExercise('Pull-up')).getByRole('button', { name: 'Pull-up options' }), 'Swap exercise');
@@ -278,8 +275,6 @@ try {
   await measure();
   check('logging a set never shifts the row under your thumb', tops.size === 1, [...tops].join(', '));
   check('typing into a pre-filled row keeps one set (no duplicates)', (await knee.getByRole('button', { name: /^Set \d options$/ }).count()) === 1);
-  const kneeMeta = await metaText(knee);
-  check('no warm-up count on the info line when the policy is none', kneeMeta === '3 × 5 · Rest 60–90 s', kneeMeta);
   await menu(knee.getByRole('button', { name: 'Set 1 options' }), 'Delete set');
   await page.waitForTimeout(200);
   check('deleting a logged set takes its row away (no pre-filled row in its place)', (await setRows(knee).count()) === 2);

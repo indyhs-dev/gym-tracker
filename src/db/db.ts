@@ -58,6 +58,23 @@ db.version(6).stores({
   bodyScans: 'id, date',
 });
 
+// v7: put the starting templates back in Legs, Chest & Back, Shoulders & Arms order
+// (a backup restored after v5 could bring the old order back). Same rules as v5:
+// only those names move, within the places they already hold.
+db.version(7)
+  .stores({})
+  .upgrade(async (tx) => {
+    const templates = tx.table<Template, string>('templates');
+    const all = await templates.toArray();
+    const moving = ['Legs', 'Chest & Back', 'Shoulders & Arms']
+      .map((name) => all.find((t) => t.name === name))
+      .filter((t): t is Template => t !== undefined);
+    const places = moving.map((t) => t.order).sort((a, b) => a - b);
+    for (const [i, t] of moving.entries()) {
+      if (t.order !== places[i]) await templates.update(t.id, { order: places[i] });
+    }
+  });
+
 db.on('populate', (tx) => {
   tx.table('settings').add(defaultSettings());
 });

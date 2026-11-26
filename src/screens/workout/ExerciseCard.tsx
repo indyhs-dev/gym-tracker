@@ -13,14 +13,12 @@ import {
   type SetFields,
 } from '../../db/sessions';
 import type { Exercise, RestGuidance, SessionExercise, WorkoutSet } from '../../db/types';
-import { formatKg, joinUnbroken, plural } from '../../lib/format';
-import { setsReps } from '../../lib/labels';
+import { formatKg, plural } from '../../lib/format';
 import { goUpWeight, progressionHint } from '../../lib/progression';
 import { restAfter } from '../../lib/rest';
 import { startRest, tickSet } from '../../lib/restTimer';
 import { rowValues, type SetRowData } from '../../lib/setRows';
 import { unlockSound } from '../../lib/sound';
-import { warmupCount } from '../../lib/warmup';
 import SetRow, { repsInputId, weightInputId } from './SetRow';
 
 /** Remembers which pre-filled rows have been sent to the database, so fast typing never adds a set twice. */
@@ -160,10 +158,6 @@ export default function ExerciseCard({
     return () => document.removeEventListener('pointerdown', close, true);
   }, [swipedId]);
 
-  const restGuide = exercise && rest[exercise.type];
-  const warmups = exercise && slot ? warmupCount(slot.warmup, exercise.type) : '';
-  const meta = joinUnbroken([slot ? setsReps(slot) : '', restGuide ? `Rest ${restGuide}` : '', warmups].filter(Boolean), ' · ');
-
   // "Go up": last time's set 1 reached the top of the range.
   const progression = active && exercise && slot ? progressionHint(previous, slot.repMax, exercise.weightStep) : null;
   const goUp = !progression
@@ -187,10 +181,8 @@ export default function ExerciseCard({
             <MoreIcon />
           </button>
         </div>
-        {meta && <p className="exercise-meta">{meta}</p>}
         {goUp && <p className="progression-hint">{goUp}</p>}
       </div>
-      {slot?.planNote && <p className="exercise-plan">{slot.planNote}</p>}
       {noteOpen && (
         <NoteField
           id={noteId}
